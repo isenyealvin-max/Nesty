@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Nesty AI</title>
+<style>
+*{box-sizing:border-box}
+body{margin:0;font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif;background:#0f1115;color:#e6e6e6;height:100dvh;display:flex;flex-direction:column}
+header{display:flex;justify-content:space-between;align-items:center;padding:14px 18px;border-bottom:1px solid #1f232b}
+.logo{font-weight:600;font-size:17px;letter-spacing:.3px}
+#newchat{background:none;border:1px solid #2a2f39;color:#aab0bd;padding:6px 12px;border-radius:8px;font-size:13px}
+#chat{flex:1;overflow-y:auto;padding:16px;max-width:760px;width:100%;margin:0 auto}
+#welcome{text-align:center;margin-top:28vh;color:#8b92a1}
+#welcome h2{color:#e6e6e6;font-weight:500;font-size:24px;margin:0 0 6px}
+.msg{margin:16px 0;line-height:1.6;white-space:pre-wrap;word-wrap:break-word;font-size:15.5px}
+.user{background:#222630;padding:10px 14px;border-radius:16px;max-width:85%;margin-left:auto;width:fit-content}
+.bot{color:#dcdfe6}
+#bar{max-width:760px;width:100%;margin:0 auto;padding:10px 14px 16px;display:flex;gap:8px;align-items:flex-end}
+#box{flex:1;resize:none;max-height:140px;background:#181b22;color:#e6e6e6;border:1px solid #2a2f39;border-radius:22px;padding:12px 16px;font-size:16px;font-family:inherit;outline:none}
+#box:focus{border-color:#4a5163}
+#send{width:44px;height:44px;border:0;border-radius:50%;background:#e6e6e6;color:#0f1115;font-size:20px;font-weight:bold}
+</style>
+</head>
+<body>
+<header>
+  <div class="logo">Nesty AI</div>
+  <button id="newchat" onclick="newChat()">New chat</button>
+</header>
+<div id="chat">
+  <div id="welcome"><h2>What can I help with?</h2><div>Ask me anything.</div></div>
+</div>
+<div id="bar">
+  <textarea id="box" rows="1" placeholder="Message Nesty"></textarea>
+  <button id="send" onclick="send()">&#8593;</button>
+</div>
+<script>
+var messages = [];
+var chat = document.getElementById("chat");
+var box = document.getElementById("box");
+
+box.addEventListener("input", function(){
+  box.style.height = "auto";
+  box.style.height = box.scrollHeight + "px";
+});
+
+function add(text, who){
+  var w = document.getElementById("welcome");
+  if(w) w.remove();
+  var d = document.createElement("div");
+  d.className = "msg " + who;
+  d.textContent = text;
+  chat.appendChild(d);
+  chat.scrollTop = chat.scrollHeight;
+  return d;
+}
+
+function newChat(){
+  messages = [];
+  chat.innerHTML = '<div id="welcome"><h2>What can I help with?</h2><div>Ask me anything.</div></div>';
+}
+
+async function send(){
+  var text = box.value.trim();
+  if(!text) return;
+  box.value = "";
+  box.style.height = "auto";
+  add(text, "user");
+  messages.push({role:"user", content:text});
+  var wait = add("...", "bot");
+  try{
+    var res = await fetch("/.netlify/functions/chat", {
+      method:"POST",
+      headers:{"Content-Type":"application/json"},
+      body:JSON.stringify({messages:messages})
+    });
+    var data = await res.json();
+    var reply = data.reply || "Sorry, something went wrong.";
+    wait.textContent = reply;
+    messages.push({role:"assistant", content:reply});
+  }catch(e){
+    wait.textContent = "Network error. Please try again.";
+  }
+  chat.scrollTop = chat.scrollHeight;
+}
+</script>
+</body>
+</html>
