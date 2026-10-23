@@ -6,83 +6,378 @@
 <title>Nesty AI</title>
 <style>
 *{box-sizing:border-box}
-body{margin:0;font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif;background:#0f1115;color:#e6e6e6;height:100dvh;display:flex;flex-direction:column}
-header{display:flex;justify-content:space-between;align-items:center;padding:14px 18px;border-bottom:1px solid #1f232b}
-.logo{font-weight:600;font-size:17px;letter-spacing:.3px}
-#newchat{background:none;border:1px solid #2a2f39;color:#aab0bd;padding:6px 12px;border-radius:8px;font-size:13px}
+body{margin:0;font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif;background:#fff;color:#1a1a1a;height:100dvh;display:flex;flex-direction:column}
+header{display:flex;justify-content:space-between;align-items:center;padding:12px 16px;border-bottom:1px solid #e8e8e8}
+.logo{font-weight:600;font-size:17px}
+.hbtn{background:#fff;border:1px solid #d8d8d8;color:#444;padding:6px 11px;border-radius:8px;font-size:13px;margin-left:6px}
+.hbtn.on{background:#1a1a1a;color:#fff;border-color:#1a1a1a}
 #chat{flex:1;overflow-y:auto;padding:16px;max-width:760px;width:100%;margin:0 auto}
-#welcome{text-align:center;margin-top:28vh;color:#8b92a1}
-#welcome h2{color:#e6e6e6;font-weight:500;font-size:24px;margin:0 0 6px}
-.msg{margin:16px 0;line-height:1.6;white-space:pre-wrap;word-wrap:break-word;font-size:15.5px}
-.user{background:#222630;padding:10px 14px;border-radius:16px;max-width:85%;margin-left:auto;width:fit-content}
-.bot{color:#dcdfe6}
-#bar{max-width:760px;width:100%;margin:0 auto;padding:10px 14px 16px;display:flex;gap:8px;align-items:flex-end}
-#box{flex:1;resize:none;max-height:140px;background:#181b22;color:#e6e6e6;border:1px solid #2a2f39;border-radius:22px;padding:12px 16px;font-size:16px;font-family:inherit;outline:none}
-#box:focus{border-color:#4a5163}
-#send{width:44px;height:44px;border:0;border-radius:50%;background:#e6e6e6;color:#0f1115;font-size:20px;font-weight:bold}
+#welcome{text-align:center;margin-top:26vh;color:#777}
+#welcome h2{color:#1a1a1a;font-weight:500;font-size:24px;margin:0 0 6px}
+.msg{margin:18px 0;line-height:1.6;font-size:15.5px;word-wrap:break-word}
+.user{background:#f1f1f1;padding:10px 14px;border-radius:16px;max-width:85%;margin-left:auto;width:fit-content;white-space:pre-wrap;-webkit-user-select:none;user-select:none;-webkit-touch-callout:none}
+.fileTag{display:inline-block;font-size:12px;background:#dedede;border-radius:6px;padding:2px 8px;margin-bottom:6px}
+.txt{white-space:pre-wrap}
+.txt code{background:#f0f0f0;padding:1px 5px;border-radius:5px;font-family:ui-monospace,Menlo,Consolas,monospace;font-size:14px}
+.code{background:#f7f7f7;border:1px solid #e3e3e3;border-radius:10px;margin:10px 0;overflow:hidden}
+.codebar{display:flex;justify-content:flex-end;padding:2px 6px;background:#ececec}
+.code pre{margin:0;padding:12px;overflow-x:auto;font-size:13.5px;font-family:ui-monospace,Menlo,Consolas,monospace;white-space:pre}
+.cpbtn{background:none;border:0;color:#555;font-size:13px;padding:6px 8px}
+.actions{margin-top:2px}
+#inputWrap{max-width:760px;width:100%;margin:0 auto;padding:6px 14px 14px}
+#chip{display:none;align-items:center;gap:8px;font-size:13px;background:#f1f1f1;border-radius:8px;padding:6px 10px;margin-bottom:8px;width:fit-content}
+#chip button{border:0;background:none;font-size:16px;color:#666}
+#bar{display:flex;gap:6px;align-items:flex-end}
+.ibtn{width:42px;height:42px;border:1px solid #d8d8d8;background:#fff;border-radius:50%;flex:none;font-size:22px;color:#444;display:flex;align-items:center;justify-content:center;padding:0}
+.ibtn.on{background:#e53935;color:#fff;border-color:#e53935}
+#send{background:#1a1a1a;color:#fff;border:0;font-weight:bold}
+#box{flex:1;resize:none;max-height:140px;background:#fafafa;color:#1a1a1a;border:1px solid #d8d8d8;border-radius:22px;padding:11px 16px;font-size:16px;font-family:inherit;outline:none}
+#menu{position:fixed;display:none;background:#fff;border:1px solid #ddd;border-radius:10px;box-shadow:0 4px 16px rgba(0,0,0,.18);z-index:20;overflow:hidden}
+#menu button{display:block;width:150px;padding:13px 16px;text-align:left;background:#fff;border:0;border-bottom:1px solid #f0f0f0;font-size:15px}
+#editor{display:none;position:fixed;inset:0;background:rgba(0,0,0,.4);z-index:30;align-items:center;justify-content:center;padding:16px}
+#editCard{background:#fff;border-radius:14px;padding:14px;width:100%;max-width:500px}
+#editBox{width:100%;height:140px;border:1px solid #d8d8d8;border-radius:10px;padding:10px;font-size:16px;font-family:inherit}
+#editBtns{display:flex;justify-content:flex-end;gap:8px;margin-top:10px}
+#editBtns button{padding:9px 16px;border-radius:8px;border:1px solid #d8d8d8;background:#fff;font-size:15px}
+#editBtns .go{background:#1a1a1a;color:#fff;border-color:#1a1a1a}
 </style>
 </head>
 <body>
 <header>
   <div class="logo">Nesty AI</div>
-  <button id="newchat" onclick="newChat()">New chat</button>
+  <div>
+    <button class="hbtn" id="spk" onclick="toggleSpeak()">Voice replies: Off</button>
+    <button class="hbtn" onclick="newChat()">New chat</button>
+  </div>
 </header>
-<div id="chat">
-  <div id="welcome"><h2>What can I help with?</h2><div>Ask me anything.</div></div>
+
+<div id="chat"></div>
+
+<div id="inputWrap">
+  <div id="chip"><span id="chipName"></span><button onclick="removeFile()">&times;</button></div>
+  <div id="bar">
+    <button class="ibtn" id="attach" onclick="document.getElementById('file').click()">+</button>
+    <textarea id="box" rows="1" placeholder="Message Nesty"></textarea>
+    <button class="ibtn" id="mic" onclick="toggleMic()"><svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M12 14a3 3 0 0 0 3-3V5a3 3 0 0 0-6 0v6a3 3 0 0 0 3 3zm5-3a5 5 0 0 1-10 0H5a7 7 0 0 0 6 6.92V21h2v-3.08A7 7 0 0 0 19 11h-2z"/></svg></button>
+    <button class="ibtn" id="send" onclick="send()">&#8593;</button>
+  </div>
+  <input type="file" id="file" style="display:none" accept=".txt,.md,.csv,.json,.js,.html,.css,.py,.java,.c,.cpp,.xml,.log">
 </div>
-<div id="bar">
-  <textarea id="box" rows="1" placeholder="Message Nesty"></textarea>
-  <button id="send" onclick="send()">&#8593;</button>
+
+<div id="menu">
+  <button onclick="menuEdit()">Edit</button>
+  <button onclick="menuCopy()">Copy text</button>
+  <button onclick="menuDelete()" style="border-bottom:0;color:#c62828">Delete</button>
 </div>
+
+<div id="editor">
+  <div id="editCard">
+    <textarea id="editBox"></textarea>
+    <div id="editBtns">
+      <button onclick="closeEditor()">Cancel</button>
+      <button class="go" onclick="saveEdit()">Send</button>
+    </div>
+  </div>
+</div>
+
 <script>
 var messages = [];
+var loading = false;
+var pendingFile = null;
+var speakOn = false;
+var voiceTurn = false;
+var menuIdx = -1;
+var editIdx = -1;
+
 var chat = document.getElementById("chat");
 var box = document.getElementById("box");
+var menu = document.getElementById("menu");
 
 box.addEventListener("input", function(){
   box.style.height = "auto";
   box.style.height = box.scrollHeight + "px";
 });
 
-function add(text, who){
-  var w = document.getElementById("welcome");
-  if(w) w.remove();
+function esc(s){
+  return s.replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");
+}
+function inline(s){
+  return esc(s).replace(/`([^`\n]+)`/g,"<code>$1</code>").replace(/\*\*([^*\n]+)\*\*/g,"<b>$1</b>");
+}
+
+function copyText(text, btn){
+  function done(){
+    if(!btn) return;
+    var old = btn.textContent;
+    btn.textContent = "Copied";
+    setTimeout(function(){ btn.textContent = old; }, 1500);
+  }
+  function fallback(){
+    var t = document.createElement("textarea");
+    t.value = text;
+    document.body.appendChild(t);
+    t.select();
+    try{ document.execCommand("copy"); }catch(e){}
+    t.remove();
+    done();
+  }
+  if(navigator.clipboard && navigator.clipboard.writeText){
+    navigator.clipboard.writeText(text).then(done).catch(fallback);
+  }else{
+    fallback();
+  }
+}
+
+function apiContent(m){
+  if(m.file){
+    return "[Attached file: " + m.file.name + "]\n" + m.file.text + "\n[End of file]\n\n" + m.text;
+  }
+  return m.text;
+}
+
+function buildUser(m, i){
   var d = document.createElement("div");
-  d.className = "msg " + who;
-  d.textContent = text;
-  chat.appendChild(d);
-  chat.scrollTop = chat.scrollHeight;
+  d.className = "msg user";
+  if(m.file){
+    var tag = document.createElement("span");
+    tag.className = "fileTag";
+    tag.textContent = m.file.name;
+    d.appendChild(tag);
+    d.appendChild(document.createElement("br"));
+  }
+  d.appendChild(document.createTextNode(m.text));
+
+  var timer = null, sx = 0, sy = 0;
+  d.addEventListener("pointerdown", function(e){
+    sx = e.clientX; sy = e.clientY;
+    timer = setTimeout(function(){ showMenu(i, sx, sy); }, 450);
+  });
+  function cancel(){ clearTimeout(timer); }
+  d.addEventListener("pointerup", cancel);
+  d.addEventListener("pointercancel", cancel);
+  d.addEventListener("pointermove", function(e){
+    if(Math.abs(e.clientX - sx) > 10 || Math.abs(e.clientY - sy) > 10) cancel();
+  });
+  d.addEventListener("contextmenu", function(e){ e.preventDefault(); });
   return d;
+}
+
+function buildBot(m){
+  var d = document.createElement("div");
+  d.className = "msg bot";
+  var parts = m.content.split("```");
+  for(var i = 0; i < parts.length; i++){
+    if(i % 2 === 1){
+      var code = parts[i];
+      var nl = code.indexOf("\n");
+      if(nl > -1 && nl <= 15 && code.slice(0, nl).trim().indexOf(" ") === -1){
+        code = code.slice(nl + 1);
+      }
+      code = code.replace(/\n+$/,"");
+      var wrap = document.createElement("div");
+      wrap.className = "code";
+      var bar = document.createElement("div");
+      bar.className = "codebar";
+      var cb = document.createElement("button");
+      cb.className = "cpbtn";
+      cb.textContent = "Copy";
+      (function(c, b){ b.onclick = function(){ copyText(c, b); }; })(code, cb);
+      bar.appendChild(cb);
+      var pre = document.createElement("pre");
+      pre.textContent = code;
+      wrap.appendChild(bar);
+      wrap.appendChild(pre);
+      d.appendChild(wrap);
+    }else{
+      var t = parts[i].replace(/^\n+|\n+$/g,"");
+      if(!t) continue;
+      var tx = document.createElement("div");
+      tx.className = "txt";
+      tx.innerHTML = inline(t);
+      d.appendChild(tx);
+    }
+  }
+  var act = document.createElement("div");
+  act.className = "actions";
+  var cp = document.createElement("button");
+  cp.className = "cpbtn";
+  cp.textContent = "Copy";
+  cp.onclick = function(){ copyText(m.content, cp); };
+  act.appendChild(cp);
+  d.appendChild(act);
+  return d;
+}
+
+function renderAll(){
+  chat.innerHTML = "";
+  if(!messages.length && !loading){
+    chat.innerHTML = '<div id="welcome"><h2>What can I help with?</h2><div>Ask me anything.</div></div>';
+    return;
+  }
+  for(var i = 0; i < messages.length; i++){
+    var m = messages[i];
+    chat.appendChild(m.role === "user" ? buildUser(m, i) : buildBot(m));
+  }
+  if(loading){
+    var w = document.createElement("div");
+    w.className = "msg bot";
+    w.textContent = "Thinking...";
+    chat.appendChild(w);
+  }
+  chat.scrollTop = chat.scrollHeight;
+}
+
+async function ask(){
+  loading = true;
+  renderAll();
+  var reply;
+  try{
+    var res = await fetch("/.netlify/functions/chat", {
+      method: "POST",
+      headers: {"Content-Type":"application/json"},
+      body: JSON.stringify({
+        messages: messages.map(function(m){
+          return {role: m.role, content: m.role === "user" ? apiContent(m) : m.content};
+        })
+      })
+    });
+    var data = await res.json();
+    reply = data.reply || "Sorry, something went wrong.";
+  }catch(e){
+    reply = "Network error. Please try again.";
+  }
+  loading = false;
+  messages.push({role:"assistant", content:reply});
+  renderAll();
+  if(speakOn || voiceTurn) speak(reply);
+  voiceTurn = false;
+}
+
+function send(){
+  if(loading) return;
+  var text = box.value.trim();
+  if(!text && !pendingFile) return;
+  if(!text) text = "Please read this file.";
+  messages.push({role:"user", text:text, file:pendingFile});
+  box.value = "";
+  box.style.height = "auto";
+  removeFile();
+  ask();
 }
 
 function newChat(){
   messages = [];
-  chat.innerHTML = '<div id="welcome"><h2>What can I help with?</h2><div>Ask me anything.</div></div>';
+  if(window.speechSynthesis) speechSynthesis.cancel();
+  renderAll();
 }
 
-async function send(){
-  var text = box.value.trim();
-  if(!text) return;
-  box.value = "";
-  box.style.height = "auto";
-  add(text, "user");
-  messages.push({role:"user", content:text});
-  var wait = add("...", "bot");
-  try{
-    var res = await fetch("/.netlify/functions/chat", {
-      method:"POST",
-      headers:{"Content-Type":"application/json"},
-      body:JSON.stringify({messages:messages})
-    });
-    var data = await res.json();
-    var reply = data.reply || "Sorry, something went wrong.";
-    wait.textContent = reply;
-    messages.push({role:"assistant", content:reply});
-  }catch(e){
-    wait.textContent = "Network error. Please try again.";
-  }
-  chat.scrollTop = chat.scrollHeight;
+/* Long-press menu */
+function showMenu(i, x, y){
+  menuIdx = i;
+  menu.style.display = "block";
+  menu.style.left = Math.min(x, window.innerWidth - 160) + "px";
+  menu.style.top = Math.min(y + 10, window.innerHeight - 170) + "px";
 }
+function hideMenu(){ menu.style.display = "none"; }
+document.addEventListener("pointerdown", function(e){
+  if(!menu.contains(e.target)) hideMenu();
+});
+function menuCopy(){
+  copyText(messages[menuIdx].text, null);
+  hideMenu();
+}
+function menuDelete(){
+  var n = (messages[menuIdx + 1] && messages[menuIdx + 1].role === "assistant") ? 2 : 1;
+  messages.splice(menuIdx, n);
+  hideMenu();
+  renderAll();
+}
+function menuEdit(){
+  editIdx = menuIdx;
+  document.getElementById("editBox").value = messages[editIdx].text;
+  document.getElementById("editor").style.display = "flex";
+  hideMenu();
+}
+function closeEditor(){
+  document.getElementById("editor").style.display = "none";
+}
+function saveEdit(){
+  var t = document.getElementById("editBox").value.trim();
+  if(!t) return;
+  messages[editIdx].text = t;
+  messages = messages.slice(0, editIdx + 1);
+  closeEditor();
+  ask();
+}
+
+/* File attach */
+var fileInput = document.getElementById("file");
+fileInput.addEventListener("change", function(){
+  var f = fileInput.files[0];
+  if(!f) return;
+  if(f.type.indexOf("image/") === 0 || f.type === "application/pdf"){
+    alert("Pictures and PDFs are not supported yet. Use a text file.");
+    fileInput.value = "";
+    return;
+  }
+  if(f.size > 1000000){
+    alert("File is too big (max 1 MB).");
+    fileInput.value = "";
+    return;
+  }
+  var r = new FileReader();
+  r.onload = function(){
+    var t = r.result;
+    if(t.length > 12000){ t = t.slice(0, 12000) + "\n...[file cut because it is long]"; }
+    pendingFile = {name: f.name, text: t};
+    document.getElementById("chipName").textContent = f.name;
+    document.getElementById("chip").style.display = "flex";
+  };
+  r.readAsText(f);
+  fileInput.value = "";
+});
+function removeFile(){
+  pendingFile = null;
+  document.getElementById("chip").style.display = "none";
+}
+
+/* Voice */
+var SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+var rec = null, listening = false;
+var micBtn = document.getElementById("mic");
+
+function toggleMic(){
+  if(!SR){ alert("Voice input is not supported in this browser."); return; }
+  if(listening){ rec.stop(); return; }
+  rec = new SR();
+  rec.lang = "en-US";
+  rec.interimResults = false;
+  rec.onstart = function(){ listening = true; micBtn.classList.add("on"); };
+  rec.onend = function(){ listening = false; micBtn.classList.remove("on"); };
+  rec.onerror = function(){ listening = false; micBtn.classList.remove("on"); };
+  rec.onresult = function(e){
+    box.value = e.results[0][0].transcript;
+    voiceTurn = true;
+    send();
+  };
+  rec.start();
+}
+
+function toggleSpeak(){
+  speakOn = !speakOn;
+  var b = document.getElementById("spk");
+  b.textContent = "Voice replies: " + (speakOn ? "On" : "Off");
+  b.classList.toggle("on", speakOn);
+  if(!speakOn && window.speechSynthesis) speechSynthesis.cancel();
+}
+function speak(text){
+  if(!window.speechSynthesis) return;
+  var clean = text.replace(/```[\s\S]*?```/g, " code block ").replace(/[*`#]/g, "");
+  speechSynthesis.cancel();
+  speechSynthesis.speak(new SpeechSynthesisUtterance(clean));
+}
+
+renderAll();
 </script>
 </body>
 </html>
