@@ -1,0 +1,11 @@
+{
+  "name": "nestyai",
+  "main": "worker.js",
+  "compatibility_date": "2026-10-01",
+  "keep_vars": true,
+  "assets": {
+    "directory": "./",
+    "binding": "ASSETS",
+    "run_worker_first": ["/api/*", "/.netlify/*", "/icon-192.png", "/icon-512.png"]
+  }
+}
