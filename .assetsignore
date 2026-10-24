@@ -1,0 +1,7 @@
+worker.js
+wrangler.jsonc
+.assetsignore
+functions
+netlify
+_redirects
+README.md
