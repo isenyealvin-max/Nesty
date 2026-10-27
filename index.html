@@ -1963,7 +1963,8 @@ drawWeb();
 drawImg();
 init();
 </script>
-<script src="/notify.js">
+<script src="/notify.js"></script>
+<script>
 function setTheme(color){
   document.documentElement.style.setProperty("--accent", color);
   try{ localStorage.setItem("nestyTheme", color); }catch(e){}
@@ -2000,8 +2001,6 @@ try{
   var sel = document.getElementById("sLang");
   if(lang && sel) sel.value = lang;
 }catch(e){}
-
 </script>
 </body>
 </html>
-
