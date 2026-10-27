@@ -1,0 +1,2058 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta name="google-site-verification" content="jfQFLIkbfVxDpRSp1eGfVPuJWENW5KKygw-WCtt0Io8" />
+<script>window.onerror=function(m){var b=document.getElementById("boot");if(b)b.textContent="Error: "+m;};</script>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Nesty AI</title>
+<link rel="manifest" href="/manifest.json">
+<meta name="theme-color" content="#ffffff">
+<link rel="icon" href="/icon-192.png">
+<link rel="apple-touch-icon" href="/icon-192.png">
+<script src="https://cdn.jsdelivr.net/npm/appwrite@17.0.0"></script>
+<style>
+*{box-sizing:border-box}
+:root{--accent:#1a1a1a}
+body{margin:0;font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif;background:#fff;color:#1a1a1a}
+.pbtn,.sbtn.dark,#send{background:var(--accent)!important;border-color:var(--accent)!important}
+button{font-family:inherit;cursor:pointer}
+#boot{padding:40vh 0;text-align:center;color:#777}
+#auth{display:none;min-height:100dvh;align-items:center;justify-content:center;padding:20px}
+#authCard{width:100%;max-width:360px}
+#authLogo{display:block;width:84px;height:84px;border-radius:20px;margin:0 auto 12px;object-fit:cover}
+#authCard h1{text-align:center;font-size:28px;margin:0 0 4px}
+#authCard p.sub{text-align:center;color:#777;margin:0 0 22px}
+#authCard input{width:100%;padding:13px 14px;border:1px solid #d8d8d8;border-radius:10px;font-size:16px;margin-bottom:10px;font-family:inherit}
+#aCode{text-align:center;letter-spacing:6px;font-size:22px}
+.pbtn{width:100%;padding:13px;border:0;border-radius:10px;background:#1a1a1a;color:#fff;font-size:16px}
+.pbtn:disabled{opacity:.6}
+.lbtn{width:100%;padding:12px;margin-top:10px;border:1px solid #d8d8d8;border-radius:10px;background:#fff;color:#333;font-size:15px}
+.lbtn:disabled{color:#999}
+#codeInfo{text-align:center;color:#555;font-size:14px;margin:0 0 14px}
+.gbtn{width:100%;padding:12px;border:1px solid #d8d8d8;border-radius:10px;background:#fff;color:#222;font-size:15px;display:flex;align-items:center;justify-content:center;gap:10px}
+.or{display:flex;align-items:center;gap:10px;color:#999;font-size:13px;margin:14px 0}
+.or:before,.or:after{content:"";flex:1;height:1px;background:#e5e5e5}
+#bootMsg{padding:0 24px}
+#bootMsg button{margin-top:14px;padding:11px 22px;border:0;border-radius:10px;background:#1a1a1a;color:#fff;font-size:15px}
+.legal{text-align:center;margin-top:18px;font-size:13px;color:#999}
+.legal a{color:#777;text-decoration:underline}
+#limitBar{display:none;background:#fff4e5;border:1px solid #ffd9a0;color:#7a4a00;border-radius:10px;padding:9px 12px;font-size:14px;margin-bottom:8px}
+#side .links{margin-top:10px;font-size:12px;color:#999;text-align:center}
+#side .links a{color:#777}
+#authErr{color:#c62828;font-size:14px;min-height:20px;margin:6px 0}
+#authSwitch{text-align:center;margin-top:16px;font-size:14px;color:#555}
+#authSwitch a{color:#1a1a1a;font-weight:600;text-decoration:underline}
+#app{display:none;flex-direction:column;height:100dvh}
+header{display:flex;justify-content:space-between;align-items:center;padding:10px 12px;border-bottom:1px solid #e8e8e8}
+.logo{font-weight:600;font-size:17px}
+.hbtn{background:#fff;border:1px solid #d8d8d8;color:#444;padding:6px 11px;border-radius:8px;font-size:13px;margin-left:6px}
+.hbtn.on{background:#1a1a1a;color:#fff;border-color:#1a1a1a}
+#chat{flex:1;overflow-y:auto;padding:16px;max-width:760px;width:100%;margin:0 auto}
+#welcome{text-align:center;margin-top:22vh;color:#777;padding:0 10px}
+#welcome img{width:72px;height:72px;border-radius:18px;object-fit:cover;margin-bottom:12px}
+#welcome h2{color:#1a1a1a;font-weight:500;font-size:24px;margin:0 0 6px}
+.msg{margin:18px 0;line-height:1.6;font-size:15.5px;word-wrap:break-word}
+.user{background:#f1f1f1;padding:10px 14px;border-radius:16px;max-width:85%;margin-left:auto;width:fit-content;white-space:pre-wrap;-webkit-user-select:none;user-select:none;-webkit-touch-callout:none}
+.fileTag{display:inline-block;font-size:12px;background:#dedede;border-radius:6px;padding:2px 8px;margin-bottom:6px}
+.txt{white-space:normal}
+.txt p{margin:0 0 10px}
+.txt h2,.txt h3,.txt h4{margin:16px 0 8px;line-height:1.3}
+.txt h2{font-size:20px}.txt h3{font-size:17.5px}.txt h4{font-size:16px}
+.txt ul,.txt ol{margin:0 0 10px;padding-left:22px}
+.txt li{margin:3px 0}
+.txt hr{border:0;border-top:1px solid #e3e3e3;margin:14px 0}
+.txt blockquote{margin:0 0 10px;padding:4px 12px;border-left:3px solid #d0d0d0;color:#555}
+.txt a{color:#1a56db;text-decoration:underline}
+.tbl{overflow-x:auto;margin:10px 0;border:1px solid #e3e3e3;border-radius:10px}
+.tbl table{border-collapse:collapse;width:100%;font-size:14px}
+.tbl th,.tbl td{padding:8px 12px;border-bottom:1px solid #eee;text-align:left;vertical-align:top;min-width:90px}
+.tbl th{background:#f5f5f5;font-weight:600;white-space:nowrap}
+.tbl tr:last-child td{border-bottom:0}
+.txt code{background:#f0f0f0;padding:1px 5px;border-radius:5px;font-family:ui-monospace,Menlo,Consolas,monospace;font-size:14px}
+.code{background:#f7f7f7;border:1px solid #e3e3e3;border-radius:10px;margin:10px 0;overflow:hidden}
+.codebar{display:flex;justify-content:flex-end;padding:2px 6px;background:#ececec}
+.code pre{margin:0;padding:12px;overflow-x:auto;font-size:13.5px;font-family:ui-monospace,Menlo,Consolas,monospace;white-space:pre}
+.cpbtn{background:none;border:0;color:#555;font-size:13px;padding:6px 8px}
+.actions{margin-top:2px}
+#inputWrap{max-width:760px;width:100%;margin:0 auto;padding:6px 14px 14px}
+#chip{display:none;align-items:center;gap:8px;font-size:13px;background:#f1f1f1;border-radius:8px;padding:6px 10px;margin-bottom:8px;width:fit-content}
+#chip button{border:0;background:none;font-size:16px;color:#666}
+#bar{display:flex;gap:6px;align-items:flex-end}
+.ibtn{width:42px;height:42px;border:1px solid #d8d8d8;background:#fff;border-radius:50%;flex:none;font-size:22px;color:#444;display:flex;align-items:center;justify-content:center;padding:0}
+.ibtn.on{background:#e53935;color:#fff;border-color:#e53935}
+#send{background:#1a1a1a;color:#fff;border:0;font-weight:bold}
+#box{flex:1;resize:none;max-height:140px;background:#fafafa;color:#1a1a1a;border:1px solid #d8d8d8;border-radius:22px;padding:11px 16px;font-size:16px;font-family:inherit;outline:none}
+#menu{position:fixed;display:none;background:#fff;border:1px solid #ddd;border-radius:10px;box-shadow:0 4px 16px rgba(0,0,0,.18);z-index:60;overflow:hidden}
+#menu button{display:block;width:150px;padding:13px 16px;text-align:left;background:#fff;border:0;border-bottom:1px solid #f0f0f0;font-size:15px}
+#editor{display:none;position:fixed;inset:0;background:rgba(0,0,0,.4);z-index:70;align-items:center;justify-content:center;padding:16px}
+#editCard{background:#fff;border-radius:14px;padding:14px;width:100%;max-width:500px}
+#editBox{width:100%;height:140px;border:1px solid #d8d8d8;border-radius:10px;padding:10px;font-size:16px;font-family:inherit}
+#editBtns{display:flex;justify-content:flex-end;gap:8px;margin-top:10px}
+#editBtns button{padding:9px 16px;border-radius:8px;border:1px solid #d8d8d8;background:#fff;font-size:15px}
+#editBtns .go{background:#1a1a1a;color:#fff;border-color:#1a1a1a}
+#overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.35);z-index:40}
+#side{position:fixed;top:0;left:0;bottom:0;width:290px;max-width:85%;background:#f8f8f8;z-index:50;transform:translateX(-100%);transition:transform .2s;display:flex;flex-direction:column;border-right:1px solid #e5e5e5}
+#side.open{transform:translateX(0)}
+#newBtn{margin:14px;padding:12px;border:1px solid #d0d0d0;background:#fff;border-radius:10px;font-size:15px;text-align:left}
+#list{flex:1;overflow-y:auto;padding:0 8px}
+.item{display:flex;align-items:center;border-radius:8px;margin-bottom:2px}
+.item.cur{background:#e9e9e9}
+.item .t{flex:1;text-align:left;background:none;border:0;padding:11px 10px;font-size:14.5px;color:#222;overflow:hidden;white-space:nowrap;text-overflow:ellipsis}
+.item .x{background:none;border:0;color:#888;font-size:18px;padding:8px 12px}
+#empty{color:#999;font-size:14px;padding:10px}
+#side .foot{border-top:1px solid #e5e5e5;padding:12px 14px;font-size:13px;color:#666}
+#side .foot button{margin-top:8px;width:100%;padding:10px;border:1px solid #d0d0d0;background:#fff;border-radius:8px;font-size:14px}
+#toast{display:none;position:fixed;bottom:84px;left:50%;transform:translateX(-50%);background:#333;color:#fff;padding:10px 16px;border-radius:10px;font-size:14px;z-index:80;max-width:90%}
+.thumb{display:block;max-width:220px;max-height:220px;border-radius:10px;margin-bottom:6px}
+.sugs{display:flex;flex-wrap:wrap;gap:8px;justify-content:center;margin-top:18px}
+.sugs button{border:1px solid #d8d8d8;background:#fff;color:#333;border-radius:18px;padding:8px 14px;font-size:14px}
+#q{margin:0 14px 10px;width:calc(100% - 28px);padding:9px 12px;border:1px solid #d8d8d8;border-radius:10px;font-size:14px;font-family:inherit}
+#side .prof{display:flex;align-items:center;gap:10px;cursor:pointer;margin-bottom:6px}
+#side .pt{min-width:0}
+#sideName{font-weight:600;color:#333;font-size:14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#who{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#settings{display:none;position:fixed;inset:0;background:#fff;z-index:75;overflow-y:auto}
+#settings .in{max-width:520px;margin:0 auto;padding:14px 18px 50px}
+#settings .bar{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px}
+#settings .bar h2{margin:0;font-size:20px}
+#settings .sec{border:1px solid #e8e8e8;border-radius:12px;padding:14px;margin:12px 0}
+#settings .sec h3{margin:0 0 10px;font-size:15px;color:#555}
+#settings input[type=text]{width:100%;padding:11px 12px;border:1px solid #d8d8d8;border-radius:10px;font-size:16px;margin-bottom:8px;font-family:inherit}
+#settings .row{display:flex;gap:8px;flex-wrap:wrap;margin-top:6px}
+.sbtn{padding:10px 14px;border:1px solid #d0d0d0;background:#fff;border-radius:10px;font-size:14px;color:#222}
+.sbtn.dark{background:#1a1a1a;color:#fff;border-color:#1a1a1a}
+.sbtn.red{color:#c62828;border-color:#e8b4b4}
+#avBig{margin:0 auto 10px}
+#sMsg{color:#2e7d32;font-size:14px;min-height:20px}
+.muted2{color:#777;font-size:13.5px;margin:4px 0 8px}
+#modeRow{display:flex;justify-content:flex-start;margin-bottom:6px}
+#webBtn{background:#fff;border:1px solid #d8d8d8;color:#555;border-radius:14px;padding:4px 11px;font-size:12.5px}
+#webBtn.on{background:#1a56db;border-color:#1a56db;color:#fff}
+#webBtn.off{color:#999}
+.src{margin:8px 0 2px;font-size:12.5px;color:#777;line-height:1.7}
+.src a{display:inline-block;margin:0 6px 4px 0;padding:2px 9px;border:1px solid #e0e0e0;border-radius:12px;color:#444;text-decoration:none;background:#fafafa}
+#modeRow{gap:8px}
+#imgBtn{background:#fff;border:1px solid #d8d8d8;color:#555;border-radius:14px;padding:4px 11px;font-size:12.5px}
+#imgBtn.on{background:#7c3aed;border-color:#7c3aed;color:#fff}
+.gimg{display:block;max-width:100%;width:420px;border-radius:12px;border:1px solid #e3e3e3;margin-bottom:6px}
+.gnote{color:#777;font-size:14px}
+#ws{display:none;position:fixed;inset:0;background:#fff;z-index:85;overflow-y:auto}
+#ws .wsin{max-width:760px;margin:0 auto;padding:12px 14px 40px}
+#ws .wsbar{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px}
+#wsName{width:100%;padding:9px 12px;border:1px solid #d0d0d0;border-radius:10px;font-size:15px;margin-bottom:8px;font-family:ui-monospace,Menlo,Consolas,monospace}
+#wsText{width:100%;height:42vh;padding:10px;border:1px solid #d0d0d0;border-radius:10px;font-size:13.5px;font-family:ui-monospace,Menlo,Consolas,monospace;white-space:pre;overflow:auto;resize:vertical;tab-size:2;background:#fafafa;color:#222}
+#ws .wsrow{display:flex;flex-wrap:wrap;gap:8px;margin:10px 0}
+#ws .wsask{display:flex;gap:8px;margin:6px 0 10px}
+#wsAsk{flex:1;min-width:0;padding:10px 12px;border:1px solid #d0d0d0;border-radius:10px;font-size:15px}
+#ws .wsh{display:flex;justify-content:space-between;align-items:center;font-size:13px;color:#777;margin:12px 0 6px}
+#wsFrame{width:100%;height:45vh;border:1px solid #d8d8d8;border-radius:10px;background:#fff}
+#wsFrame.big{height:78vh}
+#wsLog{background:#f7f7f7;border:1px solid #e3e3e3;border-radius:10px;padding:10px;font-size:13px;white-space:pre-wrap;word-break:break-word;min-height:40px;max-height:200px;overflow:auto;margin:0}
+#saveMenu{display:none;position:fixed;background:#fff;border:1px solid #ddd;border-radius:10px;box-shadow:0 4px 16px rgba(0,0,0,.18);z-index:80;overflow:hidden}
+#saveMenu button{display:block;width:210px;padding:12px 16px;text-align:left;background:#fff;border:0;border-bottom:1px solid #f0f0f0;font-size:15px}
+.codelang{margin-right:auto;font-size:12.5px;color:#777;align-self:center;padding-left:6px}
+</style>
+</head>
+<body>
+
+<div id="boot">Loading...</div>
+
+<div id="auth">
+  <div id="authCard">
+    <img id="authLogo" src="/icon-192.png" alt="Nesty AI">
+    <h1>Nesty AI</h1>
+    <p class="sub" id="authSub">Welcome back</p>
+
+    <div id="stepForm">
+      <input id="aFirst" placeholder="First name" style="display:none" autocomplete="given-name">
+      <input id="aLast" placeholder="Second name" style="display:none" autocomplete="family-name">
+      <input id="aEmail" type="email" placeholder="Email" autocomplete="email">
+      <button class="pbtn" id="sendBtn" onclick="sendCode()">Send code</button>
+      <div class="or">or</div>
+      <button class="gbtn" onclick="googleLogin()"><svg width="20" height="20" viewBox="0 0 48 48"><path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/><path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/><path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/><path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/></svg>Continue with Google</button>
+      <button class="gbtn" id="fbBtn" style="margin-top:10px;display:none" onclick="facebookLogin()"><svg width="20" height="20" viewBox="0 0 24 24"><path fill="#1877F2" d="M24 12.07C24 5.4 18.63 0 12 0S0 5.4 0 12.07C0 18.1 4.39 23.1 10.13 24v-8.44H7.08v-3.49h3.05V9.41c0-3.02 1.79-4.69 4.53-4.69 1.31 0 2.68.24 2.68.24v2.97h-1.51c-1.49 0-1.96.93-1.96 1.88v2.26h3.33l-.53 3.49h-2.8V24C19.61 23.1 24 18.1 24 12.07z"/></svg>Continue with Facebook</button>
+      <div id="authSwitch"></div>
+    </div>
+
+    <div id="stepCode" style="display:none">
+      <p id="codeInfo"></p>
+      <input id="aCode" inputmode="numeric" maxlength="6" placeholder="------" autocomplete="one-time-code">
+      <button class="pbtn" id="verifyBtn" onclick="verifyCode()">Verify</button>
+      <button class="lbtn" id="resendBtn" onclick="resendCode()">Resend code</button>
+      <button class="lbtn" onclick="backToForm()">Change email</button>
+    </div>
+
+    <div id="authErr"></div>
+    <div class="legal">By continuing you agree to our <a href="/terms.html">Terms</a> and <a href="/privacy.html">Privacy Policy</a>.</div>
+  </div>
+</div>
+
+<div id="app">
+  <header>
+    <button class="hbtn" style="margin-left:0" onclick="openSide()">&#9776;</button>
+    <div class="logo">Nesty AI</div>
+    <div>
+      <button class="hbtn" id="spk" onclick="toggleSpeak()">Voice: Off</button>
+      <button class="hbtn" onclick="newChat()">+ New</button>
+    </div>
+  </header>
+  <div id="chat"></div>
+  <div id="inputWrap">
+    <div id="limitBar"></div>
+    <div id="modeRow"><button id="webBtn" onclick="cycleWeb()">Web search: Auto</button><button id="imgBtn" onclick="toggleImg()">Make an image</button></div>
+    <div id="chip"><span id="chipName"></span><button onclick="removeFile()">&times;</button></div>
+    <div id="bar">
+      <button class="ibtn" onclick="document.getElementById('file').click()">+</button>
+      <textarea id="box" rows="1" placeholder="Message Nesty"></textarea>
+      <button class="ibtn" id="mic" onclick="toggleMic()"><svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M12 14a3 3 0 0 0 3-3V5a3 3 0 0 0-6 0v6a3 3 0 0 0 3 3zm5-3a5 5 0 0 1-10 0H5a7 7 0 0 0 6 6.92V21h2v-3.08A7 7 0 0 0 19 11h-2z"/></svg></button>
+      <button class="ibtn" id="send" onclick="send()">&#8593;</button>
+    </div>
+    <input type="file" id="file" style="display:none" accept="image/*,.pdf,.docx,.txt,.md,.csv,.json,.js,.html,.css,.py,.java,.c,.cpp,.xml,.log">
+  </div>
+</div>
+
+<div id="overlay" onclick="closeSide()"></div>
+<div id="side">
+  <button id="newBtn" onclick="newChat()">+ New chat</button>
+  <input id="q" placeholder="Search chats">
+  <div id="list"></div>
+  <div class="foot">
+    <div class="prof" onclick="openSettings()"><div id="sideAv"></div><div class="pt"><div id="sideName"></div><div id="who"></div></div></div>
+    <button onclick="wsOpenLast()">Code &amp; files</button>
+    <button onclick="openSettings()">Settings</button>
+    <button id="installBtn" style="display:none" onclick="installApp()">Install Nesty app</button>
+    <button onclick="logout()">Log out</button>
+    <div class="links"><a href="/terms.html">Terms</a> &middot; <a href="/privacy.html">Privacy</a></div>
+  </div>
+</div>
+
+<div id="menu">
+  <button onclick="menuEdit()">Edit</button>
+  <button onclick="menuCopy()">Copy text</button>
+  <button onclick="menuDelete()" style="border-bottom:0;color:#c62828">Delete</button>
+</div>
+
+<div id="editor">
+  <div id="editCard">
+    <textarea id="editBox"></textarea>
+    <div id="editBtns">
+      <button onclick="closeEditor()">Cancel</button>
+      <button class="go" onclick="saveEdit()">Send</button>
+    </div>
+  </div>
+</div>
+
+<div id="settings">
+  <div class="in">
+    <div class="bar"><h2>Settings</h2><button class="sbtn" onclick="closeSettings()">Close</button></div>
+    <div id="sMsg"></div>
+
+    <div class="sec">
+      <h3>Profile</h3>
+      <div id="avBig"></div>
+      <div class="row" style="justify-content:center">
+        <button class="sbtn" onclick="$('avFile').click()">Change photo</button>
+        <button class="sbtn" onclick="removeAvatar()">Remove photo</button>
+      </div>
+      <input type="file" id="avFile" accept="image/*" style="display:none">
+      <div style="margin-top:14px">
+        <input type="text" id="sFirst" placeholder="First name">
+        <input type="text" id="sLast" placeholder="Second name">
+        <button class="sbtn dark" onclick="saveName()">Save name</button>
+      </div>
+      <div class="muted2" id="sEmail"></div>
+    </div>
+
+    <div class="sec">
+      <h3>Notifications</h3>
+      <div class="muted2" id="sNotif"></div>
+      <button class="sbtn" id="sNotifBtn" onclick="askNotif()">Turn on notifications</button>
+    </div>
+
+    <div class="sec">
+      <h3>Your data</h3>
+      <div class="muted2">Deleting chats cannot be undone.</div>
+      <div class="row">
+        <button class="sbtn red" onclick="deleteAllChats()">Delete all my chats</button>
+        <button class="sbtn red" onclick="deleteAccount()">Delete my account</button>
+      </div>
+      <div class="muted2" style="margin-top:10px">Deleting your account removes your chats and closes your account. To have every trace removed, contact us using the email on our <a href="/privacy.html">Privacy Policy</a> page.</div>
+    </div>
+
+    <div class="sec">
+      <h3>Appearance</h3>
+      <div class="muted2">Language preference (Nesty will try to reply in this language)</div>
+      <select id="sLang" onchange="saveLang()" style="width:100%;padding:11px;border:1px solid #d8d8d8;border-radius:10px;font-size:16px;margin-bottom:8px">
+        <option value="en">English</option>
+        <option value="sw">Kiswahili</option>
+        <option value="fr">Français</option>
+        <option value="es">Español</option>
+      </select>
+      <div class="muted2">Theme colour</div>
+      <div class="row">
+        <button class="sbtn" style="background:#1a1a1a;color:#fff" onclick="setTheme('#1a1a1a')">Black</button>
+        <button class="sbtn" style="background:#1a56db;color:#fff" onclick="setTheme('#1a56db')">Blue</button>
+        <button class="sbtn" style="background:#7c3aed;color:#fff" onclick="setTheme('#7c3aed')">Purple</button>
+        <button class="sbtn" style="background:#059669;color:#fff" onclick="setTheme('#059669')">Green</button>
+        <button class="sbtn" style="background:#dc2626;color:#fff" onclick="setTheme('#dc2626')">Red</button>
+      </div>
+    </div>
+
+    <div class="sec">
+      <h3>Upgrade your plan</h3>
+      <div class="muted2" id="sPlan">You are on the Free plan</div>
+
+      <div style="border:1px solid #e8e8e8;border-radius:12px;padding:12px;margin:10px 0">
+        <b>Premium — KES 50 / month or KES 600 / year</b>
+        <ul style="margin:6px 0 0;padding-left:18px;font-size:14px">
+          <li>60 messages</li>
+          <li>50 file attachments</li>
+          <li>6 images</li>
+        </ul>
+      </div>
+
+      <div style="border:1px solid #e8e8e8;border-radius:12px;padding:12px;margin:10px 0">
+        <b>Ultra — KES 100 / month or KES 36,000 / year</b>
+        <ul style="margin:6px 0 0;padding-left:18px;font-size:14px">
+          <li>80 messages</li>
+          <li>70 file attachments</li>
+          <li>20 images</li>
+        </ul>
+      </div>
+
+      <input type="tel" id="mpesaPhone" placeholder="Your M-Pesa phone number (07xxxxxxxx)" style="width:100%;padding:11px;border:1px solid #d8d8d8;border-radius:10px;font-size:16px;margin:8px 0">
+      <div class="row">
+        <button class="sbtn dark" onclick="startPayment('premium', false)">Pay Premium monthly</button>
+        <button class="sbtn dark" onclick="startPayment('premium', true)">Pay Premium yearly</button>
+      </div>
+      <div class="row" style="margin-top:8px">
+        <button class="sbtn dark" onclick="startPayment('ultra', false)">Pay Ultra monthly</button>
+        <button class="sbtn dark" onclick="startPayment('ultra', true)">Pay Ultra yearly</button>
+      </div>
+    </div>
+
+    <div class="sec">
+      <button class="sbtn" onclick="logout();closeSettings()">Log out of your account</button>
+    </div>
+  </div>
+</div>
+
+<div id="ws">
+  <div class="wsin">
+    <div class="wsbar"><b>Code and files</b><button class="sbtn" onclick="wsClose()">Close</button></div>
+    <input id="wsName" type="text" value="index.html" spellcheck="false" autocapitalize="off">
+    <textarea id="wsText" spellcheck="false" autocapitalize="off" placeholder="Write or paste code here, or open a file from your phone..."></textarea>
+    <div class="wsrow">
+      <button class="sbtn dark" onclick="wsRun()">Run / Preview</button>
+      <button class="sbtn" onclick="wsDownload()">Download</button>
+      <button class="sbtn" onclick="wsCopy()">Copy</button>
+      <button class="sbtn" onclick="wsNew()">New</button>
+      <button class="sbtn" onclick="document.getElementById('wsOpenInput').click()">Open file</button>
+    </div>
+    <input type="file" id="wsOpenInput" style="display:none" accept=".html,.htm,.css,.js,.mjs,.json,.py,.txt,.md,.csv,.xml,.svg,.sql,.java,.c,.cpp,.cs,.php,.ts,.tsx,.jsx,.sh,.yml,.yaml,.kt,.go,.rs,.rb,.swift,.dart,.r,text/*">
+    <div class="wsask">
+      <input id="wsAsk" type="text" placeholder="Ask Nesty to change this file, e.g. make the button green">
+      <button class="sbtn dark" onclick="wsAskNesty()">Ask Nesty</button>
+    </div>
+    <div class="muted2">Code you run here stays on your phone. Only run code you trust.</div>
+    <div id="wsOutWrap" style="display:none">
+      <div class="wsh"><span>Preview</span><button class="sbtn" onclick="wsBig()">Bigger</button></div>
+      <iframe id="wsFrame" sandbox="allow-scripts allow-modals allow-forms allow-popups"></iframe>
+      <div class="wsh"><span>Console</span></div>
+      <pre id="wsLog"></pre>
+    </div>
+  </div>
+</div>
+
+<div id="saveMenu"></div>
+
+<div id="toast"></div>
+
+<script>
+var ENDPOINT = "https://sgp.cloud.appwrite.io/v1";
+var PROJECT = "6adc585d003ae0c1be08";
+var DB = "6adc5cb4000ae3ae60c6";
+var TABLE = "6adc5cc5002aa37421a9";
+
+var client = new Appwrite.Client().setEndpoint(ENDPOINT).setProject(PROJECT);
+var account = new Appwrite.Account(client);
+var db = new Appwrite.Databases(client);
+var ID = Appwrite.ID, Query = Appwrite.Query, Permission = Appwrite.Permission, Role = Appwrite.Role;
+
+/* Set to true only after Meta approves the Facebook app (Live mode). */
+var SHOW_FACEBOOK = false;
+if(SHOW_FACEBOOK){ document.getElementById("fbBtn").style.display = "flex"; }
+
+var user = null;
+var messages = [];
+var chats = [];
+var chatId = null;
+var loading = false;
+var pendingFile = null;
+var pendingImage = null;
+var aborter = null;
+var speakOn = false;
+var voiceTurn = false;
+var menuIdx = -1;
+var editIdx = -1;
+
+var authMode = "signin";
+var authUserId = null;
+var authEmail = "";
+var pendFirst = "";
+var pendLast = "";
+var resendTimer = null;
+var installEvent = null;
+
+var chat = document.getElementById("chat");
+var box = document.getElementById("box");
+var menu = document.getElementById("menu");
+
+function $(id){ return document.getElementById(id); }
+
+function toast(t){
+  var e = $("toast");
+  e.textContent = t;
+  e.style.display = "block";
+  setTimeout(function(){ e.style.display = "none"; }, 4000);
+}
+
+/* ---------- Install as app ---------- */
+window.addEventListener("beforeinstallprompt", function(e){
+  e.preventDefault();
+  installEvent = e;
+  $("installBtn").style.display = "block";
+});
+window.addEventListener("appinstalled", function(){
+  installEvent = null;
+  $("installBtn").style.display = "none";
+});
+async function installApp(){
+  if(!installEvent) return;
+  installEvent.prompt();
+  try{ await installEvent.userChoice; }catch(e){}
+  installEvent = null;
+  $("installBtn").style.display = "none";
+}
+if("serviceWorker" in navigator){
+  window.addEventListener("load", function(){
+    navigator.serviceWorker.register("/sw.js").catch(function(){});
+  });
+}
+
+/* ---------- Account (email code, no password) ---------- */
+function drawAuth(){
+  var su = authMode === "signup";
+  $("aFirst").style.display = su ? "block" : "none";
+  $("aLast").style.display = su ? "block" : "none";
+  $("authSub").textContent = su ? "Create your account" : "Welcome back";
+  $("authSwitch").innerHTML = su
+    ? 'Already have an account? <a href="#" onclick="switchAuth();return false">Sign in</a>'
+    : 'New here? <a href="#" onclick="switchAuth();return false">Create account</a>';
+  $("authErr").textContent = "";
+  $("stepForm").style.display = "block";
+  $("stepCode").style.display = "none";
+}
+function switchAuth(){
+  authMode = authMode === "signup" ? "signin" : "signup";
+  drawAuth();
+}
+function backToForm(){
+  clearInterval(resendTimer);
+  drawAuth();
+}
+
+function showAuth(){
+  clearInterval(resendTimer);
+  $("boot").style.display = "none";
+  $("app").style.display = "none";
+  $("auth").style.display = "flex";
+  drawAuth();
+}
+function showApp(){
+  $("boot").style.display = "none";
+  $("auth").style.display = "none";
+  $("app").style.display = "flex";
+  $("who").textContent = user.email || "";
+  renderSide();
+  newChat();
+  loadList();
+}
+
+function firstName(){
+  if(!user) return "";
+  var p = user.prefs || {};
+  if(p.firstName) return p.firstName;
+  return (user.name || "").split(" ")[0];
+}
+
+async function sendCode(){
+  var email = $("aEmail").value.trim().toLowerCase();
+  if(authMode === "signup"){
+    pendFirst = $("aFirst").value.trim();
+    pendLast = $("aLast").value.trim();
+    if(!pendFirst || !pendLast){ $("authErr").textContent = "Enter your first name and second name."; return; }
+  }
+  if(!email || email.indexOf("@") < 1){ $("authErr").textContent = "Enter a valid email."; return; }
+  $("sendBtn").disabled = true;
+  $("authErr").textContent = "";
+  try{
+    var t = await account.createEmailToken(ID.unique(), email);
+    authUserId = t.userId;
+    authEmail = email;
+    $("codeInfo").textContent = "We sent a 6-digit code to " + email + ". Check your spam folder too.";
+    $("aCode").value = "";
+    $("stepForm").style.display = "none";
+    $("stepCode").style.display = "block";
+    startTimer();
+    $("aCode").focus();
+  }catch(e){
+    $("authErr").textContent = e.message || "Could not send the code.";
+  }
+  $("sendBtn").disabled = false;
+}
+
+function startTimer(){
+  clearInterval(resendTimer);
+  var end = Date.now() + 120000;
+  var b = $("resendBtn");
+  b.disabled = true;
+  function tick(){
+    var s = Math.ceil((end - Date.now()) / 1000);
+    if(s <= 0){
+      clearInterval(resendTimer);
+      b.disabled = false;
+      b.textContent = "Resend code";
+      return;
+    }
+    b.textContent = "Resend code in " + Math.floor(s / 60) + ":" + ("0" + (s % 60)).slice(-2);
+  }
+  tick();
+  resendTimer = setInterval(tick, 1000);
+}
+
+async function resendCode(){
+  $("resendBtn").disabled = true;
+  $("authErr").textContent = "";
+  try{
+    var t = await account.createEmailToken(authUserId, authEmail);
+    authUserId = t.userId;
+    startTimer();
+    toast("New code sent.");
+  }catch(e){
+    $("authErr").textContent = e.message || "Could not resend the code.";
+    $("resendBtn").disabled = false;
+  }
+}
+
+async function verifyCode(){
+  var code = $("aCode").value.replace(/\s/g, "");
+  if(code.length < 6){ $("authErr").textContent = "Enter the 6-digit code sent to you"; return; }
+  $("verifyBtn").disabled = true;
+  $("authErr").textContent = "";
+  try{
+    try{ await account.deleteSession("current"); }catch(e){}
+    await account.createSession(authUserId, code);
+    user = await account.get();
+
+    if(authMode === "signup"){
+      if(!user.name){
+        await account.updateName(pendFirst + " " + pendLast);
+        await account.updatePrefs({firstName: pendFirst, lastName: pendLast});
+        user = await account.get();
+      }
+    }else{
+      if(!user.name){
+        try{ await account.deleteSession("current"); }catch(e){}
+        user = null;
+        drawAuth();
+        $("authErr").textContent = "No account found for this email. Please create an account first.";
+        $("verifyBtn").disabled = false;
+        return;
+      }
+    }
+    clearInterval(resendTimer);
+    showApp();
+  }catch(e){
+    $("authErr").textContent = e.message || "The code is wrong or expired.";
+  }
+  $("verifyBtn").disabled = false;
+}
+
+async function logout(){
+  try{ await account.deleteSession("current"); }catch(e){}
+  user = null;
+  messages = [];
+  chats = [];
+  chatId = null;
+  closeSide();
+  authMode = "signin";
+  showAuth();
+}
+
+function showConnectError(){
+  $("auth").style.display = "none";
+  $("app").style.display = "none";
+  var b = $("boot");
+  b.style.display = "block";
+  b.innerHTML = '<div id="bootMsg">Cannot connect to Nesty right now.<br> try to restart your router, check data ballance or Check your internet and try again.<br><button onclick="location.reload()">Retry</button></div>';
+}
+
+function oauthLogin(name, label){
+  $("authErr").textContent = "";
+  try{
+    var prov = (Appwrite.OAuthProvider && Appwrite.OAuthProvider[label]) ? Appwrite.OAuthProvider[label] : name;
+    account.createOAuth2Token(prov, location.origin + "/", location.origin + "/?oauth=failed");
+  }catch(e){
+    $("authErr").textContent = e.message || "Could not start sign-in.";
+  }
+}
+function googleLogin(){ oauthLogin("google", "Google"); }
+function facebookLogin(){ oauthLogin("facebook", "Facebook"); }
+
+async function init(){
+  var qs = new URLSearchParams(location.search);
+  var uid = qs.get("userId"), sec = qs.get("secret");
+  if(uid && sec){
+    try{
+      try{ await account.deleteSession("current"); }catch(e){}
+      await account.createSession(uid, sec);
+      user = await account.get();
+      try{ await fetchGoogleAvatar(); }catch(e){}
+      history.replaceState(null, "", "/");
+      showApp();
+      return;
+    }catch(e){
+      history.replaceState(null, "", "/");
+      showAuth();
+      $("authErr").textContent = (e && e.message) || "Sign-in failed. Please try again.";
+      return;
+    }
+  }
+  if(qs.get("oauth") === "failed"){
+    history.replaceState(null, "", "/");
+    showAuth();
+    $("authErr").textContent = "Sign-in was cancelled or failed. Please try again.";
+    return;
+  }
+  try{
+    user = await account.get();
+    showApp();
+  }catch(e){
+    if(e && (e.code === 401 || e.code === 403)){
+      showAuth();
+    }else{
+      showConnectError();
+    }
+  }
+}
+
+/* ---------- Saved chats ---------- */
+function chatTitle(){
+  for(var i = 0; i < messages.length; i++){
+    if(messages[i].role === "user" && messages[i].text){
+      var t = messages[i].text.replace(/\s+/g, " ").trim();
+      return t.length > 40 ? t.slice(0, 40) + "..." : t;
+    }
+  }
+  return "New chat";
+}
+
+async function saveChat(){
+  if(!user) return;
+  if(!messages.length && !chatId) return;
+  try{
+    if(!chatId){
+      var perms = [
+        Permission.read(Role.user(user.$id)),
+        Permission.update(Role.user(user.$id)),
+        Permission.delete(Role.user(user.$id))
+      ];
+      var row = await db.createDocument(DB, TABLE, ID.unique(),
+        {userId: user.$id, Title: chatTitle(), messages: packMessages()}, perms);
+      chatId = row.$id;
+    }else{
+      await db.updateDocument(DB, TABLE, chatId, {messages: packMessages()});
+    }
+    loadList();
+  }catch(e){
+    toast("Could not save chat: " + (e.message || "error"));
+  }
+}
+
+async function loadList(){
+  try{
+    var r = await db.listDocuments(DB, TABLE, [Query.orderDesc("$updatedAt"), Query.limit(50)]);
+    chats = r.documents;
+    renderList();
+  }catch(e){
+    toast("Could not load chats: " + (e.message || "error"));
+  }
+}
+
+function renderList(){
+  var list = $("list");
+  list.innerHTML = "";
+  var qv = ($("q").value || "").trim().toLowerCase();
+  var shown = chats.filter(function(c){ return !qv || (c.Title || "").toLowerCase().indexOf(qv) > -1; });
+  if(!shown.length){
+    var em = document.createElement("div");
+    em.id = "empty";
+    em.textContent = chats.length ? "No chats match." : "No saved chats yet, start chatting with Nesty.";
+    list.appendChild(em);
+    return;
+  }
+  shown.forEach(function(c){
+    var it = document.createElement("div");
+    it.className = "item" + (c.$id === chatId ? " cur" : "");
+    var t = document.createElement("button");
+    t.className = "t";
+    t.textContent = c.Title || "Chat";
+    t.onclick = function(){ openChat(c.$id); };
+    var x = document.createElement("button");
+    x.className = "x";
+    x.innerHTML = "&times;";
+    x.onclick = function(){ removeChat(c.$id); };
+    it.appendChild(t);
+    it.appendChild(x);
+    list.appendChild(it);
+  });
+}
+
+function openChat(id){
+  var c = chats.filter(function(r){ return r.$id === id; })[0];
+  if(!c) return;
+  try{ messages = JSON.parse(c.messages || "[]"); }catch(e){ messages = []; }
+  chatId = id;
+  if(window.speechSynthesis) speechSynthesis.cancel();
+  renderAll();
+  renderList();
+  closeSide();
+}
+
+async function removeChat(id){
+  if(!confirm("Delete this chat?")) return;
+  try{
+    await db.deleteDocument(DB, TABLE, id);
+    if(id === chatId){ messages = []; chatId = null; renderAll(); }
+    loadList();
+  }catch(e){
+    toast("Could not delete: " + (e.message || "error"));
+  }
+}
+
+function openSide(){
+  $("side").classList.add("open");
+  $("overlay").style.display = "block";
+  loadList();
+}
+function closeSide(){
+  $("side").classList.remove("open");
+  $("overlay").style.display = "none";
+}
+
+/* ---------- Chat display ---------- */
+box.addEventListener("input", function(){
+  box.style.height = "auto";
+  box.style.height = box.scrollHeight + "px";
+});
+
+function esc(s){
+  return s.replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");
+}
+function inline(s){
+  return esc(s).replace(/`([^`\n]+)`/g,"<code>$1</code>").replace(/\*\*([^*\n]+)\*\*/g,"<b>$1</b>");
+}
+
+function mdInline(s){
+  s = esc(s);
+  s = s.replace(/`([^`\n]+)`/g, "<code>$1</code>");
+  s = s.replace(/\*\*([^*\n]+)\*\*/g, "<b>$1</b>");
+  s = s.replace(/(^|[^*])\*([^*\n]+)\*(?!\*)/g, "$1<i>$2</i>");
+  s = s.replace(/\[([^\]\n]+)\]\((https?:\/\/[^\s)]+)\)/g, '<a href="$2" target="_blank" rel="noopener">$1</a>');
+  return s;
+}
+
+function mdToHtml(src){
+  var lines = src.split("\n");
+  var out = [];
+  var i = 0;
+  function isSep(l){
+    return /^\s*\|?\s*:?-{2,}:?\s*(\|\s*:?-{2,}:?\s*)*\|?\s*$/.test(l) && l.indexOf("-") > -1 && l.indexOf("|") > -1;
+  }
+  function cells(l){
+    l = l.trim();
+    if(l.charAt(0) === "|") l = l.slice(1);
+    if(l.charAt(l.length - 1) === "|") l = l.slice(0, -1);
+    return l.split("|").map(function(c){ return c.trim(); });
+  }
+  function isUl(l){ return /^\s*[-*+]\s+/.test(l); }
+  function isOl(l){ return /^\s*\d+[.)]\s+/.test(l); }
+  function startsBlock(l, nxt){
+    return /^#{1,6}\s+/.test(l) || isUl(l) || isOl(l) || /^\s*>/.test(l) ||
+      /^\s*([-*_])\1{2,}\s*$/.test(l) || (l.indexOf("|") > -1 && nxt !== undefined && isSep(nxt));
+  }
+  while(i < lines.length){
+    var l = lines[i];
+    if(!l.trim()){ i++; continue; }
+    var m = l.match(/^(#{1,6})\s+(.*)$/);
+    if(m){
+      var lv = Math.min(m[1].length, 3) + 1;
+      out.push("<h" + lv + ">" + mdInline(m[2]) + "</h" + lv + ">");
+      i++; continue;
+    }
+    if(/^\s*([-*_])\1{2,}\s*$/.test(l)){ out.push("<hr>"); i++; continue; }
+    if(l.indexOf("|") > -1 && i + 1 < lines.length && isSep(lines[i + 1])){
+      var head = cells(l);
+      i += 2;
+      var rows = [];
+      while(i < lines.length && lines[i].trim() && lines[i].indexOf("|") > -1){
+        rows.push(cells(lines[i]));
+        i++;
+      }
+      var h = "<div class=\"tbl\"><table><thead><tr>";
+      head.forEach(function(c){ h += "<th>" + mdInline(c) + "</th>"; });
+      h += "</tr></thead><tbody>";
+      rows.forEach(function(r){
+        h += "<tr>";
+        for(var k = 0; k < head.length; k++){ h += "<td>" + mdInline(r[k] || "") + "</td>"; }
+        h += "</tr>";
+      });
+      h += "</tbody></table></div>";
+      out.push(h);
+      continue;
+    }
+    if(/^\s*>/.test(l)){
+      var q = [];
+      while(i < lines.length && /^\s*>/.test(lines[i])){ q.push(lines[i].replace(/^\s*>\s?/, "")); i++; }
+      out.push("<blockquote>" + q.map(mdInline).join("<br>") + "</blockquote>");
+      continue;
+    }
+    if(isUl(l) || isOl(l)){
+      var ord = isOl(l);
+      var items = [];
+      while(i < lines.length && (ord ? isOl(lines[i]) : isUl(lines[i]))){
+        items.push(lines[i].replace(ord ? /^\s*\d+[.)]\s+/ : /^\s*[-*+]\s+/, ""));
+        i++;
+      }
+      var tag = ord ? "ol" : "ul";
+      out.push("<" + tag + ">" + items.map(function(it){ return "<li>" + mdInline(it) + "</li>"; }).join("") + "</" + tag + ">");
+      continue;
+    }
+    var para = [l];
+    i++;
+    while(i < lines.length && lines[i].trim() && !startsBlock(lines[i], lines[i + 1])){
+      para.push(lines[i]);
+      i++;
+    }
+    out.push("<p>" + para.map(mdInline).join("<br>") + "</p>");
+  }
+  return out.join("");
+}
+
+function copyText(text, btn){
+  function done(){
+    if(!btn) return;
+    var old = btn.textContent;
+    btn.textContent = "Copied to clipboard";
+    setTimeout(function(){ btn.textContent = old; }, 1500);
+  }
+  function fallback(){
+    var t = document.createElement("textarea");
+    t.value = text;
+    document.body.appendChild(t);
+    t.select();
+    try{ document.execCommand("copy"); }catch(e){}
+    t.remove();
+    done();
+  }
+  if(navigator.clipboard && navigator.clipboard.writeText){
+    navigator.clipboard.writeText(text).then(done).catch(fallback);
+  }else{
+    fallback();
+  }
+}
+
+function apiContent(m){
+  var t = m.text;
+  if(m.file){
+    t = "[Attached file: " + m.file.name + "]\n" + m.file.text + "\n[End of file]\n\n" + m.text;
+  }
+  if(m.image && !m.image.data){
+    t = "[The user attached a picture named " + m.image.name + ", which is no longer available.]\n\n" + t;
+  }
+  return t;
+}
+
+function packMessages(){
+  return JSON.stringify(messages, function(k, v){ return k === "data" ? undefined : v; });
+}
+
+function apiMessages(){
+  var keep = {};
+  var n = 0;
+  for(var i = messages.length - 1; i >= 0 && n < 2; i--){
+    if(messages[i].role === "user" && messages[i].image && messages[i].image.data){ keep[i] = true; n++; }
+  }
+  return messages.map(function(m, i){
+    if(m.role !== "user") return {role: m.role, content: m.content};
+    if(keep[i]){
+      return {role: "user", content: [
+        {type: "text", text: apiContent(m)},
+        {type: "image_url", image_url: {url: m.image.data}}
+      ]};
+    }
+    return {role: "user", content: apiContent(m)};
+  });
+}
+
+function hasLiveImage(){
+  return messages.some(function(m){ return m.role === "user" && m.image && m.image.data; });
+}
+
+function buildUser(m, i){
+  var d = document.createElement("div");
+  d.className = "msg user";
+  if(m.file){
+    var tag = document.createElement("span");
+    tag.className = "fileTag";
+    tag.textContent = m.file.name;
+    d.appendChild(tag);
+    d.appendChild(document.createElement("br"));
+  }
+  if(m.image){
+    if(m.image.data){
+      var im = document.createElement("img");
+      im.className = "thumb";
+      im.src = m.image.data;
+      d.appendChild(im);
+    }else{
+      var tg = document.createElement("span");
+      tg.className = "fileTag";
+      tg.textContent = "Picture: " + m.image.name + " (not saved)";
+      d.appendChild(tg);
+      d.appendChild(document.createElement("br"));
+    }
+  }
+  d.appendChild(document.createTextNode(m.text));
+
+  var timer = null, sx = 0, sy = 0;
+  d.addEventListener("pointerdown", function(e){
+    sx = e.clientX; sy = e.clientY;
+    timer = setTimeout(function(){ showMenu(i, sx, sy); }, 450);
+  });
+  function cancel(){ clearTimeout(timer); }
+  d.addEventListener("pointerup", cancel);
+  d.addEventListener("pointercancel", cancel);
+  d.addEventListener("pointermove", function(e){
+    if(Math.abs(e.clientX - sx) > 10 || Math.abs(e.clientY - sy) > 10) cancel();
+  });
+  d.addEventListener("contextmenu", function(e){ e.preventDefault(); });
+  return d;
+}
+
+function buildBot(m, isLast){
+  var d = document.createElement("div");
+  d.className = "msg bot";
+  if(m.genImage){
+    if(m.genImage.data){
+      var gi = document.createElement("img");
+      gi.className = "gimg";
+      gi.src = m.genImage.data;
+      gi.alt = "Picture made by Nesty";
+      d.appendChild(gi);
+      var ga = document.createElement("div");
+      ga.className = "actions";
+      var dl = document.createElement("a");
+      dl.className = "cpbtn";
+      dl.style.textDecoration = "none";
+      dl.href = m.genImage.data;
+      dl.download = "nesty-picture.jpg";
+      dl.textContent = "Download";
+      ga.appendChild(dl);
+      if(isLast){
+        var mk = document.createElement("button");
+        mk.className = "cpbtn";
+        mk.textContent = "Make another";
+        mk.onclick = function(){ regenerate(); };
+        ga.appendChild(mk);
+      }
+      d.appendChild(ga);
+    }else{
+      var gn = document.createElement("div");
+      gn.className = "gnote";
+      gn.textContent = "This picture was made earlier and is not kept in your history.";
+      d.appendChild(gn);
+      var again = document.createElement("button");
+      again.className = "cpbtn";
+      again.textContent = "Create it again";
+      again.onclick = function(){ if(!loading) makeImage(m.genImage.prompt); };
+      d.appendChild(again);
+    }
+    return d;
+  }
+  var parts = m.content.split("```");
+  for(var i = 0; i < parts.length; i++){
+    if(i % 2 === 1){
+      var code = parts[i];
+      var lang = "";
+      var nl = code.indexOf("\n");
+      if(nl > -1 && nl <= 15 && code.slice(0, nl).trim().indexOf(" ") === -1){
+        lang = code.slice(0, nl).trim().toLowerCase();
+        code = code.slice(nl + 1);
+      }
+      code = code.replace(/\n+$/,"");
+      var fname = guessName(lang, parts[i - 1]);
+      var wrap = document.createElement("div");
+      wrap.className = "code";
+      var bar = document.createElement("div");
+      bar.className = "codebar";
+      var ll = document.createElement("span");
+      ll.className = "codelang";
+      ll.textContent = lang || "code";
+      bar.appendChild(ll);
+      var cb = document.createElement("button");
+      cb.className = "cpbtn";
+      cb.textContent = "Copy";
+      (function(c, b){ b.onclick = function(){ copyText(c, b); }; })(code, cb);
+      bar.appendChild(cb);
+      if(code.length > 20){
+        var ob = document.createElement("button");
+        ob.className = "cpbtn";
+        ob.textContent = "Open";
+        (function(n, c, b){ b.onclick = function(){ wsOpen(n, c); }; })(fname, code, ob);
+        bar.appendChild(ob);
+        var db2 = document.createElement("button");
+        db2.className = "cpbtn";
+        db2.textContent = "Download";
+        (function(n, c, b){ b.onclick = function(){ saveBlob(c, n, "text/plain"); }; })(fname, code, db2);
+        bar.appendChild(db2);
+      }
+      var pre = document.createElement("pre");
+      pre.textContent = code;
+      wrap.appendChild(bar);
+      wrap.appendChild(pre);
+      d.appendChild(wrap);
+    }else{
+      var t = parts[i].replace(/^\n+|\n+$/g,"");
+      if(!t) continue;
+      var tx = document.createElement("div");
+      tx.className = "txt";
+      tx.innerHTML = mdToHtml(t);
+      d.appendChild(tx);
+    }
+  }
+  if(m.sources && m.sources.length){
+    var sd = document.createElement("div");
+    sd.className = "src";
+    sd.appendChild(document.createTextNode("Sources: "));
+    m.sources.forEach(function(so){
+      if(!so || !/^https?:\/\//.test(so.uri || "")) return;
+      var a = document.createElement("a");
+      a.href = so.uri;
+      a.target = "_blank";
+      a.rel = "noopener";
+      a.textContent = so.title || "source";
+      sd.appendChild(a);
+    });
+    d.appendChild(sd);
+  }
+  var act = document.createElement("div");
+  act.className = "actions";
+  var cp = document.createElement("button");
+  cp.className = "cpbtn";
+  cp.textContent = "Copy";
+  cp.onclick = function(){ copyText(m.content, cp); };
+  act.appendChild(cp);
+  var sv = document.createElement("button");
+  sv.className = "cpbtn";
+  sv.textContent = "Save as";
+  sv.onclick = function(){ showSaveMenu(sv, m.content); };
+  act.appendChild(sv);
+  if(isLast){
+    var rg = document.createElement("button");
+    rg.className = "cpbtn";
+    rg.textContent = "Regenerate your question";
+    rg.onclick = function(){ regenerate(); };
+    act.appendChild(rg);
+  }
+  d.appendChild(act);
+  return d;
+}
+
+function regenerate(){
+  if(loading) return;
+  if(limitUntil > Date.now()){ showLimit(); return; }
+  var last = messages[messages.length - 1];
+  if(!last || last.role !== "assistant") return;
+  if(last.genImage){
+    var pr = last.genImage.prompt;
+    messages.pop();
+    makeImage(pr);
+    return;
+  }
+  messages.pop();
+  ask();
+}
+
+function setSendIcon(){
+  $("send").innerHTML = loading ? "&#9632;" : "&#8593;";
+}
+
+function useSuggestion(t){
+  box.value = t;
+  send();
+}
+
+function renderAll(){
+  setSendIcon();
+  chat.innerHTML = "";
+  if(!messages.length && !loading){
+    var n = firstName();
+    var title = n ? "Hello " + esc(n) + ", how are you doing?" : "What can I help with?";
+    var sub = n ? "What can I help you with today?" : "Ask me anything.";
+    chat.innerHTML = '<div id="welcome"><img src="/icon-192.png" alt=""><h2>' + title + '</h2><div>' + sub + '</div><div class="sugs" id="sugs"></div></div>';
+    var ideas = ["Help me write an email", "Explain something simply", "Make me a study plan", "Tell me a fun fact", "ask me riddles", "who are you"];
+    ideas.forEach(function(t){
+      var b = document.createElement("button");
+      b.textContent = t;
+      b.onclick = function(){ useSuggestion(t); };
+      $("sugs").appendChild(b);
+    });
+    return;
+  }
+  for(var i = 0; i < messages.length; i++){
+    var m = messages[i];
+    chat.appendChild(m.role === "user" ? buildUser(m, i) : buildBot(m, i === messages.length - 1));
+  }
+  if(loading){
+    var w = document.createElement("div");
+    w.className = "msg bot";
+    w.textContent = creatingImg ? "Creating your picture, please wait..." : (searchingNow ? "Searching the web..." : "Thinking...");
+    chat.appendChild(w);
+  }
+  chat.scrollTop = chat.scrollHeight;
+}
+
+/* ---------- Web search switch ---------- */
+var webMode = "auto";
+var searchingNow = false;
+try{
+  var savedWeb = localStorage.getItem("nestyWeb");
+  if(savedWeb === "on" || savedWeb === "off" || savedWeb === "auto") webMode = savedWeb;
+}catch(e){}
+
+function drawWeb(){
+  var b = $("webBtn");
+  b.textContent = "Web search: " + (webMode === "auto" ? "Auto" : (webMode === "on" ? "On" : "Off"));
+  b.className = webMode === "on" ? "on" : (webMode === "off" ? "off" : "");
+}
+function cycleWeb(){
+  webMode = webMode === "auto" ? "on" : (webMode === "on" ? "off" : "auto");
+  try{ localStorage.setItem("nestyWeb", webMode); }catch(e){}
+  drawWeb();
+  toast(webMode === "auto" ? "Nesty will search the web when a question needs current information."
+        : (webMode === "on" ? "Nesty will search the web for every question." : "Web search is off."));
+}
+var AUTO_WEB = /\b(today|tonight|latest|recent|recently|news|current|currently|right now|this week|this month|this year|yesterday|tomorrow|2025|2026|price|prices|weather|forecast|score|scores|results|fixtures|trending|exchange rate|election|stock|release date|how much (is|does|are)|who is the (current|new)|who won|habari za|bei ya)\b/i;
+function needsWeb(text){
+  if(webMode === "on") return true;
+  if(webMode === "off") return false;
+  return AUTO_WEB.test(text || "");
+}
+function todayText(){
+  try{
+    return new Date().toLocaleDateString("en-GB", {weekday: "long", day: "numeric", month: "long", year: "numeric"});
+  }catch(e){ return ""; }
+}
+
+var jwtCache = {token: "", exp: 0};
+var limitUntil = 0;
+
+async function getJwt(){
+  if(jwtCache.token && jwtCache.exp > Date.now()) return jwtCache.token;
+  var r = await account.createJWT();
+  jwtCache = {token: r.jwt, exp: Date.now() + 10 * 60 * 1000};
+  return r.jwt;
+}
+
+function timeText(ms){
+  var d = new Date(ms);
+  var h = d.getHours(), m = ("0" + d.getMinutes()).slice(-2);
+  var ap = h >= 12 ? "PM" : "AM";
+  h = h % 12; if(h === 0) h = 12;
+  return h + ":" + m + " " + ap;
+}
+
+function showLimit(){
+  var bar = $("limitBar");
+  if(limitUntil > Date.now()){
+    bar.textContent = "You have reached the message limit for now. You can chat again at " + timeText(limitUntil) + ".";
+    bar.style.display = "block";
+  }else{
+    bar.style.display = "none";
+  }
+}
+
+async function ask(){
+  loading = true;
+  aborter = new AbortController();
+  renderAll();
+  var reply = null;
+  var sources = [];
+  try{
+    var jwt = await getJwt();
+    var lu = messages[messages.length - 1];
+    var wantSearch = !!(lu && lu.role === "user" && !(lu.image && lu.image.data) && !lu.file && needsWeb(lu.text));
+    searchingNow = wantSearch;
+    if(wantSearch) renderAll();
+    var res = await fetch("/.netlify/functions/chat", {
+      method: "POST",
+      headers: {"Content-Type":"application/json", "X-Nesty-Token": jwt},
+      signal: aborter.signal,
+      body: JSON.stringify({
+        userName: firstName(),
+        today: todayText(),
+        search: wantSearch,
+        messages: apiMessages()
+      })
+    });
+    var data = await res.json();
+    if(data.limited){
+      loading = false;
+      var last = messages.pop();
+      if(last && last.role === "user"){
+        box.value = last.text;
+        if(last.file){
+          pendingFile = last.file;
+          $("chipName").textContent = last.file.name;
+          $("chip").style.display = "flex";
+        }
+        if(last.image){
+          pendingImage = last.image;
+          $("chipName").textContent = "Picture: " + last.image.name;
+          $("chip").style.display = "flex";
+        }
+      }
+      limitUntil = data.resetAt || (Date.now() + 2 * 3600 * 1000);
+      showLimit();
+      renderAll();
+      return;
+    }
+    if(data.needLogin){
+      loading = false;
+      messages.pop();
+      renderAll();
+      toast("Your session ended. Please sign in again.");
+      jwtCache = {token: "", exp: 0};
+      setTimeout(function(){ location.reload(); }, 1800);
+      return;
+    }
+    reply = data.reply || "Sorry, something went wrong.";
+    sources = data.sources || [];
+    if(typeof data.left === "number" && data.left <= 5 && data.left >= 0){
+      toast(data.left + " message" + (data.left === 1 ? "" : "s") + " left before a short break.");
+    }
+  }catch(e){
+    if(e && e.name === "AbortError"){
+      loading = false;
+      aborter = null;
+      renderAll();
+      toast("Stopped.");
+      saveChat();
+      return;
+    }
+    reply = "Network error. Please try again.";
+  }
+  loading = false;
+  aborter = null;
+  searchingNow = false;
+  messages.push({role:"assistant", content:reply, sources:sources});
+  renderAll();
+  if(speakOn || voiceTurn) speak(reply);
+  voiceTurn = false;
+  saveChat();
+}
+
+/* ---------- Code and files workspace ---------- */
+var EXT = {html:"index.html",htm:"index.html",css:"style.css",js:"script.js",javascript:"script.js",mjs:"script.mjs",ts:"script.ts",typescript:"script.ts",jsx:"app.jsx",tsx:"app.tsx",json:"data.json",py:"main.py",python:"main.py",md:"notes.md",markdown:"notes.md",txt:"notes.txt",text:"notes.txt",csv:"data.csv",xml:"data.xml",svg:"image.svg",sql:"query.sql",java:"Main.java",c:"main.c",cpp:"main.cpp","c++":"main.cpp",cs:"Program.cs",php:"index.php",bash:"script.sh",sh:"script.sh",shell:"script.sh",yaml:"config.yaml",yml:"config.yml",kotlin:"Main.kt",kt:"Main.kt",swift:"main.swift",go:"main.go",rust:"main.rs",rs:"main.rs",ruby:"main.rb",rb:"main.rb",dart:"main.dart",r:"script.r"};
+
+function guessName(lang, before){
+  var re = /[\w-]+(?:\.[\w-]+)*\.(?:html?|css|mjs|js|tsx?|jsx|json|py|md|txt|csv|xml|svg|sql|java|cpp|cs|c|php|sh|ya?ml|kt|swift|go|rs|rb|dart|r)\b/gi;
+  var all = (before || "").slice(-300).match(re);
+  if(all && all.length) return all[all.length - 1];
+  return EXT[(lang || "").toLowerCase()] || "file.txt";
+}
+function extOf(name){
+  var i = (name || "").lastIndexOf(".");
+  return i > -1 ? name.slice(i + 1).toLowerCase() : "";
+}
+function saveBlob(text, name, type){
+  var b = new Blob([text], {type: type + ";charset=utf-8"});
+  var a = document.createElement("a");
+  a.href = URL.createObjectURL(b);
+  a.download = name;
+  document.body.appendChild(a);
+  a.click();
+  setTimeout(function(){ URL.revokeObjectURL(a.href); a.remove(); }, 1000);
+}
+
+function wsSaveLocal(){
+  try{ localStorage.setItem("nestyWs", JSON.stringify({name: $("wsName").value, text: $("wsText").value})); }catch(e){}
+}
+function wsOpen(name, text){
+  $("wsName").value = name || "index.html";
+  $("wsText").value = text || "";
+  $("wsOutWrap").style.display = "none";
+  $("ws").style.display = "block";
+  wsSaveLocal();
+  closeSide();
+}
+function wsOpenLast(){
+  var o = {};
+  try{ o = JSON.parse(localStorage.getItem("nestyWs") || "{}"); }catch(e){}
+  wsOpen(o.name || "index.html", o.text || "");
+}
+function wsClose(){
+  wsSaveLocal();
+  $("ws").style.display = "none";
+}
+function wsNew(){
+  if($("wsText").value.trim() && !confirm("Start a new empty file? The text in the editor will be cleared.")) return;
+  $("wsName").value = "index.html";
+  $("wsText").value = "";
+  $("wsOutWrap").style.display = "none";
+  wsSaveLocal();
+}
+function wsCopy(){ copyText($("wsText").value, null); toast("Copied."); }
+function wsDownload(){
+  if(!$("wsText").value){ toast("There is nothing to download yet."); return; }
+  saveBlob($("wsText").value, $("wsName").value || "file.txt", "text/plain");
+}
+function wsBig(){ $("wsFrame").classList.toggle("big"); }
+
+$("wsText").addEventListener("input", wsSaveLocal);
+$("wsName").addEventListener("input", wsSaveLocal);
+$("wsOpenInput").addEventListener("change", function(){
+  var f = $("wsOpenInput").files[0];
+  $("wsOpenInput").value = "";
+  if(!f) return;
+  if(f.size > 1000000){ toast("That file is too big (max 1 MB)."); return; }
+  var r = new FileReader();
+  r.onload = function(){
+    $("wsName").value = f.name;
+    $("wsText").value = String(r.result || "");
+    $("wsOutWrap").style.display = "none";
+    wsSaveLocal();
+  };
+  r.onerror = function(){ toast("Could not open that file."); };
+  r.readAsText(f);
+});
+
+var CAP = '(function(){function s(t,a){try{parent.postMessage({nesty:1,t:t,m:Array.prototype.map.call(a,function(x){try{return typeof x==="object"?JSON.stringify(x):String(x)}catch(e){return String(x)}}).join(" ")},"*")}catch(e){}}["log","info","warn","error"].forEach(function(k){var o=console[k];console[k]=function(){s(k,arguments);try{o.apply(console,arguments)}catch(e){}}});window.addEventListener("error",function(e){s("error",[e.message+" (line "+e.lineno+")"])});window.addEventListener("unhandledrejection",function(e){s("error",["Unhandled: "+((e.reason&&e.reason.message)||e.reason)])})})();';
+
+function wsRun(){
+  var name = $("wsName").value || "";
+  var text = $("wsText").value;
+  var ext = extOf(name);
+  if(!text.trim()){ toast("Nothing to run yet."); return; }
+  var capTag = "<scr" + "ipt>" + CAP + "</scr" + "ipt>";
+  var doc = "";
+  if(ext === "html" || ext === "htm"){
+    var hi = text.search(/<head[^>]*>/i);
+    if(hi > -1){
+      var he = text.indexOf(">", hi) + 1;
+      doc = text.slice(0, he) + capTag + text.slice(he);
+    }else{
+      doc = capTag + text;
+    }
+  }else if(ext === "svg"){
+    doc = "<!doctype html><html><body style='margin:0;display:flex;justify-content:center'>" + text + "</body></html>";
+  }else if(ext === "js" || ext === "mjs"){
+    doc = "<!doctype html><html><head><meta charset='utf-8'>" + capTag + "</head><body style='font-family:sans-serif;padding:10px'><scr" + "ipt>" + text.replace(/<\/script/gi, "<\\/script") + "\n</scr" + "ipt></body></html>";
+  }else if(ext === "md" || ext === "markdown"){
+    doc = "<!doctype html><html><head><meta charset='utf-8'><meta name='viewport' content='width=device-width,initial-scale=1'><style>body{font-family:sans-serif;padding:12px;line-height:1.6}table{border-collapse:collapse}td,th{border:1px solid #ccc;padding:6px 10px}code{background:#eee;padding:1px 4px}</style></head><body>" + mdToHtml(text) + "</body></html>";
+  }else if(ext === "css"){
+    toast("CSS needs an HTML file to show. Put your CSS inside a style tag in an HTML file.");
+    return;
+  }else if(ext === "py"){
+    toast("Running Python is not available yet. You can copy or download the file.");
+    return;
+  }else{
+    toast("Preview works for HTML, JavaScript, SVG and Markdown files.");
+    return;
+  }
+  $("wsLog").textContent = "";
+  $("wsOutWrap").style.display = "block";
+  $("wsFrame").srcdoc = doc;
+  $("wsOutWrap").scrollIntoView({behavior: "smooth"});
+}
+
+window.addEventListener("message", function(e){
+  var d = e.data;
+  if(!d || d.nesty !== 1) return;
+  var fr = $("wsFrame");
+  if(!fr || e.source !== fr.contentWindow) return;
+  var log = $("wsLog");
+  log.textContent += (d.t === "error" ? "Error: " : (d.t === "warn" ? "Warning: " : "")) + d.m + "\n";
+  log.scrollTop = log.scrollHeight;
+});
+
+function wsAskNesty(){
+  var ask = $("wsAsk").value.trim();
+  var text = $("wsText").value;
+  if(loading){ toast("Please wait for the current answer to finish."); return; }
+  if(!text.trim()){ toast("Write or open a file first."); return; }
+  if(!ask){ toast("Tell Nesty what to change, for example: make the button green."); return; }
+  pendingImage = null;
+  pendingFile = {name: $("wsName").value || "file.txt", text: text.slice(0, 20000)};
+  showChip(pendingFile.name);
+  box.value = ask + "\n\n(Please return the complete updated file in one code block.)";
+  $("wsAsk").value = "";
+  wsClose();
+  send();
+}
+
+/* ---------- Save an answer as a file ---------- */
+function mdFull(text){
+  var parts = text.split("```");
+  var out = "";
+  for(var i = 0; i < parts.length; i++){
+    if(i % 2 === 1){
+      var c = parts[i];
+      var nl = c.indexOf("\n");
+      if(nl > -1 && nl <= 15 && c.slice(0, nl).trim().indexOf(" ") === -1) c = c.slice(nl + 1);
+      out += "<pre>" + esc(c.replace(/\n+$/, "")) + "</pre>";
+    }else if(parts[i].trim()){
+      out += mdToHtml(parts[i].replace(/^\n+|\n+$/g, ""));
+    }
+  }
+  return out;
+}
+function htmlDoc(text){
+  return "<!doctype html><html><head><meta charset='utf-8'><title>Nesty AI</title><style>body{font-family:Arial,sans-serif;line-height:1.6;max-width:800px;margin:20px auto;padding:0 14px}table{border-collapse:collapse}td,th{border:1px solid #bbb;padding:6px 10px;text-align:left}pre{background:#f4f4f4;padding:10px;white-space:pre-wrap}code{background:#f4f4f4}</style></head><body>" + mdFull(text) + "</body></html>";
+}
+function plainText(text){
+  return text.replace(/```[\w+-]*\n?/g, "").replace(/\*\*/g, "").replace(/^#{1,6}\s+/gm, "");
+}
+function printDoc(text){
+  var w = window.open("", "_blank");
+  if(!w){ toast("Please allow pop-ups to save as PDF."); return; }
+  w.document.write(htmlDoc(text));
+  w.document.close();
+  toast("In the print screen, choose Save as PDF.");
+  setTimeout(function(){ try{ w.focus(); w.print(); }catch(e){} }, 600);
+}
+function showSaveMenu(btn, text){
+  var m = $("saveMenu");
+  m.innerHTML = "";
+  var items = [
+    ["Text file (.txt)", function(){ saveBlob(plainText(text), "nesty-answer.txt", "text/plain"); }],
+    ["Markdown (.md)", function(){ saveBlob(text, "nesty-answer.md", "text/markdown"); }],
+    ["Word document (.doc)", function(){ saveBlob(htmlDoc(text), "nesty-answer.doc", "application/msword"); }],
+    ["Web page (.html)", function(){ saveBlob(htmlDoc(text), "nesty-answer.html", "text/html"); }],
+    ["PDF (print and save)", function(){ printDoc(text); }]
+  ];
+  items.forEach(function(it){
+    var b = document.createElement("button");
+    b.textContent = it[0];
+    b.onclick = function(){ m.style.display = "none"; it[1](); };
+    m.appendChild(b);
+  });
+  var r = btn.getBoundingClientRect();
+  m.style.display = "block";
+  m.style.left = Math.max(8, Math.min(r.left, window.innerWidth - 230)) + "px";
+  m.style.top = Math.max(8, Math.min(r.bottom + 4, window.innerHeight - 260)) + "px";
+}
+document.addEventListener("pointerdown", function(e){
+  var m = $("saveMenu");
+  if(m.style.display === "block" && !m.contains(e.target) && !(e.target.className === "cpbtn" && e.target.textContent === "Save as")) m.style.display = "none";
+});
+
+/* ---------- Picture maker ---------- */
+var imageNext = false;
+var creatingImg = false;
+var IMG_RE = /^\s*(\/image\s+|(please\s+|can you\s+|could you\s+|kindly\s+)?((draw|sketch|paint|chora)\b(?!\s+(a\s+|an\s+|the\s+)?(conclusions?|tables?|charts?|graphs?|lines?|diagrams?|comparisons?|inferences?|attention))|(generate|create|make|design|tengeneza)\s+(me\s+)?(an?\s+|the\s+|some\s+)?([\w'-]+\s+){0,3}?(image|images|picture|pictures|photo|illustration|drawing|painting|logo|poster|wallpaper|portrait|cartoon|artwork|picha)\b))/i;
+function wantsImage(t){ return IMG_RE.test(t || ""); }
+function drawImg(){
+  $("imgBtn").className = imageNext ? "on" : "";
+  $("imgBtn").textContent = imageNext ? "Image mode: on" : "Make an image";
+}
+function toggleImg(){
+  imageNext = !imageNext;
+  drawImg();
+  if(imageNext) toast("Describe the picture you want step by step, then send.Nesty can make mistakes");
+}
+
+async function makeImage(prompt){
+  if(loading) return;
+  loading = true;
+  creatingImg = true;
+  searchingNow = false;
+  aborter = new AbortController();
+  renderAll();
+  try{
+    var jwt = await getJwt();
+    var res = await fetch("/api/image", {
+      method: "POST",
+      headers: {"Content-Type":"application/json", "X-Nesty-Token": jwt},
+      signal: aborter.signal,
+      body: JSON.stringify({prompt: prompt})
+    });
+    var data = await res.json();
+    if(data.limited){
+      loading = false; creatingImg = false; aborter = null;
+      var lastU = messages.pop();
+      if(lastU && lastU.role === "user") box.value = lastU.text;
+      renderAll();
+      toast("Picture limit reached for now. Try again at " + timeText(data.resetAt || (Date.now() + 2 * 3600 * 1000)) + ".");
+      return;
+    }
+    if(data.needLogin){
+      loading = false; creatingImg = false; aborter = null;
+      messages.pop();
+      renderAll();
+      toast("Your session ended. Please sign in again.");
+      jwtCache = {token: "", exp: 0};
+      setTimeout(function(){ location.reload(); }, 1800);
+      return;
+    }
+    if(data.image){
+      messages.push({role:"assistant", content:"[Nesty created a picture for: " + prompt + "]", genImage:{data:data.image, prompt:prompt}});
+      if(typeof data.left === "number" && data.left <= 2){
+        toast(data.left + " picture" + (data.left === 1 ? "" : "s") + " left before a short break.");
+      }
+    }else{
+      messages.push({role:"assistant", content: data.reply || "I could not make the picture. Please try again after a few minutes."});
+    }
+  }catch(e){
+    if(e && e.name === "AbortError"){
+      loading = false; creatingImg = false; aborter = null;
+      renderAll();
+      toast("Stopped.");
+      return;
+    }
+    messages.push({role:"assistant", content:"Network error. Please try again."});
+  }
+  loading = false;
+  creatingImg = false;
+  aborter = null;
+  renderAll();
+  saveChat();
+}
+
+function send(){
+  if(loading){ if(aborter) aborter.abort(); return; }
+  if(limitUntil > Date.now()){ showLimit(); return; }
+  var text = box.value.trim();
+  if(!text && !pendingFile && !pendingImage) return;
+  if(!text) text = pendingImage ? "Please look at this picture and tell me what you see." : "Please read this and tell me what it says.";
+  var isEdit = pendingImage && text && /\b(make|change|edit|turn|look like|add|remove|wear|running|sitting)\b/i.test(text);
+  if(isEdit){
+    loading = true;
+    renderAll();
+    try{
+      var jwt = await getJwt();
+      var res = await fetch("/api/edit-image", {
+        method: "POST",
+        headers: {"Content-Type":"application/json", "X-Nesty-Token": jwt},
+        body: JSON.stringify({prompt: text, image: pendingImage.data})
+      });
+      var data = await res.json();
+      loading = false;
+      if(data.image){
+        messages.push({role:"user", text:text, image:pendingImage});
+        messages.push({role:"assistant", content:"Here is the edited image:", image:data.image});
+      }else{
+        messages.push({role:"user", text:text, image:pendingImage});
+        messages.push({role:"assistant", content:data.reply || "Could not edit the image."});
+      }
+      pendingImage = null;
+      pendingFile = null;
+      removeFile();
+      renderAll();
+      saveChat();
+      return;
+    }catch(e){
+      loading = false;
+      toast("Image edit failed.");
+      return;
+    }
+  }
+  messages.push({role:"user", text:text, file:pendingFile, image:pendingImage});
+  box.value = "";
+  box.style.height = "auto";
+  var asImage = !pendingFile && !pendingImage && (imageNext || wantsImage(text));
+  removeFile();
+  if(asImage){
+    imageNext = false;
+    drawImg();
+    makeImage(text.replace(/^\s*\/image\s+/i, ""));
+    return;
+  }
+  ask();
+}
+
+function newChat(){
+  messages = [];
+  chatId = null;
+  if(window.speechSynthesis) speechSynthesis.cancel();
+  renderAll();
+  renderList();
+  closeSide();
+}
+
+/* ---------- Long-press menu ---------- */
+function showMenu(i, x, y){
+  menuIdx = i;
+  menu.style.display = "block";
+  menu.style.left = Math.min(x, window.innerWidth - 160) + "px";
+  menu.style.top = Math.min(y + 10, window.innerHeight - 170) + "px";
+}
+function hideMenu(){ menu.style.display = "none"; }
+document.addEventListener("pointerdown", function(e){
+  if(!menu.contains(e.target)) hideMenu();
+});
+function menuCopy(){
+  copyText(messages[menuIdx].text, null);
+  hideMenu();
+}
+function menuDelete(){
+  var n = (messages[menuIdx + 1] && messages[menuIdx + 1].role === "assistant") ? 2 : 1;
+  messages.splice(menuIdx, n);
+  hideMenu();
+  renderAll();
+  saveChat();
+}
+function menuEdit(){
+  editIdx = menuIdx;
+  $("editBox").value = messages[editIdx].text;
+  $("editor").style.display = "flex";
+  hideMenu();
+}
+function closeEditor(){ $("editor").style.display = "none"; }
+function saveEdit(){
+  var t = $("editBox").value.trim();
+  if(!t) return;
+  messages[editIdx].text = t;
+  messages = messages.slice(0, editIdx + 1);
+  closeEditor();
+  ask();
+}
+
+/* ---------- File attach ---------- */
+var fileInput = $("file");
+var libLoading = {};
+
+function loadScript(src){
+  if(libLoading[src]) return libLoading[src];
+  libLoading[src] = new Promise(function(resolve, reject){
+    var sc = document.createElement("script");
+    sc.src = src;
+    sc.onload = resolve;
+    sc.onerror = function(){ delete libLoading[src]; reject(new Error("Could not load the file reader. Check your internet.")); };
+    document.head.appendChild(sc);
+  });
+  return libLoading[src];
+}
+
+function fitImage(file, max, square, quality){
+  return new Promise(function(resolve, reject){
+    var url = URL.createObjectURL(file);
+    var img = new Image();
+    img.onload = function(){
+      var w = img.width, h = img.height, sx = 0, sy = 0, sw = w, sh = h, cw, ch;
+      if(square){
+        var side = Math.min(w, h);
+        sx = Math.round((w - side) / 2); sy = Math.round((h - side) / 2);
+        sw = side; sh = side; cw = max; ch = max;
+      }else{
+        var sc = Math.min(1, max / Math.max(w, h));
+        cw = Math.round(w * sc); ch = Math.round(h * sc);
+      }
+      var c = document.createElement("canvas");
+      c.width = cw; c.height = ch;
+      c.getContext("2d").drawImage(img, sx, sy, sw, sh, 0, 0, cw, ch);
+      URL.revokeObjectURL(url);
+      resolve(c.toDataURL("image/jpeg", quality));
+    };
+    img.onerror = function(){ URL.revokeObjectURL(url); reject(new Error("Could not open this picture.")); };
+    img.src = url;
+  });
+}
+
+async function readPdf(file){
+  await loadScript("https://cdn.jsdelivr.net/npm/pdfjs-dist@3.11.174/build/pdf.min.js");
+  pdfjsLib.GlobalWorkerOptions.workerSrc = "https://cdn.jsdelivr.net/npm/pdfjs-dist@3.11.174/build/pdf.worker.min.js";
+  var buf = await file.arrayBuffer();
+  var pdf = await pdfjsLib.getDocument({data: buf}).promise;
+  var out = "";
+  var max = Math.min(pdf.numPages, 60);
+  for(var p = 1; p <= max; p++){
+    var page = await pdf.getPage(p);
+    var tc = await page.getTextContent();
+    out += tc.items.map(function(it){ return it.str; }).join(" ") + "\n\n";
+    if(out.length > 20000) break;
+  }
+  return out;
+}
+
+async function readDocx(file){
+  await loadScript("https://cdn.jsdelivr.net/npm/mammoth@1.6.0/mammoth.browser.min.js");
+  var buf = await file.arrayBuffer();
+  var r = await mammoth.extractRawText({arrayBuffer: buf});
+  return r.value || "";
+}
+
+function readText(file){
+  return new Promise(function(resolve, reject){
+    var r = new FileReader();
+    r.onload = function(){ resolve(r.result); };
+    r.onerror = function(){ reject(new Error("Could not read this file.")); };
+    r.readAsText(file);
+  });
+}
+
+function showChip(label){
+  $("chipName").textContent = label;
+  $("chip").style.display = "flex";
+}
+
+fileInput.addEventListener("change", async function(){
+  var f = fileInput.files[0];
+  fileInput.value = "";
+  if(!f) return;
+  try{
+    var jwt = await getJwt();
+    var check = await fetch("/api/file-check", {
+      method: "POST",
+      headers: {"Content-Type":"application/json", "X-Nesty-Token": jwt}
+    });
+    var lim = await check.json();
+    if(lim.limited){
+      toast("You have reached the file attachment limit. Upgrade your plan or wait.");
+      return;
+    }
+  }catch(e){
+    toast("Could not check limit. Try again.");
+    return;
+  }
+  var name = f.name;
+  var lower = name.toLowerCase();
+  try{
+    if(f.type.indexOf("image/") === 0){
+      if(f.size > 20 * 1000000){ toast("That picture is too big (max 20 MB)."); return; }
+      showChip("Preparing picture...");
+      var data = await fitImage(f, 1280, false, 0.82);
+      pendingFile = null;
+      pendingImage = {name: name, data: data};
+      showChip("Picture: " + name);
+      return;
+    }
+    if(lower.slice(-4) === ".doc" || lower.slice(-4) === ".ppt" || lower.slice(-4) === ".xls" || lower.slice(-5) === ".pptx" || lower.slice(-5) === ".xlsx"){
+      toast("This file type is not supported yet. Use a picture, PDF, Word (.docx) or text file.");
+      return;
+    }
+    if(f.size > 15 * 1000000){ toast("That file is too big (max 15 MB)."); return; }
+    var text = "";
+    showChip("Reading " + name + "...");
+    if(lower.slice(-4) === ".pdf" || f.type === "application/pdf"){
+      text = await readPdf(f);
+      if(text.replace(/\s/g, "").length < 20){
+        removeFile();
+        toast("This PDF has no readable text. It may be scanned pictures.");
+        return;
+      }
+    }else if(lower.slice(-5) === ".docx"){
+      text = await readDocx(f);
+      if(text.replace(/\s/g, "").length < 5){
+        removeFile();
+        toast("I could not find any text in this Word file.");
+        return;
+      }
+    }else{
+      if(f.size > 1000000){ removeFile(); toast("Text files can be up to 1 MB."); return; }
+      text = await readText(f);
+    }
+    if(text.length > 20000){ text = text.slice(0, 20000) + "\n...[file cut because it is long]"; }
+    pendingImage = null;
+    pendingFile = {name: name, text: text};
+    showChip(name);
+  }catch(e){
+    removeFile();
+    toast((e && e.message) || "Could not read this file.");
+  }
+});
+
+function removeFile(){
+  pendingFile = null;
+  pendingImage = null;
+  $("chip").style.display = "none";
+}
+
+/* ---------- Profile and settings ---------- */
+function initialOf(){
+  var n = (firstName() || (user && user.email) || "?").trim();
+  return n.charAt(0).toUpperCase();
+}
+
+function avatarNode(size){
+  var p = (user && user.prefs) || {};
+  var d = document.createElement("div");
+  d.style.cssText = "width:" + size + "px;height:" + size + "px;border-radius:50%;overflow:hidden;background:#1a1a1a;color:#fff;display:flex;align-items:center;justify-content:center;font-weight:600;flex:none;font-size:" + Math.round(size * 0.45) + "px";
+  function fallback(){ d.innerHTML = ""; d.textContent = initialOf(); }
+  if(p.avatar){
+    var im = document.createElement("img");
+    im.style.cssText = "width:100%;height:100%;object-fit:cover";
+    im.referrerPolicy = "no-referrer";
+    im.onerror = fallback;
+    im.src = p.avatar;
+    d.appendChild(im);
+  }else{
+    fallback();
+  }
+  return d;
+}
+
+function renderSide(){
+  if(!user) return;
+  var av = $("sideAv");
+  av.innerHTML = "";
+  av.appendChild(avatarNode(38));
+  $("sideName").textContent = (user.name || firstName() || "Your account");
+}
+
+async function savePrefs(changes){
+  var np = Object.assign({}, user.prefs || {}, changes);
+  await account.updatePrefs(np);
+  user = await account.get();
+}
+
+async function fetchGoogleAvatar(){
+  if(user.prefs && user.prefs.avatar) return;
+  var ids = await account.listIdentities();
+  var g = (ids.identities || []).filter(function(i){ return i.provider === "google"; })[0];
+  if(!g || !g.providerAccessToken) return;
+  var r = await fetch("https://www.googleapis.com/oauth2/v3/userinfo", {
+    headers: {Authorization: "Bearer " + g.providerAccessToken}
+  });
+  if(!r.ok) return;
+  var info = await r.json();
+  if(info && info.picture){ await savePrefs({avatar: info.picture}); }
+}
+
+function sMsg(t){
+  $("sMsg").textContent = t || "";
+  if(t) setTimeout(function(){ if($("sMsg").textContent === t) $("sMsg").textContent = ""; }, 3500);
+}
+
+function notifText(){
+  if(!("Notification" in window)) return "Notifications are not supported on this device.";
+  if(Notification.permission === "granted") return "👍On. You get a notification when an answer arrives while Nesty is in the background.";
+  if(Notification.permission === "denied") return "Blocked. To turn them on, open your phone or Chrome site settings for Nesty and allow notifications.";
+  return "Off. Turn them on to get a notification when an answer arrives while Nesty is in the background.";
+}
+
+function drawSettings(){
+  var ab = $("avBig");
+  ab.innerHTML = "";
+  ab.appendChild(avatarNode(84));
+  var parts = (user.name || "").split(" ");
+  var p = user.prefs || {};
+  $("sFirst").value = p.firstName || parts[0] || "";
+  $("sLast").value = p.lastName || parts.slice(1).join(" ") || "";
+  $("sEmail").textContent = user.email ? "Signed in as " + user.email : "";
+  $("sNotif").textContent = notifText();
+  $("sNotifBtn").style.display = ("Notification" in window && Notification.permission === "default") ? "inline-block" : "none";
+}
+
+function openSettings(){
+  if(!user) return;
+  closeSide();
+  drawSettings();
+  $("settings").style.display = "block";
+}
+function closeSettings(){ $("settings").style.display = "none"; }
+
+async function askNotif(){
+  try{ await Notification.requestPermission(); }catch(e){}
+  drawSettings();
+}
+
+async function saveName(){
+  var f = $("sFirst").value.trim(), l = $("sLast").value.trim();
+  if(!f){ sMsg("Please enter your first name."); return; }
+  try{
+    await account.updateName((f + " " + l).trim());
+    await savePrefs({firstName: f, lastName: l});
+    renderSide();
+    drawSettings();
+    renderAll();
+    sMsg("Name saved.");
+  }catch(e){
+    sMsg("Could not save: " + (e.message || "error"));
+  }
+}
+
+$("avFile").addEventListener("change", async function(){
+  var f = $("avFile").files[0];
+  $("avFile").value = "";
+  if(!f) return;
+  if(f.type.indexOf("image/") !== 0){ sMsg("Please choose a picture."); return; }
+  try{
+    var data = await fitImage(f, 144, true, 0.8);
+    await savePrefs({avatar: data});
+    renderSide();
+    drawSettings();
+    sMsg("Photo updated.");
+  }catch(e){
+    sMsg("Could not save photo: " + (e.message || "error"));
+  }
+});
+
+async function removeAvatar(){
+  try{
+    await savePrefs({avatar: ""});
+    renderSide();
+    drawSettings();
+    sMsg("Photo removed.");
+  }catch(e){
+    sMsg("Could not remove photo: " + (e.message || "error"));
+  }
+}
+
+async function wipeChats(){
+  var r;
+  do{
+    r = await db.listDocuments(DB, TABLE, [Query.limit(100)]);
+    for(var i = 0; i < r.documents.length; i++){
+      await db.deleteDocument(DB, TABLE, r.documents[i].$id);
+    }
+  }while(r.documents.length >= 100);
+  messages = [];
+  chatId = null;
+  chats = [];
+  renderList();
+  renderAll();
+}
+
+async function deleteAllChats(){
+  if(!confirm("Delete ALL your saved chats? This cannot be undone.")) return;
+  sMsg("Deleting wait a few momment...");
+  try{
+    await wipeChats();
+    sMsg("All chats deleted contact Red elementteam to recover.");
+  }catch(e){
+    sMsg("Could not delete: " + (e.message || "error"));
+  }
+}
+
+async function deleteAccount(){
+  if(!confirm("Delete your account? Your chats will be removed and you will not be able to sign in again.")) return;
+  var word = prompt("Type DELETE to confirm.");
+  if(!word || word.trim().toUpperCase() !== "DELETE") return;
+  sMsg("Deleting...");
+  try{
+    await wipeChats();
+    await account.updateStatus();
+  }catch(e){
+    sMsg("Could not delete the account: " + (e.message || "error"));
+    return;
+  }
+  try{ await account.deleteSession("current"); }catch(e){}
+  user = null;
+  closeSettings();
+  authMode = "signin";
+  showAuth();
+  $("authErr").textContent = "Your account was deleted successfully.";
+}
+
+$("q").addEventListener("input", renderList);
+
+box.addEventListener("keydown", function(e){
+  if(e.key === "Enter" && !e.shiftKey && window.matchMedia && window.matchMedia("(pointer:fine)").matches){
+    e.preventDefault();
+    send();
+  }
+});
+
+/* ---------- Voice ---------- */
+var SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+var rec = null, listening = false;
+var micBtn = $("mic");
+
+function toggleMic(){
+  if(!SR){ alert("Voice input is not supported in this browser."); return; }
+  if(listening){ rec.stop(); return; }
+  rec = new SR();
+  rec.lang = "en-US";
+  rec.interimResults = false;
+  rec.onstart = function(){ listening = true; micBtn.classList.add("on"); };
+  rec.onend = function(){ listening = false; micBtn.classList.remove("on"); };
+  rec.onerror = function(ev){ listening = false; micBtn.classList.remove("on"); toast("Mic problem: " + ((ev && ev.error) || "unknown")); };
+  rec.onresult = function(e){
+    box.value = e.results[0][0].transcript;
+    voiceTurn = true;
+    send();
+  };
+  rec.start();
+}
+
+function toggleSpeak(){
+  speakOn = !speakOn;
+  var b = $("spk");
+  b.textContent = "Voice: " + (speakOn ? "On" : "Off");
+  b.classList.toggle("on", speakOn);
+  if(!speakOn && window.speechSynthesis) speechSynthesis.cancel();
+}
+function speak(text){
+  if(!window.speechSynthesis) return;
+  var clean = text.replace(/```[\s\S]*?```/g, " code block ").replace(/[*`#]/g, "");
+  speechSynthesis.cancel();
+  speechSynthesis.speak(new SpeechSynthesisUtterance(clean));
+}
+
+drawWeb();
+drawImg();
+init();
+</script>
+<script src="/notify.js">
+function setTheme(color){
+  document.documentElement.style.setProperty("--accent", color);
+  try{ localStorage.setItem("nestyTheme", color); }catch(e){}
+  sMsg("Theme colour saved.");
+}
+function saveLang(){
+  var lang = document.getElementById("sLang").value;
+  try{ localStorage.setItem("nestyLang", lang); }catch(e){}
+  sMsg("Language preference saved.");
+}
+async function startPayment(plan, yearly){
+  var phone = (document.getElementById("mpesaPhone").value || "").trim();
+  if(!phone){ sMsg("Please enter your M-Pesa phone number."); return; }
+  try{
+    var jwt = await getJwt();
+    var res = await fetch("/api/mpesa/stk", {
+      method: "POST",
+      headers: {"Content-Type":"application/json", "X-Nesty-Token": jwt},
+      body: JSON.stringify({phone: phone, plan: plan, yearly: !!yearly})
+    });
+    var d = await res.json();
+    if(d.ok) sMsg("Check your phone for the M-Pesa prompt.");
+    else sMsg("Could not start payment. Try again.");
+  }catch(e){
+    sMsg("Network error.");
+  }
+}
+try{
+  var saved = localStorage.getItem("nestyTheme");
+  if(saved) document.documentElement.style.setProperty("--accent", saved);
+  var lang = localStorage.getItem("nestyLang");
+  if(lang && document.getElementById("sLang")) document.getElementById("sLang").value = lang;
+}catch(e){}
+
+</script>
+</body>
+</html>
+
