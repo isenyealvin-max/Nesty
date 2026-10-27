@@ -136,6 +136,9 @@ header{display:flex;justify-content:space-between;align-items:center;padding:10p
 #imgBtn.on{background:#7c3aed;border-color:#7c3aed;color:#fff}
 .gimg{display:block;max-width:100%;width:420px;border-radius:12px;border:1px solid #e3e3e3;margin-bottom:6px}
 .gnote{color:#777;font-size:14px}
+#sInstr{width:100%;padding:11px 12px;border:1px solid #d8d8d8;border-radius:10px;font-size:16px;margin-bottom:8px;font-family:inherit;resize:vertical}
+.memItem{display:flex;justify-content:space-between;align-items:flex-start;gap:8px;padding:8px 10px;background:#f5f5f5;border-radius:8px;margin-bottom:6px;font-size:14.5px}
+.memItem button{border:0;background:none;font-size:18px;color:#888}
 </style>
 </head>
 <body>
@@ -248,10 +251,23 @@ header{display:flex;justify-content:space-between;align-items:center;padding:10p
     </div>
 <div class="sec">
   <h3>Voice language</h3>
+  
   <div class="muted2">Used for the microphone and for reading answers aloud.</div>
   <select id="sLang" onchange="setVoiceLang(this.value)"></select>
 </div>
+<div class="sec">
+  <h3>Custom instructions</h3>
+  <div class="muted2">Tell Nesty how to answer you in every chat. Example: I'm a Grade 9 student, explain simply.</div>
+  <textarea id="sInstr" maxlength="600" rows="4" placeholder="Type your instructions here"></textarea>
+  <button class="sbtn dark" onclick="saveInstr()">Save instructions</button>
+</div>
 
+<div class="sec">
+  <h3>Memory</h3>
+  <div class="muted2">Start a message with "Remember that ..." and Nesty saves it here for every chat.</div>
+  <div id="memList"></div>
+  <button class="sbtn red" id="memClear" onclick="clearMemory()">Clear memory</button>
+</div>
 <div class="sec">
   <h3>Feedback</h3>
   <div class="muted2">Found a problem or have an idea? Send us an email.</div>
@@ -1062,11 +1078,12 @@ function cycleWeb(){
   toast(webMode === "auto" ? "Nesty will search the web when a question needs current information."
         : (webMode === "on" ? "Nesty will search the web for every question." : "Web search is off."));
 }
-var AUTO_WEB = /\b(today|tonight|latest|recent|recently|news|current|currently|right now|this week|this month|this year|yesterday|tomorrow|2025|2026|price|prices|weather|forecast|score|scores|results|fixtures|trending|exchange rate|election|stock|release date|how much (is|does|are)|who is the (current|new)|who won|habari za|bei ya)\b/i;
+var AUTO_WEB2 = /(actualit|aujourd|dernières|noticias|hoy|últimas|notícias|hoje|nachrichten|heute|aktuell|новости|сегодня|أخبار|اليوم|الآن|समाचार|आज|新闻|今天|最新|ニュース|今日|뉴스|오늘|haberler|bugün|berita|hari ini|leo|sasa hivi)/i;
 function needsWeb(text){
   if(webMode === "on") return true;
   if(webMode === "off") return false;
-  return AUTO_WEB.test(text || "");
+  return AUTO_WEB.test(text || "") || AUTO_WEB2.test(text || "");
+}
 }
 function todayText(){
   try{
@@ -1121,6 +1138,8 @@ async function ask(){
       body: JSON.stringify({
         userName: firstName(),
         today: todayText(),
+        instructions: (user.prefs && user.prefs.instructions) || "",
+memory: getMem(),
         search: wantSearch,
         messages: apiMessages()
       })
@@ -1170,7 +1189,7 @@ async function ask(){
       saveChat();
       return;
     }
-    reply = "Network error. Please try again.";
+    reply = "Network error check or restart your WiFi router or mobile data. Please try again.";
   }
   loading = false;
   aborter = null;
@@ -1232,6 +1251,7 @@ async function makeImage(prompt){
     }
     if(data.image){
       messages.push({role:"assistant", content:"[Nesty created a picture for: " + prompt + "]", genImage:{data:data.image, prompt:prompt}});
+      maybeRemember(text);
       if(typeof data.left === "number" && data.left <= 2){
         toast(data.left + " picture" + (data.left === 1 ? "" : "s") + " left before a short break.");
       }
@@ -1531,6 +1551,8 @@ function drawSettings(){
   $("sEmail").textContent = user.email ? "Signed in as " + user.email : "";
   $("sNotif").textContent = notifText();
   $("sNotifBtn").style.display = ("Notification" in window && Notification.permission === "default") ? "inline-block" : "none";
+  $("sInstr").value = p.instructions || "";
+drawMemory();
 }
 
 function openSettings(){
@@ -1689,7 +1711,64 @@ var VOICE_LANGS = [
   ["nl-NL","Nederlands (Dutch)"],["pl-PL","Polski (Polish)"],["vi-VN","Tiếng Việt (Vietnamese)"],
   ["th-TH","ไทย (Thai)"],["fil-PH","Filipino"],["ha-NG","Hausa"],["yo-NG","Yorùbá"],["so-SO","Soomaali"]
 ];
-var voiceLang = "en-US";
+function getMem(){
+  var m = user && user.prefs && user.prefs.memory;
+  return Array.isArray(m) ? m : [];
+}
+function drawMemory(){
+  var holder = $("memList");
+  holder.innerHTML = "";
+  var m = getMem();
+  if(!m.length){
+    holder.innerHTML = '<div class="muted2">Nothing saved yet.</div>';
+    $("memClear").style.display = "none";
+    return;
+  }
+  $("memClear").style.display = "inline-block";
+  m.forEach(function(f, i){
+    var r = document.createElement("div");
+    r.className = "memItem";
+    var t = document.createElement("span");
+    t.textContent = f;
+    var x = document.createElement("button");
+    x.innerHTML = "&times;";
+    x.onclick = function(){ delMem(i); };
+    r.appendChild(t);
+    r.appendChild(x);
+    holder.appendChild(r);
+  });
+}
+async function delMem(i){
+  var m = getMem().slice();
+  m.splice(i, 1);
+  try{ await savePrefs({memory: m}); drawMemory(); }
+  catch(e){ sMsg("Could not delete: " + (e.message || "error")); }
+}
+async function clearMemory(){
+  if(!confirm("Clear everything Nesty remembers about you?")) return;
+  try{ await savePrefs({memory: []}); drawMemory(); sMsg("Memory cleared."); }
+  catch(e){ sMsg("Could not clear: " + (e.message || "error")); }
+}
+async function saveInstr(){
+  try{
+    await savePrefs({instructions: $("sInstr").value.trim().slice(0, 600)});
+    sMsg("Instructions saved.");
+  }catch(e){
+    sMsg("Could not save: " + (e.message || "error"));
+  }
+}
+var REMEMBER_RE = /^\s*(?:please\s+)?(?:nesty,?\s+)?remember\s*(?:that\b|:)\s*([\s\S]{3,})$/i;
+async function maybeRemember(text){
+  var mt = REMEMBER_RE.exec(text);
+  if(!mt) return;
+  var fact = mt[1].trim().slice(0, 200);
+  var m = getMem().slice();
+  if(m.indexOf(fact) > -1) return;
+  m.push(fact);
+  if(m.length > 30) m.shift();
+  try{ await savePrefs({memory: m}); toast("Saved to memory."); }catch(e){}
+}
+  var voiceLang = "en-US";
 try{ voiceLang = localStorage.getItem("nestyVoiceLang") || "en-US"; }catch(e){}
 function fillLangs(){
   var s = $("sLang");
