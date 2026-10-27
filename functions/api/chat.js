@@ -164,6 +164,15 @@ export async function onRequestPost(context) {
   }
   if (name) {
     system += " The user's first name is " + name + ". Use it naturally and sparingly, not in every message.";
+  }const instr = String(body.instructions || "").slice(0, 600).trim();
+  const mem = Array.isArray(body.memory)
+    ? body.memory.slice(0, 30).map(function (x) { return String(x).slice(0, 200); })
+    : [];
+  if (instr) {
+    system += " The user set these custom instructions for how you answer. Follow them in every reply unless they conflict with safety: " + instr;
+  }
+  if (mem.length) {
+    system += " Facts the user asked you to remember about them (use them when relevant, do not repeat them unprompted): " + mem.join("; ") + ".";
   }
 
   let searchFailed = false;
@@ -203,7 +212,7 @@ export async function onRequestPost(context) {
     if (tav) {
       system +=
         " Here are fresh web search results" + (today ? " (retrieved " + today + ")" : "") +
-        ". Use them to answer the user's question with current facts, and mention the source names. If they do not answer the question, say so.\n\n" +
+        ". Use them to answer the user's question with current facts, only mention the source names if asked for. If they do not answer the question, say so.\n\n" +
         tav.map(function (r, i) {
           return (i + 1) + ". " + r.title + " (" + r.uri + ")\n" + r.text;
         }).join("\n\n");
