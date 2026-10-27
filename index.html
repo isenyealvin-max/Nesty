@@ -1520,6 +1520,7 @@ function notifText(){
 }
 
 function drawSettings(){
+  fillLangs(); 
   var ab = $("avBig");
   ab.innerHTML = "";
   ab.appendChild(avatarNode(84));
@@ -1675,9 +1676,41 @@ function speak(text){
   if(!window.speechSynthesis) return;
   var clean = text.replace(/```[\s\S]*?```/g, " code block ").replace(/[*`#]/g, "");
   speechSynthesis.cancel();
-  speechSynthesis.speak(new SpeechSynthesisUtterance(clean));
+  var u = new SpeechSynthesisUtterance(clean);
+u.lang = voiceLang;
+speechSynthesis.speak(u);
+var VOICE_LANGS = [
+  ["en-US","English"],["sw-KE","Kiswahili"],["fr-FR","Français (French)"],["ar-SA","العربية (Arabic)"],
+  ["es-ES","Español (Spanish)"],["pt-BR","Português (Portuguese)"],["hi-IN","हिन्दी (Hindi)"],
+  ["zh-CN","中文 (Chinese)"],["de-DE","Deutsch (German)"],["it-IT","Italiano (Italian)"],
+  ["ru-RU","Русский (Russian)"],["ja-JP","日本語 (Japanese)"],["ko-KR","한국어 (Korean)"],
+  ["tr-TR","Türkçe (Turkish)"],["id-ID","Bahasa Indonesia"],["bn-BD","বাংলা (Bengali)"],
+  ["ur-PK","اردو (Urdu)"],["am-ET","አማርኛ (Amharic)"],["zu-ZA","isiZulu"],["af-ZA","Afrikaans"],
+  ["nl-NL","Nederlands (Dutch)"],["pl-PL","Polski (Polish)"],["vi-VN","Tiếng Việt (Vietnamese)"],
+  ["th-TH","ไทย (Thai)"],["fil-PH","Filipino"],["ha-NG","Hausa"],["yo-NG","Yorùbá"],["so-SO","Soomaali"]
+];
+var voiceLang = "en-US";
+try{ voiceLang = localStorage.getItem("nestyVoiceLang") || "en-US"; }catch(e){}
+function fillLangs(){
+  var s = $("sLang");
+  if(!s.options.length){
+    VOICE_LANGS.forEach(function(l){
+      var o = document.createElement("option");
+      o.value = l[0]; o.textContent = l[1];
+      s.appendChild(o);
+    });
+  }
+  s.value = voiceLang;
 }
-
+function setVoiceLang(v){
+  voiceLang = v;
+  try{ localStorage.setItem("nestyVoiceLang", v); }catch(e){}
+  toast("Voice language saved.");
+}
+function sendFeedback(){
+  var body = "Describe the problem or idea here:\n\n\n---\nAccount: " + (user ? user.email : "") + "\nDevice: " + navigator.userAgent;
+  location.href = "mailto:isenyealvin@gmail.com?subject=" + encodeURIComponent("Nesty AI feedback") + "&body=" + encodeURIComponent(body);
+}
 drawWeb();
 drawImg();
 init();
