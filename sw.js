@@ -1,12 +1,15 @@
-var CACHE = "nesty-v1";
+var CACHE = "nesty-v2";
 
 self.addEventListener("install", function (e) {
-  self.skipWaiting();
   e.waitUntil(
     caches.open(CACHE).then(function (c) {
       return c.addAll(["/", "/icon-192.png", "/icon-512.png"]);
     })
   );
+});
+
+self.addEventListener("message", function (e) {
+  if (e.data === "skipWaiting") self.skipWaiting();
 });
 
 self.addEventListener("activate", function (e) {
@@ -25,6 +28,7 @@ self.addEventListener("fetch", function (e) {
   if (req.method !== "GET") return;
   if (url.origin !== location.origin) return;
   if (url.pathname.indexOf("/.netlify/") === 0) return;
+  if (url.pathname.indexOf("/api/") === 0) return;
   if (url.search) return;
   e.respondWith(
     fetch(req)
