@@ -246,7 +246,17 @@ header{display:flex;justify-content:space-between;align-items:center;padding:10p
       </div>
       <div class="muted2" id="sEmail"></div>
     </div>
+<div class="sec">
+  <h3>Voice language</h3>
+  <div class="muted2">Used for the microphone and for reading answers aloud.</div>
+  <select id="sLang" onchange="setVoiceLang(this.value)"></select>
+</div>
 
+<div class="sec">
+  <h3>Feedback</h3>
+  <div class="muted2">Found a problem or have an idea? Send us an email.</div>
+  <button class="sbtn dark" onclick="sendFeedback()">Send feedback</button>
+</div>
     <div class="sec">
       <h3>Notifications</h3>
       <div class="muted2" id="sNotif"></div>
@@ -269,7 +279,7 @@ header{display:flex;justify-content:space-between;align-items:center;padding:10p
   </div>
 </div>
 
-<div id="toast"></div>
+<div id="toast"></div><div id="updateBar">New version available. Tap to refresh.</div>
 
 <script>
 var ENDPOINT = "https://sgp.cloud.appwrite.io/v1";
@@ -337,9 +347,28 @@ async function installApp(){
   installEvent = null;
   $("installBtn").style.display = "none";
 }
+var updating = false;
+function showUpdate(worker){
+  var b = $("updateBar");
+  b.style.display = "block";
+  b.onclick = function(){ updating = true; b.textContent = "Updating..."; worker.postMessage("skipWaiting"); };
+}
 if("serviceWorker" in navigator){
   window.addEventListener("load", function(){
-    navigator.serviceWorker.register("/sw.js").catch(function(){});
+    navigator.serviceWorker.register("/sw.js").then(function(reg){
+      if(reg.waiting && navigator.serviceWorker.controller) showUpdate(reg.waiting);
+      reg.addEventListener("updatefound", function(){
+        var nw = reg.installing;
+        if(!nw) return;
+        nw.addEventListener("statechange", function(){
+          if(nw.state === "installed" && navigator.serviceWorker.controller) showUpdate(nw);
+        });
+      });
+      setInterval(function(){ reg.update().catch(function(){}); }, 30 * 60 * 1000);
+    }).catch(function(){});
+  });
+  navigator.serviceWorker.addEventListener("controllerchange", function(){
+    if(updating) location.reload();
   });
 }
 
