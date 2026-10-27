@@ -81,7 +81,7 @@ header{display:flex;justify-content:space-between;align-items:center;padding:10p
 #bar{display:flex;gap:6px;align-items:flex-end}
 .ibtn{width:42px;height:42px;border:1px solid #d8d8d8;background:#fff;border-radius:50%;flex:none;font-size:22px;color:#444;display:flex;align-items:center;justify-content:center;padding:0}
 .ibtn.on{background:#e53935;color:#fff;border-color:#e53935}
-#send{background:#1a1a1a;color:#fff;border:0;font-weight:bold}
+#send{background:#1a1a1a;color:#FFA500;border:0;font-weight:bold}
 #box{flex:1;resize:none;max-height:140px;background:#fafafa;color:#1a1a1a;border:1px solid #d8d8d8;border-radius:22px;padding:11px 16px;font-size:16px;font-family:inherit;outline:none}
 #menu{position:fixed;display:none;background:#fff;border:1px solid #ddd;border-radius:10px;box-shadow:0 4px 16px rgba(0,0,0,.18);z-index:60;overflow:hidden}
 #menu button{display:block;width:150px;padding:13px 16px;text-align:left;background:#fff;border:0;border-bottom:1px solid #f0f0f0;font-size:15px}
@@ -222,7 +222,7 @@ header{display:flex;justify-content:space-between;align-items:center;padding:10p
     <button onclick="wsOpenLast()">Code &amp; files</button>
     <button onclick="openSettings()">Settings</button>
     <button id="installBtn" style="display:none" onclick="installApp()">Install Nesty app</button>
-    <button onclick="logout()">Log out</button>
+    <button onclick="logout()">Log out of your account</button>
     <div class="links"><a href="/terms.html">Terms</a> &middot; <a href="/privacy.html">Privacy</a></div>
   </div>
 </div>
@@ -314,7 +314,7 @@ header{display:flex;justify-content:space-between;align-items:center;padding:10p
           <li>80 messages</li><li>70 file attachments</li><li>20 images</li>
         </ul>
       </div>
-      <input type="tel" id="mpesaPhone" placeholder="Your M-Pesa phone number (07xxxxxxxx)" style="width:100%;padding:11px;border:1px solid #d8d8d8;border-radius:10px;font-size:16px;margin:8px 0">
+      <input type="tel" id="mpesaPhone" placeholder="Your M-Pesa phone number (07xxxxxxxx/01×××××××)" style="width:100%;padding:11px;border:1px solid #d8d8d8;border-radius:10px;font-size:16px;margin:8px 0">
       <div class="row">
         <button class="sbtn dark" onclick="startPayment('premium', false)">Pay Premium monthly</button>
         <button class="sbtn dark" onclick="startPayment('premium', true)">Pay Premium yearly</button>
@@ -541,7 +541,7 @@ async function resendCode(){
 
 async function verifyCode(){
   var code = $("aCode").value.replace(/\s/g, "");
-  if(code.length < 6){ $("authErr").textContent = "Enter the 6-digit code sent to you"; return; }
+  if(code.length < 6){ $("authErr").textContent = "Enter the 6-digit code sent to you from Appwrite"; return; }
   $("verifyBtn").disabled = true;
   $("authErr").textContent = "";
   try{
@@ -589,7 +589,7 @@ function showConnectError(){
   $("app").style.display = "none";
   var b = $("boot");
   b.style.display = "block";
-  b.innerHTML = '<div id="bootMsg">Cannot connect to Nesty right now.<br> try to restart your router, check data ballance or Check your internet and try again.<br><button onclick="location.reload()">Retry</button></div>';
+  b.innerHTML = '<div id="bootMsg">Cannot connect to Nesty right now.<br> try to restart your router or mobile data, check data ballance or Check your internet and try again.<br><button onclick="location.reload()">Retry</button></div>';
 }
 
 function oauthLogin(name, label){
@@ -1181,7 +1181,7 @@ function timeText(ms){
 function showLimit(){
   var bar = $("limitBar");
   if(limitUntil > Date.now()){
-    bar.textContent = "You have reached the message limit for now. You can chat again at " + timeText(limitUntil) + ".";
+    bar.textContent = "You have reached the message limit for now go to settings to upgrade to ultra or premium or wait until " + timeText(limitUntil) + ".";
     bar.style.display = "block";
   }else{
     bar.style.display = "none";
