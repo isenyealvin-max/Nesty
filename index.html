@@ -279,7 +279,7 @@ header{display:flex;justify-content:space-between;align-items:center;padding:10p
     </div>
 
     <div class="sec">
-      <button class="sbtn" onclick="logout();closeSettings()">Log out</button>
+      <button class="sbtn" onclick="logout();closeSettings()">Log out of your account</button>
     </div>
   </div>
 </div>
@@ -494,7 +494,7 @@ async function resendCode(){
 
 async function verifyCode(){
   var code = $("aCode").value.replace(/\s/g, "");
-  if(code.length < 6){ $("authErr").textContent = "Enter the 6-digit code."; return; }
+  if(code.length < 6){ $("authErr").textContent = "Enter the 6-digit code sent to you"; return; }
   $("verifyBtn").disabled = true;
   $("authErr").textContent = "";
   try{
@@ -542,7 +542,7 @@ function showConnectError(){
   $("app").style.display = "none";
   var b = $("boot");
   b.style.display = "block";
-  b.innerHTML = '<div id="bootMsg">Cannot connect to Nesty right now.<br>Check your internet and try again.<br><button onclick="location.reload()">Retry</button></div>';
+  b.innerHTML = '<div id="bootMsg">Cannot connect to Nesty right now.<br> try to restart your router, check data ballance or Check your internet and try again.<br><button onclick="location.reload()">Retry</button></div>';
 }
 
 function oauthLogin(name, label){
@@ -645,7 +645,7 @@ function renderList(){
   if(!shown.length){
     var em = document.createElement("div");
     em.id = "empty";
-    em.textContent = chats.length ? "No chats match." : "No saved chats yet.";
+    em.textContent = chats.length ? "No chats match." : "No saved chats yet, start chatting with Nesty.";
     list.appendChild(em);
     return;
   }
@@ -801,7 +801,7 @@ function copyText(text, btn){
   function done(){
     if(!btn) return;
     var old = btn.textContent;
-    btn.textContent = "Copied";
+    btn.textContent = "Copied to clipboard";
     setTimeout(function(){ btn.textContent = old; }, 1500);
   }
   function fallback(){
@@ -1019,7 +1019,7 @@ function buildBot(m, isLast){
   if(isLast){
     var rg = document.createElement("button");
     rg.className = "cpbtn";
-    rg.textContent = "Regenerate";
+    rg.textContent = "Regenerate your question";
     rg.onclick = function(){ regenerate(); };
     act.appendChild(rg);
   }
@@ -1059,7 +1059,7 @@ function renderAll(){
     var title = n ? "Hello " + esc(n) + ", how are you doing?" : "What can I help with?";
     var sub = n ? "What can I help you with today?" : "Ask me anything.";
     chat.innerHTML = '<div id="welcome"><img src="/icon-192.png" alt=""><h2>' + title + '</h2><div>' + sub + '</div><div class="sugs" id="sugs"></div></div>';
-    var ideas = ["Help me write an email", "Explain something simply", "Make me a study plan", "Tell me a fun fact"];
+    var ideas = ["Help me write an email", "Explain something simply", "Make me a study plan", "Tell me a fun fact", "ask me riddles", "who are you"];
     ideas.forEach(function(t){
       var b = document.createElement("button");
       b.textContent = t;
@@ -1075,7 +1075,7 @@ function renderAll(){
   if(loading){
     var w = document.createElement("div");
     w.className = "msg bot";
-    w.textContent = creatingImg ? "Creating your picture..." : (searchingNow ? "Searching the web..." : "Thinking...");
+    w.textContent = creatingImg ? "Creating your picture, please wait..." : (searchingNow ? "Searching the web..." : "Thinking...");
     chat.appendChild(w);
   }
   chat.scrollTop = chat.scrollHeight;
@@ -1428,7 +1428,7 @@ function drawImg(){
 function toggleImg(){
   imageNext = !imageNext;
   drawImg();
-  if(imageNext) toast("Describe the picture you want, then send.");
+  if(imageNext) toast("Describe the picture you want step by step, then send.Nesty can make mistakes");
 }
 
 async function makeImage(prompt){
@@ -1470,7 +1470,7 @@ async function makeImage(prompt){
         toast(data.left + " picture" + (data.left === 1 ? "" : "s") + " left before a short break.");
       }
     }else{
-      messages.push({role:"assistant", content: data.reply || "I could not make the picture. Please try again."});
+      messages.push({role:"assistant", content: data.reply || "I could not make the picture. Please try again after a few minutes."});
     }
   }catch(e){
     if(e && e.name === "AbortError"){
@@ -1748,7 +1748,7 @@ function sMsg(t){
 
 function notifText(){
   if(!("Notification" in window)) return "Notifications are not supported on this device.";
-  if(Notification.permission === "granted") return "On. You get a notification when an answer arrives while Nesty is in the background.";
+  if(Notification.permission === "granted") return "👍On. You get a notification when an answer arrives while Nesty is in the background.";
   if(Notification.permission === "denied") return "Blocked. To turn them on, open your phone or Chrome site settings for Nesty and allow notifications.";
   return "Off. Turn them on to get a notification when an answer arrives while Nesty is in the background.";
 }
@@ -1838,10 +1838,10 @@ async function wipeChats(){
 
 async function deleteAllChats(){
   if(!confirm("Delete ALL your saved chats? This cannot be undone.")) return;
-  sMsg("Deleting...");
+  sMsg("Deleting wait a few momment...");
   try{
     await wipeChats();
-    sMsg("All chats deleted.");
+    sMsg("All chats deleted contact Red elementteam to recover.");
   }catch(e){
     sMsg("Could not delete: " + (e.message || "error"));
   }
@@ -1864,7 +1864,7 @@ async function deleteAccount(){
   closeSettings();
   authMode = "signin";
   showAuth();
-  $("authErr").textContent = "Your account was deleted.";
+  $("authErr").textContent = "Your account was deleted successfully.";
 }
 
 $("q").addEventListener("input", renderList);
