@@ -1656,11 +1656,30 @@ function showChip(label){
   $("chipName").textContent = label;
   $("chip").style.display = "flex";
 }
-
 fileInput.addEventListener("change", async function(){
   var f = fileInput.files[0];
   fileInput.value = "";
   if(!f) return;
+
+  // Check file attachment limit
+  try{
+    var jwt = await getJwt();
+    var check = await fetch("/api/file-check", {
+      method: "POST",
+      headers: {"Content-Type":"application/json", "X-Nesty-Token": jwt}
+    });
+    var lim = await check.json();
+    if(lim.limited){
+      toast("You have reached the file attachment limit. Upgrade your plan or wait.");
+      return;
+    }
+  }catch(e){
+    toast("Could not check limit. Try again.");
+    return;
+  }
+
+  var name = f.name;
+
   var name = f.name;
   var lower = name.toLowerCase();
   try{
