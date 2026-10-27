@@ -305,7 +305,7 @@ async function handleEditImage(request, env) {
 /* ---------- M-Pesa Daraja ---------- */
 async function getMpesaToken(env) {
   const auth = btoa(env.MPESA_CONSUMER_KEY + ":" + env.MPESA_CONSUMER_SECRET);
-  const res = await fetch("https://api.safaricom.co.ke/oauth/v1/generate?grant_type=client_credentials", {
+  const res = await fetch("https://sandbox.safaricom.co.ke/oauth/v1/generate?grant_type=client_credentials", {
     headers: { Authorization: "Basic " + auth },
   });
   if (!res.ok) throw new Error("token failed");
@@ -331,7 +331,7 @@ async function handleStk(request, env) {
 
   try {
     const token = await getMpesaToken(env);
-    const res = await fetch("https://api.safaricom.co.ke/mpesa/stkpush/v1/processrequest", {
+    const res = await fetch("https://sandbox.safaricom.co.ke/mpesa/stkpush/v1/processrequest", {
       method: "POST",
       headers: {
         Authorization: "Bearer " + token,
