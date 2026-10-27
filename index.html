@@ -1361,8 +1361,7 @@ function wsRun(){
       doc = capTag + text;
     }
   }else if(ext === "svg"){
-    doc = "<!doctype html><html><body style='margin:0;display:flex;justify-content:center'>" + text + "<script src="/nesty-upgrades.js"></script>
-</body></html>";
+  doc = "<!doctype html><html><body style='margin:0;display:flex;justify-content:center'>" + text + "</body></html>";
   }else if(ext === "js" || ext === "mjs"){
     doc = "<!doctype html><html><head><meta charset='utf-8'>" + capTag + "</head><body style='font-family:sans-serif;padding:10px'><scr" + "ipt>" + text.replace(/<\/script/gi, "<\\/script") + "\n</scr" + "ipt></body></html>";
   }else if(ext === "md" || ext === "markdown"){
