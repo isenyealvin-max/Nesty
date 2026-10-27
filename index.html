@@ -1518,6 +1518,45 @@ function send(){
   var text = box.value.trim();
   if(!text && !pendingFile && !pendingImage) return;
   if(!text) text = pendingImage ? "Please look at this picture and tell me what you see." : "Please read this and tell me what it says.";
+
+  // Image editing: if user attached an image and the text looks like an edit request
+  var isEdit = pendingImage && text && /\b(make|change|edit|turn|look like|add|remove|wear|running|sitting)\b/i.test(text);
+  if(isEdit){
+    loading = true;
+    renderAll();
+    try{
+      var jwt = await getJwt();
+      var res = await fetch("/api/edit-image", {
+        method: "POST",
+        headers: {"Content-Type":"application/json", "X-Nesty-Token": jwt},
+        body: JSON.stringify({
+          prompt: text,
+          image: pendingImage.data
+        })
+      });
+      var data = await res.json();
+      loading = false;
+      if(data.image){
+        messages.push({role:"user", text:text, image:pendingImage});
+        messages.push({role:"assistant", content:"Here is the edited image:", image:data.image});
+      }else{
+        messages.push({role:"user", text:text, image:pendingImage});
+        messages.push({role:"assistant", content:data.reply || "Could not edit the image."});
+      }
+      pendingImage = null;
+      pendingFile = null;
+      removeFile();
+      renderAll();
+      saveChat();
+      return;
+    }catch(e){
+      loading = false;
+      toast("Image edit failed.");
+      return;
+    }
+  }
+
+  messages.push({role:"user", text:text, file:pendingFile, image:pendingImage});
   messages.push({role:"user", text:text, file:pendingFile, image:pendingImage});
   box.value = "";
   box.style.height = "auto";
@@ -1660,7 +1699,22 @@ function showChip(label){
 fileInput.addEventListener("change", async function(){
   var f = fileInput.files[0];
   fileInput.value = "";
-  if(!f) return;
+  if(!f) return;// Check file attachment limit
+  try{
+    var jwt = await getJwt();
+    var check = await fetch("/api/file-check", {
+      method: "POST",
+      headers: {"Content-Type":"application/json", "X-Nesty-Token": jwt}
+    });
+    var lim = await check.json();
+    if(lim.limited){
+      toast("You have reached the file attachment limit. Upgrade your plan or wait.");
+      return;
+    }
+  }catch(e){
+    toast("Could not check limit. Try again.");
+    return;
+  }
   var name = f.name;
   var lower = name.toLowerCase();
   try{
