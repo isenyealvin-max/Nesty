@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex,nofollow">
+<title>Nesty admin</title>
+<style>
+*{box-sizing:border-box}body{margin:0;font-family:system-ui,sans-serif;background:#fff;color:#1a1a1a}
+main{max-width:560px;margin:0 auto;padding:18px}h1{font-size:22px}
+input,select,button{width:100%;padding:12px;margin:6px 0;border:1px solid #ccc;border-radius:10px;font-size:16px;font-family:inherit}
+button{background:#1a1a1a;color:#fff;border:0}button.l{background:#fff;color:#1a1a1a;border:1px solid #ccc}
+.code{font-family:ui-monospace,Menlo,monospace;font-size:17px;padding:8px 10px;background:#f3f3f3;border-radius:8px;margin:6px 0;display:flex;justify-content:space-between;gap:8px}
+.code span{cursor:pointer;color:#1a56db;font-size:14px;font-family:system-ui}
+table{width:100%;border-collapse:collapse;font-size:13px}td,th{border-bottom:1px solid #eee;padding:6px;text-align:left}
+#msg{color:#c62828;min-height:20px}.note{color:#777;font-size:13px}
+</style>
+</head>
+<body>
+<main>
+<h1>Nesty admin: activation codes</h1>
+<p class="note">Your admin key is typed here each time. It is never saved and is not in any file.</p>
+<input id="key" type="password" placeholder="Admin key" autocomplete="off">
+<select id="plan"><option value="premium">Premium</option><option value="ultra">Ultra</option></select>
+<select id="period"><option value="monthly">Monthly</option><option value="yearly">Yearly</option></select>
+<input id="count" type="number" min="1" max="50" value="1" placeholder="How many codes">
+<input id="label" placeholder="Note, e.g. buyer name or payment reference">
+<button id="gen">Generate code(s)</button>
+<button class="l" id="lst">Show recent codes</button>
+<div id="msg"></div>
+<div id="out"></div>
+</main>
+<script>
+var $ = function (i) { return document.getElementById(i); };
+async function call(path, payload) {
+  $("msg").textContent = "";
+  var res = await fetch(path, { method: "POST", headers: { "Content-Type": "application/json", "X-Admin-Key": $("key").value }, body: JSON.stringify(payload || {}) });
+  var d = await res.json();
+  if (!res.ok) { $("msg").textContent = d.error || "Error"; return null; }
+  return d;
+}
+function esc(s) { return String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;"); }
+$("gen").onclick = async function () {
+  var d = await call("/api/admin/generate", { plan: $("plan").value, period: $("period").value, count: $("count").value, label: $("label").value });
+  if (!d) return;
+  $("out").innerHTML = "<p>" + esc(d.plan) + " " + esc(d.period) + " (KSh " + d.price + "). Copy now; codes cannot be shown again.</p>" +
+    d.codes.map(function (c) { return '<div class="code">' + esc(c) + '<span onclick="navigator.clipboard.writeText(\'' + c + '\')">Copy</span></div>'; }).join("");
+};
+$("lst").onclick = async function () {
+  var d = await call("/api/admin/list", {});
+  if (!d) return;
+  $("out").innerHTML = "<table><tr><th>ID</th><th>Plan</th><th>Note</th><th>Status</th></tr>" +
+    d.codes.map(function (c) {
+      return "<tr><td>" + esc(c.id) + "</td><td>" + esc(c.plan) + " " + esc(c.period) + "</td><td>" + esc(c.label || "") + "</td><td>" +
+        (c.used ? "used " + new Date(c.usedAt).toLocaleString() : "unused") + "</td></tr>";
+    }).join("") + "</table>";
+};
+</script>
+</body>
+  </html>
