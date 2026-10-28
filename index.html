@@ -12,146 +12,161 @@
 <link rel="apple-touch-icon" href="/icon-192.png">
 <script src="https://cdn.jsdelivr.net/npm/appwrite@17.0.0"></script>
 <style>
+:root{--bg:#ffffff;--text:#1a1a1a;--muted:#6b6b6b;--card:#ffffff;--soft:#f0f0f0;--soft2:#e6e6e6;--border:#d8d8d8;--side:#f8f8f8;--btn:#1a1a1a;--btnText:#ffffff;--link:#1a56db}
 *{box-sizing:border-box}
-:root{--accent:#1a1a1a}
-body{margin:0;font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif;background:#fff;color:#1a1a1a}
-.pbtn,.sbtn.dark,#send{background:var(--accent)!important;border-color:var(--accent)!important}
+body{margin:0;font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif;background:var(--bg);color:var(--text)}
 button{font-family:inherit;cursor:pointer}
-#boot{padding:40vh 0;text-align:center;color:#777}
+#boot{padding:40vh 0;text-align:center;color:var(--muted)}
 #auth{display:none;min-height:100dvh;align-items:center;justify-content:center;padding:20px}
 #authCard{width:100%;max-width:360px}
 #authLogo{display:block;width:84px;height:84px;border-radius:20px;margin:0 auto 12px;object-fit:cover}
 #authCard h1{text-align:center;font-size:28px;margin:0 0 4px}
-#authCard p.sub{text-align:center;color:#777;margin:0 0 22px}
-#authCard input{width:100%;padding:13px 14px;border:1px solid #d8d8d8;border-radius:10px;font-size:16px;margin-bottom:10px;font-family:inherit}
+#authCard p.sub{text-align:center;color:var(--muted);margin:0 0 22px}
+#authCard input{width:100%;padding:13px 14px;border:1px solid var(--border);border-radius:10px;font-size:16px;margin-bottom:10px;font-family:inherit;background:var(--card);color:var(--text)}
 #aCode{text-align:center;letter-spacing:6px;font-size:22px}
-.pbtn{width:100%;padding:13px;border:0;border-radius:10px;background:#1a1a1a;color:#fff;font-size:16px}
+.pbtn{width:100%;padding:13px;border:0;border-radius:10px;background:var(--btn);color:var(--btnText);font-size:16px}
 .pbtn:disabled{opacity:.6}
-.lbtn{width:100%;padding:12px;margin-top:10px;border:1px solid #d8d8d8;border-radius:10px;background:#fff;color:#333;font-size:15px}
-.lbtn:disabled{color:#999}
-#codeInfo{text-align:center;color:#555;font-size:14px;margin:0 0 14px}
-.gbtn{width:100%;padding:12px;border:1px solid #d8d8d8;border-radius:10px;background:#fff;color:#222;font-size:15px;display:flex;align-items:center;justify-content:center;gap:10px}
-.or{display:flex;align-items:center;gap:10px;color:#999;font-size:13px;margin:14px 0}
-.or:before,.or:after{content:"";flex:1;height:1px;background:#e5e5e5}
+.lbtn{width:100%;padding:12px;margin-top:10px;border:1px solid var(--border);border-radius:10px;background:var(--card);color:var(--text);font-size:15px}
+.lbtn:disabled{color:var(--muted)}
+#codeInfo{text-align:center;color:var(--muted);font-size:14px;margin:0 0 14px}
+.gbtn{width:100%;padding:12px;border:1px solid var(--border);border-radius:10px;background:var(--card);color:var(--text);font-size:15px;display:flex;align-items:center;justify-content:center;gap:10px}
+.or{display:flex;align-items:center;gap:10px;color:var(--muted);font-size:13px;margin:14px 0}
+.or:before,.or:after{content:"";flex:1;height:1px;background:var(--border)}
 #bootMsg{padding:0 24px}
-#bootMsg button{margin-top:14px;padding:11px 22px;border:0;border-radius:10px;background:#1a1a1a;color:#fff;font-size:15px}
-.legal{text-align:center;margin-top:18px;font-size:13px;color:#999}
-.legal a{color:#777;text-decoration:underline}
+#bootMsg button{margin-top:14px;padding:11px 22px;border:0;border-radius:10px;background:var(--btn);color:var(--btnText);font-size:15px}
+.legal{text-align:center;margin-top:18px;font-size:13px;color:var(--muted)}
+.legal a{color:var(--muted);text-decoration:underline}
+#verAuth{margin-top:6px}
 #limitBar{display:none;background:#fff4e5;border:1px solid #ffd9a0;color:#7a4a00;border-radius:10px;padding:9px 12px;font-size:14px;margin-bottom:8px}
-#side .links{margin-top:10px;font-size:12px;color:#999;text-align:center}
-#side .links a{color:#777}
-#authErr{color:#c62828;font-size:14px;min-height:20px;margin:6px 0}
-#authSwitch{text-align:center;margin-top:16px;font-size:14px;color:#555}
-#authSwitch a{color:#1a1a1a;font-weight:600;text-decoration:underline}
+#side .links{margin-top:10px;font-size:12px;color:var(--muted);text-align:center}
+#side .links a{color:var(--muted)}
+#authErr{color:#e53935;font-size:14px;min-height:20px;margin:6px 0}
+#authSwitch{text-align:center;margin-top:16px;font-size:14px;color:var(--muted)}
+#authSwitch a{color:var(--text);font-weight:600;text-decoration:underline}
 #app{display:none;flex-direction:column;height:100dvh}
-header{display:flex;justify-content:space-between;align-items:center;padding:10px 12px;border-bottom:1px solid #e8e8e8}
+header{display:flex;justify-content:space-between;align-items:center;padding:10px 12px;border-bottom:1px solid var(--border)}
 .logo{font-weight:600;font-size:17px}
-.hbtn{background:#fff;border:1px solid #d8d8d8;color:#444;padding:6px 11px;border-radius:8px;font-size:13px;margin-left:6px}
-.hbtn.on{background:#1a1a1a;color:#fff;border-color:#1a1a1a}
+.hbtn{background:var(--card);border:1px solid var(--border);color:var(--text);padding:6px 11px;border-radius:8px;font-size:13px;margin-left:6px}
+.hbtn.on{background:var(--btn);color:var(--btnText);border-color:var(--btn)}
 #chat{flex:1;overflow-y:auto;padding:16px;max-width:760px;width:100%;margin:0 auto}
-#welcome{text-align:center;margin-top:22vh;color:#777;padding:0 10px}
+#welcome{text-align:center;margin-top:22vh;color:var(--muted);padding:0 10px}
 #welcome img{width:72px;height:72px;border-radius:18px;object-fit:cover;margin-bottom:12px}
-#welcome h2{color:#1a1a1a;font-weight:500;font-size:24px;margin:0 0 6px}
+#welcome h2{color:var(--text);font-weight:500;font-size:24px;margin:0 0 6px}
 .msg{margin:18px 0;line-height:1.6;font-size:15.5px;word-wrap:break-word}
-.user{background:#f1f1f1;padding:10px 14px;border-radius:16px;max-width:85%;margin-left:auto;width:fit-content;white-space:pre-wrap;-webkit-user-select:none;user-select:none;-webkit-touch-callout:none}
-.fileTag{display:inline-block;font-size:12px;background:#dedede;border-radius:6px;padding:2px 8px;margin-bottom:6px}
+.user{background:var(--soft);padding:10px 14px;border-radius:16px;max-width:85%;margin-left:auto;width:fit-content;white-space:pre-wrap;-webkit-user-select:none;user-select:none;-webkit-touch-callout:none}
+.fileTag{display:inline-block;font-size:12px;background:var(--soft2);border-radius:6px;padding:2px 8px;margin-bottom:6px}
 .txt{white-space:normal}
 .txt p{margin:0 0 10px}
 .txt h2,.txt h3,.txt h4{margin:16px 0 8px;line-height:1.3}
 .txt h2{font-size:20px}.txt h3{font-size:17.5px}.txt h4{font-size:16px}
 .txt ul,.txt ol{margin:0 0 10px;padding-left:22px}
 .txt li{margin:3px 0}
-.txt hr{border:0;border-top:1px solid #e3e3e3;margin:14px 0}
-.txt blockquote{margin:0 0 10px;padding:4px 12px;border-left:3px solid #d0d0d0;color:#555}
-.txt a{color:#1a56db;text-decoration:underline}
-.tbl{overflow-x:auto;margin:10px 0;border:1px solid #e3e3e3;border-radius:10px}
+.txt hr{border:0;border-top:1px solid var(--border);margin:14px 0}
+.txt blockquote{margin:0 0 10px;padding:4px 12px;border-left:3px solid var(--border);color:var(--muted)}
+.txt a{color:var(--link);text-decoration:underline}
+.tbl{overflow-x:auto;margin:10px 0;border:1px solid var(--border);border-radius:10px}
 .tbl table{border-collapse:collapse;width:100%;font-size:14px}
-.tbl th,.tbl td{padding:8px 12px;border-bottom:1px solid #eee;text-align:left;vertical-align:top;min-width:90px}
-.tbl th{background:#f5f5f5;font-weight:600;white-space:nowrap}
+.tbl th,.tbl td{padding:8px 12px;border-bottom:1px solid var(--border);text-align:left;vertical-align:top;min-width:90px}
+.tbl th{background:var(--soft);font-weight:600;white-space:nowrap}
 .tbl tr:last-child td{border-bottom:0}
-.txt code{background:#f0f0f0;padding:1px 5px;border-radius:5px;font-family:ui-monospace,Menlo,Consolas,monospace;font-size:14px}
-.code{background:#f7f7f7;border:1px solid #e3e3e3;border-radius:10px;margin:10px 0;overflow:hidden}
-.codebar{display:flex;justify-content:flex-end;padding:2px 6px;background:#ececec}
-.code pre{margin:0;padding:12px;overflow-x:auto;font-size:13.5px;font-family:ui-monospace,Menlo,Consolas,monospace;white-space:pre}
-.cpbtn{background:none;border:0;color:#555;font-size:13px;padding:6px 8px}
+.txt code{background:var(--soft2);padding:1px 5px;border-radius:5px;font-family:ui-monospace,Menlo,Consolas,monospace;font-size:14px}
+.code{background:var(--soft);border:1px solid var(--border);border-radius:10px;margin:10px 0;overflow:hidden}
+.codebar{display:flex;justify-content:flex-end;padding:2px 6px;background:var(--soft2)}
+.code pre{margin:0;padding:12px;overflow-x:auto;font-size:13.5px;font-family:ui-monospace,Menlo,Consolas,monospace;white-space:pre;direction:ltr;text-align:left}
+.cpbtn{background:none;border:0;color:var(--muted);font-size:13px;padding:6px 8px}
 .actions{margin-top:2px}
 #inputWrap{max-width:760px;width:100%;margin:0 auto;padding:6px 14px 14px}
-#chip{display:none;align-items:center;gap:8px;font-size:13px;background:#f1f1f1;border-radius:8px;padding:6px 10px;margin-bottom:8px;width:fit-content}
-#chip button{border:0;background:none;font-size:16px;color:#666}
+#chip{display:none;align-items:center;gap:8px;font-size:13px;background:var(--soft);border-radius:8px;padding:6px 10px;margin-bottom:8px;width:fit-content}
+#chip button{border:0;background:none;font-size:16px;color:var(--muted)}
 #bar{display:flex;gap:6px;align-items:flex-end}
-.ibtn{width:42px;height:42px;border:1px solid #d8d8d8;background:#fff;border-radius:50%;flex:none;font-size:22px;color:#444;display:flex;align-items:center;justify-content:center;padding:0}
+.ibtn{width:42px;height:42px;border:1px solid var(--border);background:var(--card);border-radius:50%;flex:none;font-size:22px;color:var(--text);display:flex;align-items:center;justify-content:center;padding:0}
 .ibtn.on{background:#e53935;color:#fff;border-color:#e53935}
-#send{background:#1a1a1a;color:#FFA500;border:0;font-weight:bold}
-#box{flex:1;resize:none;max-height:140px;background:#fafafa;color:#1a1a1a;border:1px solid #d8d8d8;border-radius:22px;padding:11px 16px;font-size:16px;font-family:inherit;outline:none}
-#menu{position:fixed;display:none;background:#fff;border:1px solid #ddd;border-radius:10px;box-shadow:0 4px 16px rgba(0,0,0,.18);z-index:60;overflow:hidden}
-#menu button{display:block;width:150px;padding:13px 16px;text-align:left;background:#fff;border:0;border-bottom:1px solid #f0f0f0;font-size:15px}
+#send{background:var(--btn);color:var(--btnText);border:0;font-weight:bold}
+#box{flex:1;resize:none;max-height:140px;background:var(--card);color:var(--text);border:1px solid var(--border);border-radius:22px;padding:11px 16px;font-size:16px;font-family:inherit;outline:none}
+#menu{position:fixed;display:none;background:var(--card);border:1px solid var(--border);border-radius:10px;box-shadow:0 4px 16px rgba(0,0,0,.25);z-index:60;overflow:hidden}
+#menu button{display:block;width:150px;padding:13px 16px;text-align:start;background:var(--card);color:var(--text);border:0;border-bottom:1px solid var(--border);font-size:15px}
 #editor{display:none;position:fixed;inset:0;background:rgba(0,0,0,.4);z-index:70;align-items:center;justify-content:center;padding:16px}
-#editCard{background:#fff;border-radius:14px;padding:14px;width:100%;max-width:500px}
-#editBox{width:100%;height:140px;border:1px solid #d8d8d8;border-radius:10px;padding:10px;font-size:16px;font-family:inherit}
+#editCard{background:var(--card);border-radius:14px;padding:14px;width:100%;max-width:500px}
+#editBox{width:100%;height:140px;border:1px solid var(--border);border-radius:10px;padding:10px;font-size:16px;font-family:inherit;background:var(--card);color:var(--text)}
 #editBtns{display:flex;justify-content:flex-end;gap:8px;margin-top:10px}
-#editBtns button{padding:9px 16px;border-radius:8px;border:1px solid #d8d8d8;background:#fff;font-size:15px}
-#editBtns .go{background:#1a1a1a;color:#fff;border-color:#1a1a1a}
+#editBtns button{padding:9px 16px;border-radius:8px;border:1px solid var(--border);background:var(--card);color:var(--text);font-size:15px}
+#editBtns .go{background:var(--btn);color:var(--btnText);border-color:var(--btn)}
 #overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.35);z-index:40}
-#side{position:fixed;top:0;left:0;bottom:0;width:290px;max-width:85%;background:#f8f8f8;z-index:50;transform:translateX(-100%);transition:transform .2s;display:flex;flex-direction:column;border-right:1px solid #e5e5e5}
+#side{position:fixed;top:0;left:0;bottom:0;width:290px;max-width:85%;background:var(--side);z-index:50;transform:translateX(-100%);transition:transform .2s;display:flex;flex-direction:column;border-right:1px solid var(--border)}
 #side.open{transform:translateX(0)}
-#newBtn{margin:14px;padding:12px;border:1px solid #d0d0d0;background:#fff;border-radius:10px;font-size:15px;text-align:left}
+#newBtn{margin:14px;padding:12px;border:1px solid var(--border);background:var(--card);color:var(--text);border-radius:10px;font-size:15px;text-align:start}
 #list{flex:1;overflow-y:auto;padding:0 8px}
 .item{display:flex;align-items:center;border-radius:8px;margin-bottom:2px}
-.item.cur{background:#e9e9e9}
-.item .t{flex:1;text-align:left;background:none;border:0;padding:11px 10px;font-size:14.5px;color:#222;overflow:hidden;white-space:nowrap;text-overflow:ellipsis}
-.item .x{background:none;border:0;color:#888;font-size:18px;padding:8px 12px}
-#empty{color:#999;font-size:14px;padding:10px}
-#side .foot{border-top:1px solid #e5e5e5;padding:12px 14px;font-size:13px;color:#666}
-#side .foot button{margin-top:8px;width:100%;padding:10px;border:1px solid #d0d0d0;background:#fff;border-radius:8px;font-size:14px}
-#toast{display:none;position:fixed;bottom:84px;left:50%;transform:translateX(-50%);background:#333;color:#fff;padding:10px 16px;border-radius:10px;font-size:14px;z-index:80;max-width:90%}
+.item.cur{background:var(--soft2)}
+.item .t{flex:1;text-align:start;background:none;border:0;padding:11px 10px;font-size:14.5px;color:var(--text);overflow:hidden;white-space:nowrap;text-overflow:ellipsis}
+.item .x{background:none;border:0;color:var(--muted);font-size:18px;padding:8px 12px}
+#empty{color:var(--muted);font-size:14px;padding:10px}
+#side .foot{border-top:1px solid var(--border);padding:12px 14px;font-size:13px;color:var(--muted)}
+#side .foot button{margin-top:8px;width:100%;padding:10px;border:1px solid var(--border);background:var(--card);color:var(--text);border-radius:8px;font-size:14px}
+#toast{display:none;position:fixed;bottom:84px;left:50%;transform:translateX(-50%);background:var(--btn);color:var(--btnText);padding:10px 16px;border-radius:10px;font-size:14px;z-index:80;max-width:90%}
 .thumb{display:block;max-width:220px;max-height:220px;border-radius:10px;margin-bottom:6px}
 .sugs{display:flex;flex-wrap:wrap;gap:8px;justify-content:center;margin-top:18px}
-.sugs button{border:1px solid #d8d8d8;background:#fff;color:#333;border-radius:18px;padding:8px 14px;font-size:14px}
-#q{margin:0 14px 10px;width:calc(100% - 28px);padding:9px 12px;border:1px solid #d8d8d8;border-radius:10px;font-size:14px;font-family:inherit}
+.sugs button{border:1px solid var(--border);background:var(--card);color:var(--text);border-radius:18px;padding:8px 14px;font-size:14px}
+#q{margin:0 14px 10px;width:calc(100% - 28px);padding:9px 12px;border:1px solid var(--border);border-radius:10px;font-size:14px;font-family:inherit;background:var(--card);color:var(--text)}
 #side .prof{display:flex;align-items:center;gap:10px;cursor:pointer;margin-bottom:6px}
 #side .pt{min-width:0}
-#sideName{font-weight:600;color:#333;font-size:14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#sideName{font-weight:600;color:var(--text);font-size:14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 #who{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-#settings{display:none;position:fixed;inset:0;background:#fff;z-index:75;overflow-y:auto}
+#settings{display:none;position:fixed;inset:0;background:var(--bg);z-index:75;overflow-y:auto}
 #settings .in{max-width:520px;margin:0 auto;padding:14px 18px 50px}
 #settings .bar{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px}
 #settings .bar h2{margin:0;font-size:20px}
-#settings .sec{border:1px solid #e8e8e8;border-radius:12px;padding:14px;margin:12px 0}
-#settings .sec h3{margin:0 0 10px;font-size:15px;color:#555}
-#settings input[type=text]{width:100%;padding:11px 12px;border:1px solid #d8d8d8;border-radius:10px;font-size:16px;margin-bottom:8px;font-family:inherit}
+#settings .sec{border:1px solid var(--border);border-radius:12px;padding:14px;margin:12px 0}
+#settings .sec h3{margin:0 0 10px;font-size:15px;color:var(--muted)}
+#settings input[type=text]{width:100%;padding:11px 12px;border:1px solid var(--border);border-radius:10px;font-size:16px;margin-bottom:8px;font-family:inherit;background:var(--card);color:var(--text)}
 #settings .row{display:flex;gap:8px;flex-wrap:wrap;margin-top:6px}
-.sbtn{padding:10px 14px;border:1px solid #d0d0d0;background:#fff;border-radius:10px;font-size:14px;color:#222}
-.sbtn.dark{background:#1a1a1a;color:#fff;border-color:#1a1a1a}
-.sbtn.red{color:#c62828;border-color:#e8b4b4}
+.sbtn{padding:10px 14px;border:1px solid var(--border);background:var(--card);border-radius:10px;font-size:14px;color:var(--text)}
+.sbtn.dark{background:var(--btn);color:var(--btnText);border-color:var(--btn)}
+.sbtn.red{color:#e53935;border-color:#e8b4b4}
 #avBig{margin:0 auto 10px}
-#sMsg{color:#2e7d32;font-size:14px;min-height:20px}
-.muted2{color:#777;font-size:13.5px;margin:4px 0 8px}
-#modeRow{display:flex;justify-content:flex-start;margin-bottom:6px}
-#webBtn{background:#fff;border:1px solid #d8d8d8;color:#555;border-radius:14px;padding:4px 11px;font-size:12.5px}
+#sMsg{color:#43a047;font-size:14px;min-height:20px}
+.muted2{color:var(--muted);font-size:13.5px;margin:4px 0 8px}
+#modeRow{display:flex;justify-content:flex-start;margin-bottom:6px;gap:8px}
+#webBtn{background:var(--card);border:1px solid var(--border);color:var(--muted);border-radius:14px;padding:4px 11px;font-size:12.5px}
 #webBtn.on{background:#1a56db;border-color:#1a56db;color:#fff}
-#webBtn.off{color:#999}
-.src{margin:8px 0 2px;font-size:12.5px;color:#777;line-height:1.7}
-.src a{display:inline-block;margin:0 6px 4px 0;padding:2px 9px;border:1px solid #e0e0e0;border-radius:12px;color:#444;text-decoration:none;background:#fafafa}
-#modeRow{gap:8px}
-#imgBtn{background:#fff;border:1px solid #d8d8d8;color:#555;border-radius:14px;padding:4px 11px;font-size:12.5px}
+#webBtn.off{opacity:.65}
+.src{margin:8px 0 2px;font-size:12.5px;color:var(--muted);line-height:1.7}
+.src a{display:inline-block;margin:0 6px 4px 0;padding:2px 9px;border:1px solid var(--border);border-radius:12px;color:var(--text);text-decoration:none;background:var(--card)}
+#imgBtn{background:var(--card);border:1px solid var(--border);color:var(--muted);border-radius:14px;padding:4px 11px;font-size:12.5px}
 #imgBtn.on{background:#7c3aed;border-color:#7c3aed;color:#fff}
-.gimg{display:block;max-width:100%;width:420px;border-radius:12px;border:1px solid #e3e3e3;margin-bottom:6px}
-.gnote{color:#777;font-size:14px}
-#ws{display:none;position:fixed;inset:0;background:#fff;z-index:85;overflow-y:auto}
-#ws .wsin{max-width:760px;margin:0 auto;padding:12px 14px 40px}
-#ws .wsbar{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px}
-#wsName{width:100%;padding:9px 12px;border:1px solid #d0d0d0;border-radius:10px;font-size:15px;margin-bottom:8px;font-family:ui-monospace,Menlo,Consolas,monospace}
-#wsText{width:100%;height:42vh;padding:10px;border:1px solid #d0d0d0;border-radius:10px;font-size:13.5px;font-family:ui-monospace,Menlo,Consolas,monospace;white-space:pre;overflow:auto;resize:vertical;tab-size:2;background:#fafafa;color:#222}
-#ws .wsrow{display:flex;flex-wrap:wrap;gap:8px;margin:10px 0}
-#ws .wsask{display:flex;gap:8px;margin:6px 0 10px}
-#wsAsk{flex:1;min-width:0;padding:10px 12px;border:1px solid #d0d0d0;border-radius:10px;font-size:15px}
-#ws .wsh{display:flex;justify-content:space-between;align-items:center;font-size:13px;color:#777;margin:12px 0 6px}
-#wsFrame{width:100%;height:45vh;border:1px solid #d8d8d8;border-radius:10px;background:#fff}
-#wsFrame.big{height:78vh}
-#wsLog{background:#f7f7f7;border:1px solid #e3e3e3;border-radius:10px;padding:10px;font-size:13px;white-space:pre-wrap;word-break:break-word;min-height:40px;max-height:200px;overflow:auto;margin:0}
-#saveMenu{display:none;position:fixed;background:#fff;border:1px solid #ddd;border-radius:10px;box-shadow:0 4px 16px rgba(0,0,0,.18);z-index:80;overflow:hidden}
-#saveMenu button{display:block;width:210px;padding:12px 16px;text-align:left;background:#fff;border:0;border-bottom:1px solid #f0f0f0;font-size:15px}
-.codelang{margin-right:auto;font-size:12.5px;color:#777;align-self:center;padding-left:6px}
+.gimg{display:block;max-width:100%;width:420px;border-radius:12px;border:1px solid var(--border);margin-bottom:6px}
+.gnote{color:var(--muted);font-size:14px}
+#updateBar{display:none;position:fixed;top:0;left:0;right:0;background:#1a56db;color:#fff;text-align:center;padding:12px;font-size:14px;z-index:90;cursor:pointer}
+.sel{width:100%;padding:11px 12px;border:1px solid var(--border);border-radius:10px;font-size:16px;background:var(--card);color:var(--text);font-family:inherit}
+#aLang{margin-top:14px}
+#sInstr{width:100%;padding:11px 12px;border:1px solid var(--border);border-radius:10px;font-size:16px;margin-bottom:8px;font-family:inherit;resize:vertical;background:var(--card);color:var(--text)}
+.memItem{display:flex;justify-content:space-between;align-items:flex-start;gap:8px;padding:8px 10px;background:var(--soft);border-radius:8px;margin-bottom:6px;font-size:14.5px}
+.memItem button{border:0;background:none;font-size:18px;color:var(--muted)}
+#swatches{display:flex;flex-wrap:wrap;gap:10px;margin:8px 0 12px}
+.sw{width:36px;height:36px;border-radius:50%;border:2px solid var(--border);padding:0}
+.sw.on{outline:3px solid #1a56db;outline-offset:2px}
+.customBg{display:flex;align-items:center;gap:10px;font-size:14px;color:var(--muted)}
+#bgPick{width:44px;height:34px;border:0;padding:0;background:none}
+#sMsg{position:sticky;top:0;z-index:2;background:var(--bg)}
+#settings input[type=password]{width:100%;padding:11px 12px;border:1px solid var(--border);border-radius:10px;font-size:16px;margin-bottom:8px;font-family:inherit;background:var(--card);color:var(--text)}
+.hbtn.up{background:#1a56db;color:#fff;border-color:#1a56db}
+.hbtn.plan{border-color:#7c3aed;color:#7c3aed}
+#promoBar{display:none;position:relative;background:#eef4ff;border:1px solid #b9d0ff;color:#173b8f;border-radius:10px;padding:10px 34px 10px 12px;font-size:14px;margin-bottom:8px}
+#promoBar .x{position:absolute;top:2px;right:6px;border:0;background:none;font-size:20px;color:inherit}
+.upRow{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px}
+.upRow button{padding:7px 12px;border-radius:8px;border:1px solid #1a56db;background:#fff;color:#1a56db;font-size:13px;font-weight:600}
+#limitBar .upRow button{border-color:#7a4a00;color:#7a4a00}
+#plans{display:none;position:fixed;inset:0;background:var(--bg);z-index:76;overflow-y:auto}
+#plans .in{max-width:520px;margin:0 auto;padding:14px 18px 50px}
+.pcard{border:1px solid var(--border);border-radius:12px;padding:14px;margin:12px 0;background:var(--card)}
+.pcard.cur{border-color:#1a56db}
+.pcard.focus{outline:3px solid #7c3aed}
+.pcard h3{margin:0 0 4px;font-size:17px}
+.pcard .price{font-size:14px;color:var(--muted);margin-bottom:6px}
+.pcard ul,.pcard ol{margin:6px 0 0;padding-left:22px;font-size:14.5px}
+#actMsg.ok{color:#43a047}
+#actMsg.bad{color:#e53935}
+#actCode{width:100%;padding:12px;border:1px solid var(--border);border-radius:10px;font-size:16px;letter-spacing:2px;text-transform:uppercase;margin:8px 0;background:var(--card);color:var(--text);font-family:inherit}
 </style>
 </head>
 <body>
@@ -162,15 +177,18 @@ header{display:flex;justify-content:space-between;align-items:center;padding:10p
   <div id="authCard">
     <img id="authLogo" src="/icon-192.png" alt="Nesty AI">
     <h1>Nesty AI</h1>
-    <p class="sub" id="authSub">Welcome back</p>
+    <p class="sub" id="authSub"></p>
 
     <div id="stepForm">
-      <input id="aFirst" placeholder="First name" style="display:none" autocomplete="given-name">
-      <input id="aLast" placeholder="Second name" style="display:none" autocomplete="family-name">
-      <input id="aEmail" type="email" placeholder="Email" autocomplete="email">
-      <button class="pbtn" id="sendBtn" onclick="sendCode()">Send code</button>
-      <div class="or">or</div>
-      <button class="gbtn" onclick="googleLogin()"><svg width="20" height="20" viewBox="0 0 48 48"><path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/><path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/><path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/><path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/></svg>Continue with Google</button>
+      <input id="aName" data-ph="a_name" style="display:none" autocomplete="name">
+      <input id="aAge" type="number" inputmode="numeric" min="13" max="120" data-ph="a_age" style="display:none">
+      <input id="aEmail" type="email" data-ph="a_email" autocomplete="email">
+      <input id="aPass" type="password" data-ph="a_pass" autocomplete="current-password">
+      <input id="aPass2" type="password" data-ph="a_pass2" style="display:none" autocomplete="new-password">
+      <button class="pbtn" id="sendBtn" onclick="submitAuth()"></button>
+      <button class="lbtn" id="codeLoginBtn" onclick="emailCodeLogin()"></button>
+      <div class="or" data-i="a_or"></div>
+      <button class="gbtn" onclick="googleLogin()"><svg width="20" height="20" viewBox="0 0 48 48"><path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/><path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/><path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/><path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/></svg><span data-i="a_google"></span></button>
       <button class="gbtn" id="fbBtn" style="margin-top:10px;display:none" onclick="facebookLogin()"><svg width="20" height="20" viewBox="0 0 24 24"><path fill="#1877F2" d="M24 12.07C24 5.4 18.63 0 12 0S0 5.4 0 12.07C0 18.1 4.39 23.1 10.13 24v-8.44H7.08v-3.49h3.05V9.41c0-3.02 1.79-4.69 4.53-4.69 1.31 0 2.68.24 2.68.24v2.97h-1.51c-1.49 0-1.96.93-1.96 1.88v2.26h3.33l-.53 3.49h-2.8V24C19.61 23.1 24 18.1 24 12.07z"/></svg>Continue with Facebook</button>
       <div id="authSwitch"></div>
     </div>
@@ -178,33 +196,36 @@ header{display:flex;justify-content:space-between;align-items:center;padding:10p
     <div id="stepCode" style="display:none">
       <p id="codeInfo"></p>
       <input id="aCode" inputmode="numeric" maxlength="6" placeholder="------" autocomplete="one-time-code">
-      <button class="pbtn" id="verifyBtn" onclick="verifyCode()">Verify</button>
-      <button class="lbtn" id="resendBtn" onclick="resendCode()">Resend code</button>
-      <button class="lbtn" onclick="backToForm()">Change email</button>
+      <button class="pbtn" id="verifyBtn" onclick="verifyCode()" data-i="a_verify"></button>
+      <button class="lbtn" id="resendBtn" onclick="resendCode()"></button>
+      <button class="lbtn" onclick="backToForm()" data-i="a_change"></button>
     </div>
 
     <div id="authErr"></div>
-    <div class="legal">By continuing you agree to our <a href="/terms.html">Terms</a> and <a href="/privacy.html">Privacy Policy</a>.</div>
+    <select id="aLang" class="sel" onchange="setUiLang(this.value)"></select>
+    <div class="legal" id="legal"></div>
+    <div class="legal" id="verAuth"></div>
   </div>
 </div>
 
 <div id="app">
   <header>
-    <button class="hbtn" style="margin-left:0" onclick="openSide()">&#9776;</button>
+    <div><button class="hbtn" style="margin-left:0" onclick="openSide()">&#9776;</button><button class="hbtn" id="planBtn" onclick="openPlans()"></button></div>
     <div class="logo">Nesty AI</div>
     <div>
-      <button class="hbtn" id="spk" onclick="toggleSpeak()">Voice: Off</button>
-      <button class="hbtn" onclick="newChat()">+ New</button>
+      <button class="hbtn" id="spk" onclick="toggleSpeak()"></button>
+      <button class="hbtn" onclick="newChat()" data-i="new"></button>
     </div>
   </header>
   <div id="chat"></div>
   <div id="inputWrap">
-    <div id="limitBar"></div>
-    <div id="modeRow"><button id="webBtn" onclick="cycleWeb()">Web search: Auto</button><button id="imgBtn" onclick="toggleImg()">Make an image</button></div>
+    <div id="promoBar"><button class="x" onclick="hidePromo()">&times;</button><div id="promoTxt"></div><div class="upRow"><button onclick="openPlans('premium')" data-i="btn_premium"></button><button onclick="openPlans('ultra')" data-i="btn_ultra"></button></div></div>
+    <div id="limitBar"><div id="limitTxt"></div><div class="upRow"><button onclick="openPlans('ultra')" data-i="btn_ultra"></button><button onclick="openPlans('premium')" data-i="btn_premium"></button></div></div>
+    <div id="modeRow"><button id="webBtn" onclick="cycleWeb()"></button><button id="imgBtn" onclick="toggleImg()"></button></div>
     <div id="chip"><span id="chipName"></span><button onclick="removeFile()">&times;</button></div>
     <div id="bar">
       <button class="ibtn" onclick="document.getElementById('file').click()">+</button>
-      <textarea id="box" rows="1" placeholder="Message Nesty"></textarea>
+      <textarea id="box" rows="1" dir="auto" data-ph="ph"></textarea>
       <button class="ibtn" id="mic" onclick="toggleMic()"><svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M12 14a3 3 0 0 0 3-3V5a3 3 0 0 0-6 0v6a3 3 0 0 0 3 3zm5-3a5 5 0 0 1-10 0H5a7 7 0 0 0 6 6.92V21h2v-3.08A7 7 0 0 0 19 11h-2z"/></svg></button>
       <button class="ibtn" id="send" onclick="send()">&#8593;</button>
     </div>
@@ -214,155 +235,505 @@ header{display:flex;justify-content:space-between;align-items:center;padding:10p
 
 <div id="overlay" onclick="closeSide()"></div>
 <div id="side">
-  <button id="newBtn" onclick="newChat()">+ New chat</button>
-  <input id="q" placeholder="Search chats">
+  <button id="newBtn" onclick="newChat()" data-i="side_new"></button>
+  <input id="q" data-ph="search">
   <div id="list"></div>
   <div class="foot">
     <div class="prof" onclick="openSettings()"><div id="sideAv"></div><div class="pt"><div id="sideName"></div><div id="who"></div></div></div>
-    <button onclick="wsOpenLast()">Code &amp; files</button>
-    <button onclick="openSettings()">Settings</button>
-    <button id="installBtn" style="display:none" onclick="installApp()">Install Nesty app</button>
-    <button onclick="logout()">Log out of your account</button>
-    <div class="links"><a href="/terms.html">Terms</a> &middot; <a href="/privacy.html">Privacy</a></div>
+    <button onclick="openPlans()" data-i="plans_btn"></button>
+    <button onclick="openSettings()" data-i="settings"></button>
+    <button id="installBtn" style="display:none" onclick="installApp()" data-i="install"></button>
+    <button onclick="logout()" data-i="logout"></button>
+    <div class="links"><span id="sideLinks"></span><div id="verSide"></div></div>
   </div>
 </div>
 
 <div id="menu">
-  <button onclick="menuEdit()">Edit</button>
-  <button onclick="menuCopy()">Copy text</button>
-  <button onclick="menuDelete()" style="border-bottom:0;color:#c62828">Delete</button>
+  <button onclick="menuEdit()" data-i="edit"></button>
+  <button onclick="menuCopy()" data-i="copytext"></button>
+  <button onclick="menuDelete()" style="border-bottom:0;color:#e53935" data-i="delete"></button>
 </div>
 
 <div id="editor">
   <div id="editCard">
-    <textarea id="editBox"></textarea>
+    <textarea id="editBox" dir="auto"></textarea>
     <div id="editBtns">
-      <button onclick="closeEditor()">Cancel</button>
-      <button class="go" onclick="saveEdit()">Send</button>
+      <button onclick="closeEditor()" data-i="cancel"></button>
+      <button class="go" onclick="saveEdit()" data-i="send"></button>
     </div>
   </div>
 </div>
 
 <div id="settings">
   <div class="in">
-    <div class="bar"><h2>Settings</h2><button class="sbtn" onclick="closeSettings()">Close</button></div>
+    <div class="bar"><h2 data-i="s_title"></h2><button class="sbtn" onclick="closeSettings()" data-i="close"></button></div>
     <div id="sMsg"></div>
 
     <div class="sec">
-      <h3>Profile</h3>
+      <h3 data-i="s_profile"></h3>
       <div id="avBig"></div>
       <div class="row" style="justify-content:center">
-        <button class="sbtn" onclick="$('avFile').click()">Change photo</button>
-        <button class="sbtn" onclick="removeAvatar()">Remove photo</button>
+        <button class="sbtn" onclick="$('avFile').click()" data-i="s_photo"></button>
+        <button class="sbtn" onclick="removeAvatar()" data-i="s_rmphoto"></button>
       </div>
       <input type="file" id="avFile" accept="image/*" style="display:none">
       <div style="margin-top:14px">
-        <input type="text" id="sFirst" placeholder="First name">
-        <input type="text" id="sLast" placeholder="Second name">
-        <button class="sbtn dark" onclick="saveName()">Save name</button>
+        <input type="text" id="sFirst" data-ph="a_first">
+        <input type="text" id="sLast" data-ph="a_last">
+        <button class="sbtn dark" onclick="saveName()" data-i="s_savename"></button>
       </div>
       <div class="muted2" id="sEmail"></div>
     </div>
 
     <div class="sec">
-      <h3>Notifications</h3>
+      <h3 data-i="s_sub"></h3>
+      <div class="muted2" id="subTxt"></div>
+      <button class="sbtn dark" onclick="openPlans()" data-i="s_sub_btn"></button>
+    </div>
+
+    <div class="sec">
+      <h3 data-i="s_pw"></h3>
+      <div class="muted2" data-i="s_pw_d"></div>
+      <input type="password" id="pwOld" data-ph="pw_old" autocomplete="current-password">
+      <input type="password" id="pwNew" data-ph="pw_new" autocomplete="new-password">
+      <input type="password" id="pwNew2" data-ph="pw_new2" autocomplete="new-password">
+      <button class="sbtn dark" onclick="changePassword()" data-i="pw_btn"></button>
+    </div>
+
+    <div class="sec">
+      <h3 data-i="s_lang"></h3>
+      <div class="muted2" data-i="s_lang_d"></div>
+      <select id="sUi" class="sel" onchange="setUiLang(this.value)"></select>
+    </div>
+
+    <div class="sec">
+      <h3 data-i="s_bg"></h3>
+      <div id="swatches"></div>
+      <label class="customBg"><span data-i="s_bg_custom"></span><input type="color" id="bgPick" oninput="pickBg(this.value)"></label>
+    </div>
+
+    <div class="sec">
+      <h3 data-i="s_instr"></h3>
+      <div class="muted2" data-i="s_instr_d"></div>
+      <textarea id="sInstr" maxlength="600" rows="4" dir="auto" data-ph="s_instr_ph"></textarea>
+      <button class="sbtn dark" onclick="saveInstr()" data-i="s_instr_save"></button>
+    </div>
+
+    <div class="sec">
+      <h3 data-i="s_mem"></h3>
+      <div class="muted2" data-i="s_mem_d"></div>
+      <div id="memList"></div>
+      <button class="sbtn red" id="memClear" onclick="clearMemory()" data-i="s_mem_clear"></button>
+    </div>
+
+    <div class="sec">
+      <h3 data-i="s_vlang"></h3>
+      <div class="muted2" data-i="s_vlang_d"></div>
+      <select id="sLang" class="sel" onchange="setVoiceLang(this.value)"></select>
+    </div>
+
+    <div class="sec">
+      <h3 data-i="s_fb"></h3>
+      <div class="muted2" data-i="s_fb_d"></div>
+      <button class="sbtn dark" onclick="sendFeedback()" data-i="s_fb_btn"></button>
+    </div>
+
+    <div class="sec">
+      <h3 data-i="s_notif"></h3>
       <div class="muted2" id="sNotif"></div>
-      <button class="sbtn" id="sNotifBtn" onclick="askNotif()">Turn on notifications</button>
+      <button class="sbtn" id="sNotifBtn" onclick="askNotif()" data-i="n_btn"></button>
     </div>
 
     <div class="sec">
-      <h3>Your data</h3>
-      <div class="muted2">Deleting chats cannot be undone.</div>
+      <h3 data-i="s_data"></h3>
+      <div class="muted2" data-i="s_data_d"></div>
       <div class="row">
-        <button class="sbtn red" onclick="deleteAllChats()">Delete all my chats</button>
-        <button class="sbtn red" onclick="deleteAccount()">Delete my account</button>
+        <button class="sbtn red" onclick="deleteAllChats()" data-i="s_delchats"></button>
+        <button class="sbtn red" onclick="deleteAccount()" data-i="s_delacc"></button>
       </div>
-      <div class="muted2" style="margin-top:10px">Deleting your account removes your chats and closes your account. To have every trace removed, contact us using the email on our <a href="/privacy.html">Privacy Policy</a> page.</div>
+      <div class="muted2" style="margin-top:10px" id="dataNote"></div>
     </div>
 
     <div class="sec">
-      <h3>Appearance</h3>
-      <div class="muted2">Language preference</div>
-      <select id="sLang" onchange="saveLang()" style="width:100%;padding:11px;border:1px solid #d8d8d8;border-radius:10px;font-size:16px;margin-bottom:8px">
-        <option value="en">English</option>
-        <option value="sw">Kiswahili</option>
-        <option value="fr">Français</option>
-        <option value="es">Español</option>
-      </select>
-      <div class="muted2">Theme colour</div>
-      <div class="row">
-        <button class="sbtn" style="background:#1a1a1a;color:#fff" onclick="setTheme('#1a1a1a')">Black</button>
-        <button class="sbtn" style="background:#1a56db;color:#fff" onclick="setTheme('#1a56db')">Blue</button>
-        <button class="sbtn" style="background:#7c3aed;color:#fff" onclick="setTheme('#7c3aed')">Purple</button>
-        <button class="sbtn" style="background:#059669;color:#fff" onclick="setTheme('#059669')">Green</button>
-        <button class="sbtn" style="background:#dc2626;color:#fff" onclick="setTheme('#dc2626')">Red</button>
-      </div>
+      <h3 data-i="s_about"></h3>
+      <div class="muted2" id="aboutTxt"></div>
     </div>
 
     <div class="sec">
-      <h3>Upgrade your plan</h3>
-      <div class="muted2" id="sPlan">You are on the Free plan</div>
-      <div style="border:1px solid #e8e8e8;border-radius:12px;padding:12px;margin:10px 0">
-        <b>Premium — KES 50 / month or KES 600 / year</b>
-        <ul style="margin:6px 0 0;padding-left:18px;font-size:14px">
-          <li>60 messages</li><li>50 file attachments</li><li>6 images</li>
-        </ul>
-      </div>
-      <div style="border:1px solid #e8e8e8;border-radius:12px;padding:12px;margin:10px 0">
-        <b>Ultra — KES 100 / month or KES 36,000 / year</b>
-        <ul style="margin:6px 0 0;padding-left:18px;font-size:14px">
-          <li>80 messages</li><li>70 file attachments</li><li>20 images</li>
-        </ul>
-      </div>
-      <input type="tel" id="mpesaPhone" placeholder="Your M-Pesa phone number (07xxxxxxxx/01×××××××)" style="width:100%;padding:11px;border:1px solid #d8d8d8;border-radius:10px;font-size:16px;margin:8px 0">
-      <div class="row">
-        <button class="sbtn dark" onclick="startPayment('premium', false)">Pay Premium monthly</button>
-        <button class="sbtn dark" onclick="startPayment('premium', true)">Pay Premium yearly</button>
-      </div>
-      <div class="row" style="margin-top:8px">
-        <button class="sbtn dark" onclick="startPayment('ultra', false)">Pay Ultra monthly</button>
-        <button class="sbtn dark" onclick="startPayment('ultra', true)">Pay Ultra yearly</button>
-      </div>
-    </div>
-
-    <div class="sec">
-      <button class="sbtn" onclick="logout();closeSettings()">Log out of your account</button>
+      <button class="sbtn" onclick="logout();closeSettings()" data-i="logout"></button>
     </div>
   </div>
 </div>
 
-<div id="ws">
-  <div class="wsin">
-    <div class="wsbar"><b>Code and files</b><button class="sbtn" onclick="wsClose()">Close</button></div>
-    <input id="wsName" type="text" value="index.html" spellcheck="false" autocapitalize="off">
-    <textarea id="wsText" spellcheck="false" autocapitalize="off" placeholder="Write or paste code here, or open a file from your phone..."></textarea>
-    <div class="wsrow">
-      <button class="sbtn dark" onclick="wsRun()">Run / Preview</button>
-      <button class="sbtn" onclick="wsDownload()">Download</button>
-      <button class="sbtn" onclick="wsCopy()">Copy</button>
-      <button class="sbtn" onclick="wsNew()">New</button>
-      <button class="sbtn" onclick="document.getElementById('wsOpenInput').click()">Open file</button>
-    </div>
-    <input type="file" id="wsOpenInput" style="display:none" accept=".html,.htm,.css,.js,.mjs,.json,.py,.txt,.md,.csv,.xml,.svg,.sql,.java,.c,.cpp,.cs,.php,.ts,.tsx,.jsx,.sh,.yml,.yaml,.kt,.go,.rs,.rb,.swift,.dart,.r,text/*">
-    <div class="wsask">
-      <input id="wsAsk" type="text" placeholder="Ask Nesty to change this file, e.g. make the button green">
-      <button class="sbtn dark" onclick="wsAskNesty()">Ask Nesty</button>
-    </div>
-    <div class="muted2">Code you run here stays on your phone. Only run code you trust.</div>
-    <div id="wsOutWrap" style="display:none">
-      <div class="wsh"><span>Preview</span><button class="sbtn" onclick="wsBig()">Bigger</button></div>
-      <iframe id="wsFrame" sandbox="allow-scripts allow-modals allow-forms allow-popups"></iframe>
-      <div class="wsh"><span>Console</span></div>
-      <pre id="wsLog"></pre>
-    </div>
+<div id="plans">
+  <div class="in">
+    <div style="display:flex;justify-content:space-between;align-items:center"><h2 style="margin:0;font-size:20px" data-i="plans_title"></h2><button class="sbtn" onclick="closePlans()" data-i="close"></button></div>
+    <div class="muted2" id="curPlan"></div>
+    <div id="plansBody"></div>
+    <div class="pcard"><h3 data-i="how_title"></h3><ol id="howList"></ol><div class="muted2" data-i="replaces"></div><button class="sbtn" onclick="sendProof()" data-i="proof_btn"></button></div>
+    <div class="pcard"><h3 data-i="act_title"></h3><input id="actCode" data-ph="act_ph" autocomplete="off" autocapitalize="characters" spellcheck="false"><button class="sbtn dark" id="actBtn" onclick="redeemCode()" data-i="act_btn"></button><div class="muted2" id="actMsg"></div></div>
   </div>
 </div>
-
-<div id="saveMenu"></div>
 
 <div id="toast"></div>
+<div id="updateBar"></div>
 
 <script>
+var VERSION = "V7";
+
+/* ---------- Interface languages ---------- */
+var STR = {
+en:{
+a_welcome:"Welcome back",a_create:"Create your account",a_first:"First name",a_last:"Second name",a_email:"Email",a_send:"Send code",a_or:"or",a_google:"Continue with Google",
+a_new:"New here?",a_createLink:"Create account",a_have:"Already have an account?",a_signin:"Sign in",
+a_sent:"We sent a 6-digit code to {e}. Check your spam folder too.",a_verify:"Verify",a_resend:"Resend code",a_resendIn:"Resend code in {t}",a_change:"Change email",
+legal:"By continuing you agree to our {t} and {p}.",terms:"Terms",privacy:"Privacy Policy",
+e_names:"Enter your first name and second name.",e_email:"Enter a valid email.",e_send:"Could not send the code.",e_code6:"Enter the 6-digit code.",
+e_noacc:"No account found for this email. Please create an account first.",e_badcode:"The code is wrong or expired.",t_newcode:"New code sent.",e_resend:"Could not resend the code.",
+voice:"Voice",on:"On",off:"Off",new:"+ New",ph:"Message Nesty",web:"Web search",auto:"Auto",img:"Make an image",img_on:"Image mode: on",img_tip:"Describe the picture you want, then send.",
+side_new:"+ New chat",search:"Search chats",settings:"Settings",install:"Install Nesty app",logout:"Log out",none:"No saved chats yet.",nomatch:"No chats match.",
+hello:"Hello {n}, how are you doing?",help:"What can I help with?",help2:"What can I help you with today?",ask:"Ask me anything.",
+i1:"Help me write an email",i2:"Explain something simply",i3:"Make me a study plan",i4:"Tell me a fun fact",
+creating:"Creating your picture...",searching:"Searching the web...",thinking:"Thinking...",
+copy:"Copy",copied:"Copied",regen:"Regenerate",download:"Download",another:"Make another",oldpic:"This picture was made earlier and is not kept in your history.",again:"Create it again",sources:"Sources: ",notsaved:"Picture: {n} (not saved)",
+edit:"Edit",copytext:"Copy text",delete:"Delete",cancel:"Cancel",send:"Send",
+w_auto:"Nesty will search the web when a question needs current information.",w_on:"Nesty will search the web for every question.",w_off:"Web search is off.",
+stopped:"Stopped.",session:"Your session ended. Please sign in again.",left_m:"Messages left before a short break: {n}",left_i:"Pictures left before a short break: {n}",
+lim_msg:"You have reached the message limit for now. You can chat again at {t} (in {r}).",lim_img:"You have reached the picture limit for now. You can make pictures again at {t} (in {r}).",
+pic_big:"That picture is too big (max 20 MB).",preparing:"Preparing picture...",unsupported:"This file type is not supported yet. Use a picture, PDF, Word (.docx) or text file.",
+file_big:"That file is too big (max 15 MB).",reading:"Reading {n}...",pdf_empty:"This PDF has no readable text. It may be scanned pictures.",docx_empty:"I could not find any text in this Word file.",txt_big:"Text files can be up to 1 MB.",read_fail:"Could not read this file.",
+p_pic:"Please look at this picture and tell me what you see.",p_file:"Please read this and tell me what it says.",
+s_title:"Settings",close:"Close",s_profile:"Profile",s_photo:"Change photo",s_rmphoto:"Remove photo",s_savename:"Save name",s_signed:"Signed in as {e}",
+s_instr:"Custom instructions",s_instr_d:"Tell Nesty how to answer you in every chat. Example: I'm a Grade 9 student, explain simply.",s_instr_ph:"Type your instructions here",s_instr_save:"Save instructions",
+s_mem:"Memory",s_mem_d:"Nesty saves important facts about you automatically, such as your name. You can also say “Remember that ...”. Delete anything here at any time.",s_mem_none:"Nothing saved yet.",s_mem_clear:"Clear memory",
+s_lang:"Language",s_lang_d:"Language of the app menus and buttons.",s_bg:"Background colour",s_bg_custom:"Pick your own colour",
+s_vlang:"Voice language",s_vlang_d:"Used for the microphone and for reading answers aloud.",
+s_fb:"Feedback",s_fb_d:"Found a problem or have an idea? Send us an email.",s_fb_btn:"Send feedback",fb_body:"Describe the problem or idea here:",
+s_notif:"Notifications",n_na:"Notifications are not supported on this device.",n_on:"On. You get a notification when an answer arrives while Nesty is in the background.",
+n_denied:"Blocked. To turn them on, open your phone or Chrome site settings for Nesty and allow notifications.",n_off:"Off. Turn them on to get a notification when an answer arrives while Nesty is in the background.",n_btn:"Turn on notifications",
+s_data:"Your data",s_data_d:"Deleting chats cannot be undone.",s_delchats:"Delete all my chats",s_delacc:"Delete my account",
+s_data_note:"Deleting your account removes your chats and closes your account. To have every trace removed, contact us using the email on our {p} page.",
+s_about:"About",s_made:"Made by Red element",
+name_saved:"Name saved.",name_need:"Please enter your first name.",photo_ok:"Photo updated.",photo_rm:"Photo removed.",instr_ok:"Instructions saved.",mem_cleared:"Memory cleared.",mem_saved:"Saved to memory.",
+vlang_ok:"Voice language saved.",deleting:"Deleting...",chats_deleted:"All chats deleted.",conf_all:"Delete ALL your saved chats? This cannot be undone.",
+conf_acc:"Delete your account? Your chats will be removed and you will not be able to sign in again.",type_del:"Type DELETE to confirm.",acc_deleted:"Your account was deleted.",
+conf_mem:"Clear everything Nesty remembers about you?",conf_chat:"Delete this chat?",pick_pic:"Please choose a picture.",upd:"New version available. Tap to refresh.",updating:"Updating..."
+},
+sw:{
+a_welcome:"Karibu tena",a_create:"Fungua akaunti yako",a_first:"Jina la kwanza",a_last:"Jina la pili",a_email:"Barua pepe",a_send:"Tuma msimbo",a_or:"au",a_google:"Endelea na Google",
+a_new:"Mgeni hapa?",a_createLink:"Fungua akaunti",a_have:"Tayari una akaunti?",a_signin:"Ingia",
+a_sent:"Tumetuma msimbo wa tarakimu 6 kwa {e}. Angalia pia folda ya barua taka.",a_verify:"Thibitisha",a_resend:"Tuma msimbo tena",a_resendIn:"Tuma msimbo tena baada ya {t}",a_change:"Badilisha barua pepe",
+legal:"Kwa kuendelea unakubali {t} na {p} zetu.",terms:"Masharti",privacy:"Sera ya Faragha",
+e_names:"Weka jina lako la kwanza na la pili.",e_email:"Weka barua pepe sahihi.",e_send:"Imeshindwa kutuma msimbo.",e_code6:"Weka msimbo wa tarakimu 6.",
+e_noacc:"Hakuna akaunti kwa barua pepe hii. Tafadhali fungua akaunti kwanza.",e_badcode:"Msimbo si sahihi au umeisha muda.",t_newcode:"Msimbo mpya umetumwa.",e_resend:"Imeshindwa kutuma msimbo tena.",
+voice:"Sauti",on:"Imewashwa",off:"Imezimwa",new:"+ Mpya",ph:"Mwandikie Nesty",web:"Utafutaji wa wavuti",auto:"Otomatiki",img:"Tengeneza picha",img_on:"Hali ya picha: imewashwa",img_tip:"Elezea picha unayotaka, kisha tuma.",
+side_new:"+ Mazungumzo mapya",search:"Tafuta mazungumzo",settings:"Mipangilio",install:"Sakinisha programu ya Nesty",logout:"Toka",none:"Hakuna mazungumzo yaliyohifadhiwa bado.",nomatch:"Hakuna mazungumzo yanayolingana.",
+hello:"Habari {n}, hujambo?",help:"Nikusaidie nini?",help2:"Nikusaidie nini leo?",ask:"Niulize chochote.",
+i1:"Nisaidie kuandika barua pepe",i2:"Nielezee kitu kwa urahisi",i3:"Nitengenezee ratiba ya kusoma",i4:"Niambie jambo la kufurahisha",
+creating:"Inatengeneza picha yako...",searching:"Inatafuta kwenye wavuti...",thinking:"Inafikiri...",
+copy:"Nakili",copied:"Imenakiliwa",regen:"Jibu upya",download:"Pakua",another:"Tengeneza nyingine",oldpic:"Picha hii ilitengenezwa awali na haihifadhiwi kwenye historia yako.",again:"Itengeneze tena",sources:"Vyanzo: ",notsaved:"Picha: {n} (haijahifadhiwa)",
+edit:"Hariri",copytext:"Nakili maandishi",delete:"Futa",cancel:"Ghairi",send:"Tuma",
+w_auto:"Nesty itatafuta kwenye wavuti swali likihitaji taarifa za sasa.",w_on:"Nesty itatafuta kwenye wavuti kwa kila swali.",w_off:"Utafutaji wa wavuti umezimwa.",
+stopped:"Imesimamishwa.",session:"Kipindi chako kimeisha. Tafadhali ingia tena.",left_m:"Ujumbe uliobaki kabla ya mapumziko mafupi: {n}",left_i:"Picha zilizobaki kabla ya mapumziko mafupi: {n}",
+lim_msg:"Umefikia kikomo cha ujumbe kwa sasa. Unaweza kuzungumza tena saa {t} (baada ya {r}).",lim_img:"Umefikia kikomo cha picha kwa sasa. Unaweza kutengeneza picha tena saa {t} (baada ya {r}).",
+preparing:"Inaandaa picha...",reading:"Inasoma {n}...",read_fail:"Imeshindwa kusoma faili hii.",
+p_pic:"Tafadhali tazama picha hii uniambie unachoona.",p_file:"Tafadhali soma hii uniambie inasema nini.",
+s_title:"Mipangilio",close:"Funga",s_profile:"Wasifu",s_photo:"Badilisha picha",s_rmphoto:"Ondoa picha",s_savename:"Hifadhi jina",s_signed:"Umeingia kama {e}",
+s_instr:"Maelekezo maalum",s_instr_d:"Mwambie Nesty jinsi ya kukujibu kwenye kila mazungumzo. Mfano: Mimi ni mwanafunzi wa Gredi ya 9, eleza kwa urahisi.",s_instr_ph:"Andika maelekezo yako hapa",s_instr_save:"Hifadhi maelekezo",
+s_mem:"Kumbukumbu",s_mem_d:"Nesty huhifadhi moja kwa moja taarifa muhimu kukuhusu, kama jina lako. Unaweza pia kusema “Kumbuka kwamba ...”. Futa chochote hapa wakati wowote.",s_mem_none:"Hakuna kilichohifadhiwa bado.",s_mem_clear:"Futa kumbukumbu",
+s_lang:"Lugha",s_lang_d:"Lugha ya menyu na vitufe vya programu.",s_bg:"Rangi ya mandhari",s_bg_custom:"Chagua rangi yako mwenyewe",
+s_vlang:"Lugha ya sauti",s_vlang_d:"Hutumika kwa maikrofoni na kusoma majibu kwa sauti.",
+s_fb:"Maoni",s_fb_d:"Umepata tatizo au una wazo? Tutumie barua pepe.",s_fb_btn:"Tuma maoni",
+s_notif:"Arifa",n_na:"Arifa hazitumiki kwenye kifaa hiki.",n_on:"Zimewashwa. Unapata arifa jibu linapofika Nesty ikiwa nyuma.",
+n_denied:"Zimezuiwa. Ili kuziwasha, fungua mipangilio ya tovuti ya Nesty kwenye simu au Chrome na uruhusu arifa.",n_off:"Zimezimwa. Ziwashe upate arifa jibu linapofika Nesty ikiwa nyuma.",n_btn:"Washa arifa",
+s_data:"Data yako",s_data_d:"Kufuta mazungumzo hakuwezi kutenduliwa.",s_delchats:"Futa mazungumzo yangu yote",s_delacc:"Futa akaunti yangu",
+s_data_note:"Kufuta akaunti kunaondoa mazungumzo yako na kufunga akaunti yako. Ili kuondoa kila kitu, wasiliana nasi kwa barua pepe iliyo kwenye ukurasa wa {p}.",
+s_about:"Kuhusu",s_made:"Imetengenezwa na Red element",
+name_saved:"Jina limehifadhiwa.",name_need:"Tafadhali weka jina lako la kwanza.",photo_ok:"Picha imebadilishwa.",photo_rm:"Picha imeondolewa.",instr_ok:"Maelekezo yamehifadhiwa.",mem_cleared:"Kumbukumbu imefutwa.",mem_saved:"Imehifadhiwa kwenye kumbukumbu.",
+vlang_ok:"Lugha ya sauti imehifadhiwa.",deleting:"Inafuta...",chats_deleted:"Mazungumzo yote yamefutwa.",conf_all:"Futa mazungumzo yako YOTE yaliyohifadhiwa? Hili haliwezi kutenduliwa.",
+conf_acc:"Futa akaunti yako? Mazungumzo yako yataondolewa na hutaweza kuingia tena.",type_del:"Andika DELETE ili kuthibitisha.",acc_deleted:"Akaunti yako imefutwa.",
+conf_mem:"Futa kila kitu ambacho Nesty inakumbuka kukuhusu?",conf_chat:"Futa mazungumzo haya?",pick_pic:"Tafadhali chagua picha.",upd:"Toleo jipya linapatikana. Gusa ili kuonyesha upya.",updating:"Inasasisha..."
+},
+fr:{
+a_welcome:"Bon retour",a_create:"Créez votre compte",a_first:"Prénom",a_last:"Nom",a_email:"E-mail",a_send:"Envoyer le code",a_or:"ou",a_google:"Continuer avec Google",
+a_new:"Nouveau ici ?",a_createLink:"Créer un compte",a_have:"Vous avez déjà un compte ?",a_signin:"Se connecter",
+a_sent:"Nous avons envoyé un code à 6 chiffres à {e}. Vérifiez aussi vos spams.",a_verify:"Vérifier",a_resend:"Renvoyer le code",a_resendIn:"Renvoyer le code dans {t}",a_change:"Changer d'e-mail",
+legal:"En continuant, vous acceptez nos {t} et notre {p}.",terms:"Conditions",privacy:"Politique de confidentialité",
+e_names:"Entrez votre prénom et votre nom.",e_email:"Entrez un e-mail valide.",e_send:"Impossible d'envoyer le code.",e_code6:"Entrez le code à 6 chiffres.",
+e_noacc:"Aucun compte trouvé pour cet e-mail. Veuillez d'abord créer un compte.",e_badcode:"Le code est incorrect ou expiré.",t_newcode:"Nouveau code envoyé.",e_resend:"Impossible de renvoyer le code.",
+voice:"Voix",on:"Activée",off:"Désactivée",new:"+ Nouveau",ph:"Écrire à Nesty",web:"Recherche web",auto:"Auto",img:"Créer une image",img_on:"Mode image : activé",img_tip:"Décrivez l'image voulue, puis envoyez.",
+side_new:"+ Nouvelle discussion",search:"Rechercher",settings:"Paramètres",install:"Installer l'app Nesty",logout:"Se déconnecter",none:"Aucune discussion enregistrée.",nomatch:"Aucune discussion trouvée.",
+hello:"Bonjour {n}, comment allez-vous ?",help:"Comment puis-je vous aider ?",help2:"En quoi puis-je vous aider aujourd'hui ?",ask:"Posez-moi n'importe quelle question.",
+i1:"Aide-moi à écrire un e-mail",i2:"Explique-moi quelque chose simplement",i3:"Fais-moi un plan d'étude",i4:"Raconte-moi une anecdote amusante",
+creating:"Création de votre image...",searching:"Recherche sur le web...",thinking:"Réflexion...",
+copy:"Copier",copied:"Copié",regen:"Régénérer",download:"Télécharger",another:"En créer une autre",oldpic:"Cette image a été créée plus tôt et n'est pas conservée dans votre historique.",again:"La recréer",sources:"Sources : ",notsaved:"Image : {n} (non enregistrée)",
+edit:"Modifier",copytext:"Copier le texte",delete:"Supprimer",cancel:"Annuler",send:"Envoyer",
+w_auto:"Nesty cherchera sur le web quand une question demande des infos récentes.",w_on:"Nesty cherchera sur le web pour chaque question.",w_off:"La recherche web est désactivée.",
+stopped:"Arrêté.",session:"Votre session a expiré. Veuillez vous reconnecter.",left_m:"Messages restants avant une courte pause : {n}",left_i:"Images restantes avant une courte pause : {n}",
+lim_msg:"Vous avez atteint la limite de messages pour le moment. Vous pourrez discuter à nouveau à {t} (dans {r}).",lim_img:"Vous avez atteint la limite d'images pour le moment. Vous pourrez créer des images à {t} (dans {r}).",
+preparing:"Préparation de l'image...",reading:"Lecture de {n}...",read_fail:"Impossible de lire ce fichier.",
+p_pic:"Regarde cette image et dis-moi ce que tu vois.",p_file:"Lis ceci et dis-moi ce que cela dit.",
+s_title:"Paramètres",close:"Fermer",s_profile:"Profil",s_photo:"Changer la photo",s_rmphoto:"Supprimer la photo",s_savename:"Enregistrer le nom",s_signed:"Connecté en tant que {e}",
+s_instr:"Instructions personnalisées",s_instr_d:"Dites à Nesty comment vous répondre dans chaque discussion. Exemple : je suis en 3e, explique simplement.",s_instr_ph:"Écrivez vos instructions ici",s_instr_save:"Enregistrer les instructions",
+s_mem:"Mémoire",s_mem_d:"Nesty enregistre automatiquement les faits importants sur vous, comme votre prénom. Vous pouvez aussi dire « Souviens-toi que ... ». Supprimez ce que vous voulez à tout moment.",s_mem_none:"Rien d'enregistré pour l'instant.",s_mem_clear:"Effacer la mémoire",
+s_lang:"Langue",s_lang_d:"Langue des menus et des boutons de l'application.",s_bg:"Couleur d'arrière-plan",s_bg_custom:"Choisir votre propre couleur",
+s_vlang:"Langue de la voix",s_vlang_d:"Utilisée pour le micro et la lecture des réponses à voix haute.",
+s_fb:"Commentaires",s_fb_d:"Un problème ou une idée ? Envoyez-nous un e-mail.",s_fb_btn:"Envoyer un commentaire",
+s_notif:"Notifications",n_na:"Les notifications ne sont pas prises en charge sur cet appareil.",n_on:"Activées. Vous recevez une notification quand une réponse arrive pendant que Nesty est en arrière-plan.",
+n_denied:"Bloquées. Pour les activer, ouvrez les paramètres du site Nesty dans votre téléphone ou Chrome et autorisez les notifications.",n_off:"Désactivées. Activez-les pour être notifié quand une réponse arrive pendant que Nesty est en arrière-plan.",n_btn:"Activer les notifications",
+s_data:"Vos données",s_data_d:"La suppression des discussions est définitive.",s_delchats:"Supprimer toutes mes discussions",s_delacc:"Supprimer mon compte",
+s_data_note:"Supprimer votre compte efface vos discussions et ferme votre compte. Pour tout effacer, contactez-nous avec l'e-mail indiqué sur la page {p}.",
+s_about:"À propos",s_made:"Créé par Red element",
+name_saved:"Nom enregistré.",name_need:"Veuillez entrer votre prénom.",photo_ok:"Photo mise à jour.",photo_rm:"Photo supprimée.",instr_ok:"Instructions enregistrées.",mem_cleared:"Mémoire effacée.",mem_saved:"Enregistré dans la mémoire.",
+vlang_ok:"Langue de la voix enregistrée.",deleting:"Suppression...",chats_deleted:"Toutes les discussions sont supprimées.",conf_all:"Supprimer TOUTES vos discussions enregistrées ? C'est irréversible.",
+conf_acc:"Supprimer votre compte ? Vos discussions seront supprimées et vous ne pourrez plus vous connecter.",type_del:"Tapez DELETE pour confirmer.",acc_deleted:"Votre compte a été supprimé.",
+conf_mem:"Effacer tout ce que Nesty retient sur vous ?",conf_chat:"Supprimer cette discussion ?",pick_pic:"Veuillez choisir une image.",upd:"Nouvelle version disponible. Touchez pour actualiser.",updating:"Mise à jour..."
+},
+es:{
+a_welcome:"Bienvenido de nuevo",a_create:"Crea tu cuenta",a_first:"Nombre",a_last:"Apellido",a_email:"Correo electrónico",a_send:"Enviar código",a_or:"o",a_google:"Continuar con Google",
+a_new:"¿Eres nuevo?",a_createLink:"Crear cuenta",a_have:"¿Ya tienes cuenta?",a_signin:"Iniciar sesión",
+a_sent:"Enviamos un código de 6 dígitos a {e}. Revisa también el spam.",a_verify:"Verificar",a_resend:"Reenviar código",a_resendIn:"Reenviar código en {t}",a_change:"Cambiar correo",
+legal:"Al continuar aceptas nuestros {t} y nuestra {p}.",terms:"Términos",privacy:"Política de privacidad",
+e_names:"Escribe tu nombre y apellido.",e_email:"Escribe un correo válido.",e_send:"No se pudo enviar el código.",e_code6:"Escribe el código de 6 dígitos.",
+e_noacc:"No hay cuenta con este correo. Primero crea una cuenta.",e_badcode:"El código es incorrecto o ha caducado.",t_newcode:"Código nuevo enviado.",e_resend:"No se pudo reenviar el código.",
+voice:"Voz",on:"Sí",off:"No",new:"+ Nuevo",ph:"Escribe a Nesty",web:"Búsqueda web",auto:"Auto",img:"Crear imagen",img_on:"Modo imagen: activado",img_tip:"Describe la imagen que quieres y envía.",
+side_new:"+ Nuevo chat",search:"Buscar chats",settings:"Ajustes",install:"Instalar la app Nesty",logout:"Cerrar sesión",none:"Aún no hay chats guardados.",nomatch:"Ningún chat coincide.",
+hello:"Hola {n}, ¿cómo estás?",help:"¿En qué puedo ayudarte?",help2:"¿En qué puedo ayudarte hoy?",ask:"Pregúntame lo que quieras.",
+i1:"Ayúdame a escribir un correo",i2:"Explícame algo de forma sencilla",i3:"Hazme un plan de estudio",i4:"Cuéntame un dato curioso",
+creating:"Creando tu imagen...",searching:"Buscando en la web...",thinking:"Pensando...",
+copy:"Copiar",copied:"Copiado",regen:"Regenerar",download:"Descargar",another:"Crear otra",oldpic:"Esta imagen se creó antes y no se guarda en tu historial.",again:"Crearla de nuevo",sources:"Fuentes: ",notsaved:"Imagen: {n} (no guardada)",
+edit:"Editar",copytext:"Copiar texto",delete:"Eliminar",cancel:"Cancelar",send:"Enviar",
+w_auto:"Nesty buscará en la web cuando una pregunta necesite información actual.",w_on:"Nesty buscará en la web en cada pregunta.",w_off:"La búsqueda web está desactivada.",
+stopped:"Detenido.",session:"Tu sesión terminó. Inicia sesión de nuevo.",left_m:"Mensajes restantes antes de una pausa corta: {n}",left_i:"Imágenes restantes antes de una pausa corta: {n}",
+lim_msg:"Has alcanzado el límite de mensajes por ahora. Podrás chatear de nuevo a las {t} (en {r}).",lim_img:"Has alcanzado el límite de imágenes por ahora. Podrás crear imágenes de nuevo a las {t} (en {r}).",
+preparing:"Preparando la imagen...",reading:"Leyendo {n}...",read_fail:"No se pudo leer este archivo.",
+p_pic:"Mira esta imagen y dime qué ves.",p_file:"Lee esto y dime qué dice.",
+s_title:"Ajustes",close:"Cerrar",s_profile:"Perfil",s_photo:"Cambiar foto",s_rmphoto:"Quitar foto",s_savename:"Guardar nombre",s_signed:"Sesión iniciada como {e}",
+s_instr:"Instrucciones personalizadas",s_instr_d:"Dile a Nesty cómo responderte en cada chat. Ejemplo: Soy estudiante de secundaria, explica de forma sencilla.",s_instr_ph:"Escribe tus instrucciones aquí",s_instr_save:"Guardar instrucciones",
+s_mem:"Memoria",s_mem_d:"Nesty guarda automáticamente datos importantes sobre ti, como tu nombre. También puedes decir “Recuerda que ...”. Borra lo que quieras en cualquier momento.",s_mem_none:"Aún no hay nada guardado.",s_mem_clear:"Borrar memoria",
+s_lang:"Idioma",s_lang_d:"Idioma de los menús y botones de la app.",s_bg:"Color de fondo",s_bg_custom:"Elige tu propio color",
+s_vlang:"Idioma de voz",s_vlang_d:"Se usa para el micrófono y para leer las respuestas en voz alta.",
+s_fb:"Comentarios",s_fb_d:"¿Encontraste un problema o tienes una idea? Envíanos un correo.",s_fb_btn:"Enviar comentarios",
+s_notif:"Notificaciones",n_na:"Este dispositivo no admite notificaciones.",n_on:"Activadas. Recibes una notificación cuando llega una respuesta con Nesty en segundo plano.",
+n_denied:"Bloqueadas. Para activarlas, abre los ajustes del sitio de Nesty en tu teléfono o Chrome y permite las notificaciones.",n_off:"Desactivadas. Actívalas para recibir un aviso cuando llegue una respuesta con Nesty en segundo plano.",n_btn:"Activar notificaciones",
+s_data:"Tus datos",s_data_d:"Borrar chats no se puede deshacer.",s_delchats:"Borrar todos mis chats",s_delacc:"Eliminar mi cuenta",
+s_data_note:"Eliminar tu cuenta borra tus chats y cierra tu cuenta. Para borrar todo rastro, contáctanos con el correo de la página de {p}.",
+s_about:"Acerca de",s_made:"Creado por Red element",
+name_saved:"Nombre guardado.",name_need:"Escribe tu nombre.",photo_ok:"Foto actualizada.",photo_rm:"Foto eliminada.",instr_ok:"Instrucciones guardadas.",mem_cleared:"Memoria borrada.",mem_saved:"Guardado en la memoria.",
+vlang_ok:"Idioma de voz guardado.",deleting:"Eliminando...",chats_deleted:"Todos los chats eliminados.",conf_all:"¿Borrar TODOS tus chats guardados? No se puede deshacer.",
+conf_acc:"¿Eliminar tu cuenta? Se borrarán tus chats y no podrás volver a entrar.",type_del:"Escribe DELETE para confirmar.",acc_deleted:"Tu cuenta fue eliminada.",
+conf_mem:"¿Borrar todo lo que Nesty recuerda de ti?",conf_chat:"¿Eliminar este chat?",pick_pic:"Elige una imagen.",upd:"Hay una versión nueva. Toca para actualizar.",updating:"Actualizando..."
+},
+pt:{
+a_welcome:"Bem-vindo de volta",a_create:"Crie a sua conta",a_first:"Nome",a_last:"Apelido",a_email:"E-mail",a_send:"Enviar código",a_or:"ou",a_google:"Continuar com o Google",
+a_new:"É novo aqui?",a_createLink:"Criar conta",a_have:"Já tem conta?",a_signin:"Entrar",
+a_sent:"Enviámos um código de 6 dígitos para {e}. Verifique também o spam.",a_verify:"Verificar",a_resend:"Reenviar código",a_resendIn:"Reenviar código em {t}",a_change:"Alterar e-mail",
+legal:"Ao continuar, aceita os nossos {t} e a {p}.",terms:"Termos",privacy:"Política de Privacidade",
+e_names:"Escreva o seu nome e apelido.",e_email:"Escreva um e-mail válido.",e_send:"Não foi possível enviar o código.",e_code6:"Escreva o código de 6 dígitos.",
+e_noacc:"Não há conta com este e-mail. Crie primeiro uma conta.",e_badcode:"O código está errado ou expirou.",t_newcode:"Novo código enviado.",e_resend:"Não foi possível reenviar o código.",
+voice:"Voz",on:"Ligada",off:"Desligada",new:"+ Novo",ph:"Escreva ao Nesty",web:"Pesquisa web",auto:"Auto",img:"Criar imagem",img_on:"Modo imagem: ligado",img_tip:"Descreva a imagem que quer e envie.",
+side_new:"+ Nova conversa",search:"Pesquisar conversas",settings:"Definições",install:"Instalar a app Nesty",logout:"Terminar sessão",none:"Ainda sem conversas guardadas.",nomatch:"Nenhuma conversa encontrada.",
+hello:"Olá {n}, como está?",help:"Em que posso ajudar?",help2:"Em que posso ajudar hoje?",ask:"Pergunte-me qualquer coisa.",
+i1:"Ajuda-me a escrever um e-mail",i2:"Explica-me algo de forma simples",i3:"Faz-me um plano de estudo",i4:"Conta-me uma curiosidade",
+creating:"A criar a sua imagem...",searching:"A pesquisar na web...",thinking:"A pensar...",
+copy:"Copiar",copied:"Copiado",regen:"Regenerar",download:"Transferir",another:"Criar outra",oldpic:"Esta imagem foi criada antes e não é guardada no seu histórico.",again:"Criar de novo",sources:"Fontes: ",notsaved:"Imagem: {n} (não guardada)",
+edit:"Editar",copytext:"Copiar texto",delete:"Apagar",cancel:"Cancelar",send:"Enviar",
+w_auto:"O Nesty pesquisa na web quando uma pergunta precisa de informação atual.",w_on:"O Nesty pesquisa na web em todas as perguntas.",w_off:"A pesquisa web está desligada.",
+stopped:"Parado.",session:"A sua sessão terminou. Inicie sessão novamente.",left_m:"Mensagens restantes antes de uma pausa curta: {n}",left_i:"Imagens restantes antes de uma pausa curta: {n}",
+lim_msg:"Atingiu o limite de mensagens por agora. Poderá conversar novamente às {t} (daqui a {r}).",lim_img:"Atingiu o limite de imagens por agora. Poderá criar imagens novamente às {t} (daqui a {r}).",
+preparing:"A preparar a imagem...",reading:"A ler {n}...",read_fail:"Não foi possível ler este ficheiro.",
+p_pic:"Olha para esta imagem e diz-me o que vês.",p_file:"Lê isto e diz-me o que diz.",
+s_title:"Definições",close:"Fechar",s_profile:"Perfil",s_photo:"Alterar foto",s_rmphoto:"Remover foto",s_savename:"Guardar nome",s_signed:"Sessão iniciada como {e}",
+s_instr:"Instruções personalizadas",s_instr_d:"Diga ao Nesty como responder em todas as conversas. Exemplo: Sou aluno do 9.º ano, explica de forma simples.",s_instr_ph:"Escreva aqui as suas instruções",s_instr_save:"Guardar instruções",
+s_mem:"Memória",s_mem_d:"O Nesty guarda automaticamente factos importantes sobre si, como o seu nome. Também pode dizer “Lembra-te de que ...”. Apague o que quiser a qualquer momento.",s_mem_none:"Ainda nada guardado.",s_mem_clear:"Limpar memória",
+s_lang:"Idioma",s_lang_d:"Idioma dos menus e botões da app.",s_bg:"Cor de fundo",s_bg_custom:"Escolha a sua própria cor",
+s_vlang:"Idioma da voz",s_vlang_d:"Usado no microfone e na leitura das respostas em voz alta.",
+s_fb:"Comentários",s_fb_d:"Encontrou um problema ou tem uma ideia? Envie-nos um e-mail.",s_fb_btn:"Enviar comentários",
+s_notif:"Notificações",n_na:"Este dispositivo não suporta notificações.",n_on:"Ativadas. Recebe uma notificação quando chega uma resposta com o Nesty em segundo plano.",
+n_denied:"Bloqueadas. Para ativar, abra as definições do site Nesty no telemóvel ou Chrome e permita notificações.",n_off:"Desativadas. Ative para ser avisado quando chega uma resposta com o Nesty em segundo plano.",n_btn:"Ativar notificações",
+s_data:"Os seus dados",s_data_d:"Apagar conversas não pode ser desfeito.",s_delchats:"Apagar todas as minhas conversas",s_delacc:"Eliminar a minha conta",
+s_data_note:"Eliminar a conta apaga as suas conversas e encerra a conta. Para remover todos os vestígios, contacte-nos pelo e-mail na página de {p}.",
+s_about:"Acerca",s_made:"Criado por Red element",
+name_saved:"Nome guardado.",name_need:"Escreva o seu nome.",photo_ok:"Foto atualizada.",photo_rm:"Foto removida.",instr_ok:"Instruções guardadas.",mem_cleared:"Memória limpa.",mem_saved:"Guardado na memória.",
+vlang_ok:"Idioma da voz guardado.",deleting:"A apagar...",chats_deleted:"Todas as conversas apagadas.",conf_all:"Apagar TODAS as suas conversas guardadas? Isto não pode ser desfeito.",
+conf_acc:"Eliminar a sua conta? As conversas serão removidas e não poderá voltar a entrar.",type_del:"Escreva DELETE para confirmar.",acc_deleted:"A sua conta foi eliminada.",
+conf_mem:"Limpar tudo o que o Nesty sabe sobre si?",conf_chat:"Apagar esta conversa?",pick_pic:"Escolha uma imagem.",upd:"Nova versão disponível. Toque para atualizar.",updating:"A atualizar..."
+},
+ar:{
+a_welcome:"مرحبًا بعودتك",a_create:"أنشئ حسابك",a_first:"الاسم الأول",a_last:"اسم العائلة",a_email:"البريد الإلكتروني",a_send:"إرسال الرمز",a_or:"أو",a_google:"المتابعة باستخدام Google",
+a_new:"جديد هنا؟",a_createLink:"إنشاء حساب",a_have:"لديك حساب بالفعل؟",a_signin:"تسجيل الدخول",
+a_sent:"أرسلنا رمزًا من 6 أرقام إلى {e}. تحقق من البريد المزعج أيضًا.",a_verify:"تحقق",a_resend:"إعادة إرسال الرمز",a_resendIn:"إعادة الإرسال بعد {t}",a_change:"تغيير البريد",
+legal:"بالمتابعة فإنك توافق على {t} و{p}.",terms:"الشروط",privacy:"سياسة الخصوصية",
+e_names:"أدخل اسمك الأول واسم العائلة.",e_email:"أدخل بريدًا إلكترونيًا صالحًا.",e_send:"تعذر إرسال الرمز.",e_code6:"أدخل الرمز المكوّن من 6 أرقام.",
+e_noacc:"لا يوجد حساب بهذا البريد. أنشئ حسابًا أولًا.",e_badcode:"الرمز خاطئ أو منتهي الصلاحية.",t_newcode:"تم إرسال رمز جديد.",e_resend:"تعذر إعادة إرسال الرمز.",
+voice:"الصوت",on:"تشغيل",off:"إيقاف",new:"+ جديد",ph:"اكتب إلى Nesty",web:"بحث الويب",auto:"تلقائي",img:"إنشاء صورة",img_on:"وضع الصورة: مفعّل",img_tip:"صف الصورة التي تريدها ثم أرسل.",
+side_new:"+ محادثة جديدة",search:"ابحث في المحادثات",settings:"الإعدادات",install:"تثبيت تطبيق Nesty",logout:"تسجيل الخروج",none:"لا توجد محادثات محفوظة بعد.",nomatch:"لا توجد محادثات مطابقة.",
+hello:"مرحبًا {n}، كيف حالك؟",help:"كيف يمكنني مساعدتك؟",help2:"بماذا يمكنني مساعدتك اليوم؟",ask:"اسألني أي شيء.",
+i1:"ساعدني في كتابة بريد إلكتروني",i2:"اشرح لي شيئًا ببساطة",i3:"اصنع لي خطة دراسة",i4:"أخبرني معلومة طريفة",
+creating:"جارٍ إنشاء صورتك...",searching:"جارٍ البحث في الويب...",thinking:"جارٍ التفكير...",
+copy:"نسخ",copied:"تم النسخ",regen:"إعادة التوليد",download:"تنزيل",another:"إنشاء أخرى",oldpic:"أُنشئت هذه الصورة سابقًا ولا تُحفظ في سجلك.",again:"إنشاؤها مجددًا",sources:"المصادر: ",notsaved:"صورة: {n} (غير محفوظة)",
+edit:"تعديل",copytext:"نسخ النص",delete:"حذف",cancel:"إلغاء",send:"إرسال",
+w_auto:"سيبحث Nesty في الويب عندما يحتاج السؤال إلى معلومات حديثة.",w_on:"سيبحث Nesty في الويب لكل سؤال.",w_off:"بحث الويب متوقف.",
+stopped:"تم الإيقاف.",session:"انتهت جلستك. سجّل الدخول مرة أخرى.",left_m:"الرسائل المتبقية قبل استراحة قصيرة: {n}",left_i:"الصور المتبقية قبل استراحة قصيرة: {n}",
+lim_msg:"وصلت إلى حد الرسائل حاليًا. يمكنك المحادثة مجددًا عند {t} (بعد {r}).",lim_img:"وصلت إلى حد الصور حاليًا. يمكنك إنشاء الصور مجددًا عند {t} (بعد {r}).",
+preparing:"جارٍ تجهيز الصورة...",reading:"جارٍ قراءة {n}...",read_fail:"تعذرت قراءة هذا الملف.",
+p_pic:"انظر إلى هذه الصورة وأخبرني ماذا ترى.",p_file:"اقرأ هذا وأخبرني ماذا يقول.",
+s_title:"الإعدادات",close:"إغلاق",s_profile:"الملف الشخصي",s_photo:"تغيير الصورة",s_rmphoto:"إزالة الصورة",s_savename:"حفظ الاسم",s_signed:"تم تسجيل الدخول باسم {e}",
+s_instr:"تعليمات مخصصة",s_instr_d:"أخبر Nesty كيف يجيبك في كل محادثة. مثال: أنا طالب في الصف التاسع، اشرح ببساطة.",s_instr_ph:"اكتب تعليماتك هنا",s_instr_save:"حفظ التعليمات",
+s_mem:"الذاكرة",s_mem_d:"يحفظ Nesty تلقائيًا الحقائق المهمة عنك مثل اسمك. يمكنك أيضًا أن تقول “تذكّر أن ...”. احذف أي شيء هنا في أي وقت.",s_mem_none:"لا شيء محفوظ بعد.",s_mem_clear:"مسح الذاكرة",
+s_lang:"اللغة",s_lang_d:"لغة قوائم التطبيق وأزراره.",s_bg:"لون الخلفية",s_bg_custom:"اختر لونك الخاص",
+s_vlang:"لغة الصوت",s_vlang_d:"تُستخدم للميكروفون ولقراءة الإجابات بصوت عالٍ.",
+s_fb:"ملاحظات",s_fb_d:"وجدت مشكلة أو لديك فكرة؟ أرسل لنا بريدًا إلكترونيًا.",s_fb_btn:"إرسال ملاحظات",
+s_notif:"الإشعارات",n_na:"الإشعارات غير مدعومة على هذا الجهاز.",n_on:"مفعّلة. يصلك إشعار عند وصول إجابة بينما Nesty في الخلفية.",
+n_denied:"محظورة. لتفعيلها افتح إعدادات موقع Nesty في هاتفك أو Chrome واسمح بالإشعارات.",n_off:"متوقفة. فعّلها ليصلك إشعار عند وصول إجابة بينما Nesty في الخلفية.",n_btn:"تفعيل الإشعارات",
+s_data:"بياناتك",s_data_d:"لا يمكن التراجع عن حذف المحادثات.",s_delchats:"حذف كل محادثاتي",s_delacc:"حذف حسابي",
+s_data_note:"حذف حسابك يزيل محادثاتك ويغلق حسابك. لإزالة كل الأثر تواصل معنا عبر البريد المذكور في صفحة {p}.",
+s_about:"حول",s_made:"من تطوير Red element",
+name_saved:"تم حفظ الاسم.",name_need:"أدخل اسمك الأول.",photo_ok:"تم تحديث الصورة.",photo_rm:"تمت إزالة الصورة.",instr_ok:"تم حفظ التعليمات.",mem_cleared:"تم مسح الذاكرة.",mem_saved:"تم الحفظ في الذاكرة.",
+vlang_ok:"تم حفظ لغة الصوت.",deleting:"جارٍ الحذف...",chats_deleted:"تم حذف كل المحادثات.",conf_all:"حذف كل محادثاتك المحفوظة؟ لا يمكن التراجع.",
+conf_acc:"حذف حسابك؟ ستُزال محادثاتك ولن تتمكن من الدخول مجددًا.",type_del:"اكتب DELETE للتأكيد.",acc_deleted:"تم حذف حسابك.",
+conf_mem:"مسح كل ما يتذكره Nesty عنك؟",conf_chat:"حذف هذه المحادثة؟",pick_pic:"اختر صورة.",upd:"إصدار جديد متاح. اضغط للتحديث.",updating:"جارٍ التحديث..."
+},
+hi:{
+a_welcome:"वापसी पर स्वागत है",a_create:"अपना खाता बनाएँ",a_first:"पहला नाम",a_last:"उपनाम",a_email:"ईमेल",a_send:"कोड भेजें",a_or:"या",a_google:"Google से जारी रखें",
+a_new:"नए हैं?",a_createLink:"खाता बनाएँ",a_have:"पहले से खाता है?",a_signin:"साइन इन करें",
+a_sent:"हमने {e} पर 6 अंकों का कोड भेजा है। स्पैम फ़ोल्डर भी देखें।",a_verify:"सत्यापित करें",a_resend:"कोड फिर भेजें",a_resendIn:"{t} में कोड फिर भेजें",a_change:"ईमेल बदलें",
+legal:"जारी रखकर आप हमारी {t} और {p} से सहमत होते हैं।",terms:"शर्तें",privacy:"गोपनीयता नीति",
+e_names:"अपना पहला नाम और उपनाम दर्ज करें।",e_email:"सही ईमेल दर्ज करें।",e_send:"कोड नहीं भेजा जा सका।",e_code6:"6 अंकों का कोड दर्ज करें।",
+e_noacc:"इस ईमेल का कोई खाता नहीं मिला। पहले खाता बनाएँ।",e_badcode:"कोड गलत है या समाप्त हो गया है।",t_newcode:"नया कोड भेजा गया।",e_resend:"कोड दोबारा नहीं भेजा जा सका।",
+voice:"आवाज़",on:"चालू",off:"बंद",new:"+ नया",ph:"Nesty को लिखें",web:"वेब खोज",auto:"ऑटो",img:"चित्र बनाएँ",img_on:"चित्र मोड: चालू",img_tip:"जो चित्र चाहिए उसका वर्णन करें, फिर भेजें।",
+side_new:"+ नई चैट",search:"चैट खोजें",settings:"सेटिंग्स",install:"Nesty ऐप इंस्टॉल करें",logout:"लॉग आउट",none:"अभी कोई सहेजी चैट नहीं।",nomatch:"कोई चैट नहीं मिली।",
+hello:"नमस्ते {n}, आप कैसे हैं?",help:"मैं किसमें मदद करूँ?",help2:"आज मैं आपकी किसमें मदद करूँ?",ask:"मुझसे कुछ भी पूछें।",
+i1:"ईमेल लिखने में मदद करें",i2:"कुछ सरल भाषा में समझाएँ",i3:"मेरे लिए पढ़ाई की योजना बनाएँ",i4:"कोई मज़ेदार तथ्य बताएँ",
+creating:"आपका चित्र बन रहा है...",searching:"वेब पर खोज रहा है...",thinking:"सोच रहा है...",
+copy:"कॉपी",copied:"कॉपी हो गया",regen:"फिर से बनाएँ",download:"डाउनलोड",another:"दूसरा बनाएँ",oldpic:"यह चित्र पहले बना था और आपके इतिहास में नहीं रखा गया है।",again:"फिर से बनाएँ",sources:"स्रोत: ",notsaved:"चित्र: {n} (सहेजा नहीं गया)",
+edit:"संपादित करें",copytext:"टेक्स्ट कॉपी करें",delete:"हटाएँ",cancel:"रद्द करें",send:"भेजें",
+w_auto:"जब प्रश्न को ताज़ा जानकारी चाहिए होगी तब Nesty वेब पर खोजेगा।",w_on:"Nesty हर प्रश्न के लिए वेब पर खोजेगा।",w_off:"वेब खोज बंद है।",
+stopped:"रोक दिया गया।",session:"आपका सत्र समाप्त हो गया। कृपया फिर साइन इन करें।",left_m:"छोटे ब्रेक से पहले बचे संदेश: {n}",left_i:"छोटे ब्रेक से पहले बचे चित्र: {n}",
+lim_msg:"आप अभी संदेश सीमा तक पहुँच गए हैं। आप {t} पर फिर चैट कर सकते हैं ({r} बाद)।",lim_img:"आप अभी चित्र सीमा तक पहुँच गए हैं। आप {t} पर फिर चित्र बना सकते हैं ({r} बाद)।",
+preparing:"चित्र तैयार हो रहा है...",reading:"{n} पढ़ रहा है...",read_fail:"यह फ़ाइल नहीं पढ़ी जा सकी।",
+p_pic:"कृपया यह चित्र देखें और बताएँ कि आपको क्या दिखता है।",p_file:"कृपया इसे पढ़ें और बताएँ कि इसमें क्या लिखा है।",
+s_title:"सेटिंग्स",close:"बंद करें",s_profile:"प्रोफ़ाइल",s_photo:"फ़ोटो बदलें",s_rmphoto:"फ़ोटो हटाएँ",s_savename:"नाम सहेजें",s_signed:"{e} के रूप में साइन इन",
+s_instr:"कस्टम निर्देश",s_instr_d:"Nesty को बताएँ कि हर चैट में आपको कैसे जवाब देना है। उदाहरण: मैं कक्षा 9 का छात्र हूँ, सरल भाषा में समझाएँ।",s_instr_ph:"अपने निर्देश यहाँ लिखें",s_instr_save:"निर्देश सहेजें",
+s_mem:"स्मृति",s_mem_d:"Nesty आपके बारे में ज़रूरी बातें, जैसे आपका नाम, अपने-आप सहेजता है। आप “याद रखो कि ...” भी कह सकते हैं। यहाँ से कभी भी कुछ भी हटाएँ।",s_mem_none:"अभी कुछ सहेजा नहीं गया।",s_mem_clear:"स्मृति साफ़ करें",
+s_lang:"भाषा",s_lang_d:"ऐप के मेनू और बटनों की भाषा।",s_bg:"पृष्ठभूमि का रंग",s_bg_custom:"अपना रंग चुनें",
+s_vlang:"आवाज़ की भाषा",s_vlang_d:"माइक्रोफ़ोन और जवाब ज़ोर से पढ़ने के लिए उपयोग होती है।",
+s_fb:"फ़ीडबैक",s_fb_d:"कोई समस्या मिली या कोई विचार है? हमें ईमेल भेजें।",s_fb_btn:"फ़ीडबैक भेजें",
+s_notif:"सूचनाएँ",n_na:"इस डिवाइस पर सूचनाएँ समर्थित नहीं हैं।",n_on:"चालू। Nesty के बैकग्राउंड में होने पर जवाब आने पर सूचना मिलती है।",
+n_denied:"ब्लॉक हैं। चालू करने के लिए फ़ोन या Chrome में Nesty की साइट सेटिंग खोलकर सूचनाएँ अनुमति दें।",n_off:"बंद। Nesty के बैकग्राउंड में होने पर जवाब आने की सूचना पाने के लिए चालू करें।",n_btn:"सूचनाएँ चालू करें",
+s_data:"आपका डेटा",s_data_d:"चैट हटाना वापस नहीं हो सकता।",s_delchats:"मेरी सारी चैट हटाएँ",s_delacc:"मेरा खाता हटाएँ",
+s_data_note:"खाता हटाने पर आपकी चैट हट जाती हैं और खाता बंद हो जाता है। सब कुछ मिटाने के लिए {p} पेज पर दिए ईमेल से संपर्क करें।",
+s_about:"परिचय",s_made:"Red element द्वारा निर्मित",
+name_saved:"नाम सहेजा गया।",name_need:"कृपया अपना पहला नाम दर्ज करें।",photo_ok:"फ़ोटो अपडेट हुई।",photo_rm:"फ़ोटो हटाई गई।",instr_ok:"निर्देश सहेजे गए।",mem_cleared:"स्मृति साफ़ हुई।",mem_saved:"स्मृति में सहेजा गया।",
+vlang_ok:"आवाज़ की भाषा सहेजी गई।",deleting:"हटा रहा है...",chats_deleted:"सारी चैट हटा दी गईं।",conf_all:"आपकी सारी सहेजी चैट हटाएँ? यह वापस नहीं होगा।",
+conf_acc:"अपना खाता हटाएँ? आपकी चैट हट जाएँगी और आप फिर साइन इन नहीं कर पाएँगे।",type_del:"पुष्टि के लिए DELETE लिखें।",acc_deleted:"आपका खाता हटा दिया गया।",
+conf_mem:"Nesty को आपके बारे में जो याद है वह सब साफ़ करें?",conf_chat:"यह चैट हटाएँ?",pick_pic:"कृपया एक चित्र चुनें।",upd:"नया संस्करण उपलब्ध है। रीफ़्रेश करने के लिए टैप करें।",updating:"अपडेट हो रहा है..."
+}
+};
+Object.assign(STR.en, {
+a_name:"Full name",a_age:"Age",a_pass:"Password",a_pass2:"Confirm password",a_codelogin:"Email me a sign-in code instead",
+e_fullname:"Enter your full name (first and second name).",e_age:"Enter a valid age (13 or older).",e_pass:"Password must be at least 8 characters.",e_match:"The passwords do not match.",
+e_exists:"An account with this email already exists. Please sign in.",e_pwreq:"Enter your email and password.",
+e_login:"Wrong email or password. If you signed up with a code or Google, tap “Email me a sign-in code instead” or Continue with Google, then set a password in Settings.",
+needverify:"Please verify your email to continue.",
+upgrade:"Upgrade",plans_btn:"Plans & upgrade",btn_premium:"Premium Features",btn_ultra:"Ultra Features",
+promo:"You are using the Free plan. Upgrade to Premium and get sorted, or get more than Premium with Ultra!",
+lim_file:"You have reached the file attachment limit for now. You can attach files again at {t} (in {r}).",
+plans_title:"Plans",current:"Current",free_price:"Free",monthly:"month",yearly:"year",
+pl_msg:"{n} messages per 5 hours",pl_file:"{n} file attachments per 5 hours",pl_img:"{n} image creations per 5 hours",
+pl_win:"Each limit resets exactly 5 hours after its window starts (your first use). The exact reset time is shown when you reach a limit.",
+how_title:"How to upgrade",how1:"Pay the plan price directly to {num}.",how2:"Send your payment confirmation and your Nesty email to the administrator.",
+how3:"The administrator checks the payment and sends you a unique activation code.",how4:"Enter the code below. Your plan activates automatically.",
+replaces:"Activating a higher plan replaces your current plan. Activating the same plan again adds time.",proof_btn:"Send payment proof by email",
+act_title:"Activation code",act_ph:"XXXX-XXXX-XXXX-XXXX",act_btn:"Activate",act_ok:"{plan} plan activated until {t}.",act_fail:"Could not activate this code.",
+on_free:"You are on the Free plan.",on_plan:"You are on the {plan} plan until {t}.",expired_note:"Your {plan} plan expired on {t}.",
+use_title:"Your usage",k_msg:"Messages",k_file:"File attachments",k_img:"Images",use_line:"{k}: {u} / {l} · resets {t}",use_line0:"{k}: {u} / {l}",
+s_sub:"Subscription",s_sub_btn:"View plans / enter code",
+s_pw:"Password",s_pw_d:"Set or change your password. Leave the current password empty if you signed up with a code or Google.",
+pw_new:"New password",pw_new2:"Confirm new password",pw_old:"Current password (if you have one)",pw_btn:"Save password",pw_ok:"Password saved."
+});
+var UI_LANGS = [["en","English"],["sw","Kiswahili"],["fr","Français"],["es","Español"],["pt","Português"],["ar","العربية"],["hi","हिन्दी"]];
+var UI_VOICE = {en:"en-US",sw:"sw-KE",fr:"fr-FR",es:"es-ES",pt:"pt-BR",ar:"ar-SA",hi:"hi-IN"};
+
+var uiLang = "";
+try{ uiLang = localStorage.getItem("nestyLang") || ""; }catch(e){}
+if(!STR[uiLang]){
+  var nl = ((navigator.language || "en").slice(0, 2) || "en").toLowerCase();
+  uiLang = STR[nl] ? nl : "en";
+}
+
+function L(k, v){
+  var s = (STR[uiLang] && STR[uiLang][k]);
+  if(s === undefined) s = STR.en[k];
+  if(s === undefined) s = k;
+  if(v){ for(var x in v){ s = s.split("{" + x + "}").join(v[x]); } }
+  return s;
+}
+
+/* ---------- Background colour ---------- */
+var BG_PRESETS = ["#ffffff","#fff3b0","#d9f2d9","#e6d9f7","#d6e8fb","#fbdde8","#ffe3c7","#d3f0ee","#e4e4e4","#121212"];
+var curBg = "#ffffff";
+function hex2rgb(h){
+  h = h.replace("#", "");
+  if(h.length === 3) h = h.split("").map(function(c){ return c + c; }).join("");
+  return [parseInt(h.slice(0,2),16), parseInt(h.slice(2,4),16), parseInt(h.slice(4,6),16)];
+}
+function rgb2hex(r){
+  return "#" + r.map(function(x){ x = Math.max(0, Math.min(255, Math.round(x))); return ("0" + x.toString(16)).slice(-2); }).join("");
+}
+function mix(a, b, p){
+  var A = hex2rgb(a), B = hex2rgb(b);
+  return rgb2hex([A[0] + (B[0] - A[0]) * p, A[1] + (B[1] - A[1]) * p, A[2] + (B[2] - A[2]) * p]);
+}
+function applyBg(hex){
+  if(!/^#[0-9a-fA-F]{6}$/.test(hex || "")) hex = "#ffffff";
+  hex = hex.toLowerCase();
+  curBg = hex;
+  var c = hex2rgb(hex);
+  var dark = (0.299 * c[0] + 0.587 * c[1] + 0.114 * c[2]) / 255 < 0.5;
+  var st = document.documentElement.style;
+  function set(k, v){ st.setProperty("--" + k, v); }
+  set("bg", hex);
+  if(dark){
+    set("text","#ececec"); set("muted","#a8a8a8"); set("card", mix(hex,"#ffffff",0.07)); set("soft", mix(hex,"#ffffff",0.12));
+    set("soft2", mix(hex,"#ffffff",0.2)); set("border", mix(hex,"#ffffff",0.22)); set("side", mix(hex,"#ffffff",0.04));
+    set("btn","#ececec"); set("btnText","#111111"); set("link","#7db0ff");
+  }else{
+    set("text","#1a1a1a"); set("muted","#666666"); set("card", mix(hex,"#ffffff",0.7)); set("soft", mix(hex,"#000000",0.06));
+    set("soft2", mix(hex,"#000000",0.1)); set("border", mix(hex,"#000000",0.15)); set("side", mix(hex,"#000000",0.03));
+    set("btn","#1a1a1a"); set("btnText","#ffffff"); set("link","#1a56db");
+  }
+  st.colorScheme = dark ? "dark" : "light";
+  var mt = document.querySelector('meta[name="theme-color"]');
+  if(mt) mt.setAttribute("content", hex);
+}
+function buildSwatches(){
+  var h = document.getElementById("swatches");
+  h.innerHTML = "";
+  BG_PRESETS.forEach(function(c){
+    var b = document.createElement("button");
+    b.className = "sw";
+    b.style.background = c;
+    b.setAttribute("data-c", c);
+    b.onclick = function(){ pickBg(c); };
+    h.appendChild(b);
+  });
+}
+function markSwatches(){
+  var h = document.getElementById("swatches");
+  for(var i = 0; i < h.children.length; i++){
+    h.children[i].classList.toggle("on", h.children[i].getAttribute("data-c") === curBg);
+  }
+  document.getElementById("bgPick").value = curBg;
+}
+function pickBg(hex){
+  applyBg(hex);
+  try{ localStorage.setItem("nestyBg", curBg); }catch(e){}
+  markSwatches();
+}
+try{ applyBg(localStorage.getItem("nestyBg") || "#ffffff"); }catch(e){ applyBg("#ffffff"); }
+
+/* ---------- App setup ---------- */
 var ENDPOINT = "https://sgp.cloud.appwrite.io/v1";
 var PROJECT = "6adc585d003ae0c1be08";
 var DB = "6adc5cb4000ae3ae60c6";
@@ -404,11 +775,49 @@ var menu = document.getElementById("menu");
 
 function $(id){ return document.getElementById(id); }
 
-function toast(t){
+function toast(m){
   var e = $("toast");
-  e.textContent = t;
+  e.textContent = m;
   e.style.display = "block";
   setTimeout(function(){ e.style.display = "none"; }, 4000);
+}
+
+/* ---------- Language switching ---------- */
+function applyLang(){
+  document.documentElement.lang = uiLang;
+  document.documentElement.dir = uiLang === "ar" ? "rtl" : "ltr";
+  document.querySelectorAll("[data-i]").forEach(function(e){ e.textContent = L(e.getAttribute("data-i")); });
+  document.querySelectorAll("[data-ph]").forEach(function(e){ e.placeholder = L(e.getAttribute("data-ph")); });
+  var links = '<a href="/terms.html">' + L("terms") + '</a>';
+  var pl = '<a href="/privacy.html">' + L("privacy") + '</a>';
+  $("legal").innerHTML = L("legal", {t: links, p: pl});
+  $("sideLinks").innerHTML = links + " &middot; " + pl;
+  $("dataNote").innerHTML = L("s_data_note", {p: pl});
+  var vtxt = "Nesty AI " + VERSION + " \u00b7 Red element";
+  $("verSide").textContent = vtxt;
+  $("verAuth").textContent = vtxt;
+  $("aboutTxt").textContent = "Nesty AI " + VERSION + " \u2014 " + L("s_made");
+  if(!$("resendBtn").disabled) $("resendBtn").textContent = L("a_resend");
+  $("updateBar").textContent = L("upd");
+  drawAuthText();
+  drawWeb();
+  drawImg();
+  drawSpk();
+  fillLangs();
+  $("aLang").value = uiLang;
+  $("sUi").value = uiLang;
+  renderAll();
+  renderList();
+  drawPlanBtn();
+  if(user){ drawSettings(); renderPlans(); }
+}
+function setUiLang(v){
+  if(!STR[v]) return;
+  uiLang = v;
+  try{ localStorage.setItem("nestyLang", v); }catch(e){}
+  voiceLang = UI_VOICE[v] || voiceLang;
+  try{ localStorage.setItem("nestyVoiceLang", voiceLang); }catch(e){}
+  applyLang();
 }
 
 /* ---------- Install as app ---------- */
@@ -428,21 +837,51 @@ async function installApp(){
   installEvent = null;
   $("installBtn").style.display = "none";
 }
+var updating = false;
+function showUpdate(worker){
+  var b = $("updateBar");
+  b.textContent = L("upd");
+  b.style.display = "block";
+  b.onclick = function(){ updating = true; b.textContent = L("updating"); worker.postMessage("skipWaiting"); };
+}
 if("serviceWorker" in navigator){
   window.addEventListener("load", function(){
-    navigator.serviceWorker.register("/sw.js").catch(function(){});
+    navigator.serviceWorker.register("/sw.js").then(function(reg){
+      if(reg.waiting && navigator.serviceWorker.controller) showUpdate(reg.waiting);
+      reg.addEventListener("updatefound", function(){
+        var nw = reg.installing;
+        if(!nw) return;
+        nw.addEventListener("statechange", function(){
+          if(nw.state === "installed" && navigator.serviceWorker.controller) showUpdate(nw);
+        });
+      });
+      setInterval(function(){ reg.update().catch(function(){}); }, 30 * 60 * 1000);
+    }).catch(function(){});
+  });
+  navigator.serviceWorker.addEventListener("controllerchange", function(){
+    if(updating) location.reload();
   });
 }
 
 /* ---------- Account (email code, no password) ---------- */
+var pendName = "", pendAge = 0, codeFlow = "login";
+function drawAuthText(){
+  var su = authMode === "signup";
+  $("authSub").textContent = L(su ? "a_create" : "a_welcome");
+  $("sendBtn").textContent = L(su ? "a_createLink" : "a_signin");
+  $("codeLoginBtn").textContent = L("a_codelogin");
+  $("authSwitch").innerHTML = su
+    ? L("a_have") + ' <a href="#" onclick="switchAuth();return false">' + L("a_signin") + '</a>'
+    : L("a_new") + ' <a href="#" onclick="switchAuth();return false">' + L("a_createLink") + '</a>';
+}
 function drawAuth(){
   var su = authMode === "signup";
-  $("aFirst").style.display = su ? "block" : "none";
-  $("aLast").style.display = su ? "block" : "none";
-  $("authSub").textContent = su ? "Create your account" : "Welcome back";
-  $("authSwitch").innerHTML = su
-    ? 'Already have an account? <a href="#" onclick="switchAuth();return false">Sign in</a>'
-    : 'New here? <a href="#" onclick="switchAuth();return false">Create account</a>';
+  $("aName").style.display = su ? "block" : "none";
+  $("aAge").style.display = su ? "block" : "none";
+  $("aPass2").style.display = su ? "block" : "none";
+  $("codeLoginBtn").style.display = su ? "none" : "block";
+  $("aPass").autocomplete = su ? "new-password" : "current-password";
+  drawAuthText();
   $("authErr").textContent = "";
   $("stepForm").style.display = "block";
   $("stepCode").style.display = "none";
@@ -471,6 +910,7 @@ function showApp(){
   renderSide();
   newChat();
   loadList();
+  loadMe();
 }
 
 function firstName(){
@@ -480,30 +920,85 @@ function firstName(){
   return (user.name || "").split(" ")[0];
 }
 
-async function sendCode(){
+function goCodeStep(){
+  $("codeInfo").textContent = L("a_sent", {e: authEmail});
+  $("aCode").value = "";
+  $("stepForm").style.display = "none";
+  $("stepCode").style.display = "block";
+  startTimer();
+  $("aCode").focus();
+}
+
+async function submitAuth(){
   var email = $("aEmail").value.trim().toLowerCase();
+  var pass = $("aPass").value;
+  if(!email || email.indexOf("@") < 1){ $("authErr").textContent = L("e_email"); return; }
   if(authMode === "signup"){
-    pendFirst = $("aFirst").value.trim();
-    pendLast = $("aLast").value.trim();
-    if(!pendFirst || !pendLast){ $("authErr").textContent = "Enter your first name and second name."; return; }
+    var name = $("aName").value.trim().replace(/\s+/g, " ");
+    var age = parseInt($("aAge").value, 10);
+    if(name.length < 3 || name.indexOf(" ") < 1){ $("authErr").textContent = L("e_fullname"); return; }
+    if(!(age >= 13 && age <= 120)){ $("authErr").textContent = L("e_age"); return; }
+    if(pass.length < 8){ $("authErr").textContent = L("e_pass"); return; }
+    if(pass !== $("aPass2").value){ $("authErr").textContent = L("e_match"); return; }
+    $("sendBtn").disabled = true;
+    $("authErr").textContent = "";
+    try{
+      var nu = await account.create(ID.unique(), email, pass, name);
+      authUserId = nu.$id;
+      authEmail = email;
+      pendName = name;
+      pendAge = age;
+      await account.createEmailToken(authUserId, email);
+      codeFlow = "signup";
+      goCodeStep();
+    }catch(e){
+      $("authErr").textContent = (e && e.code === 409) ? L("e_exists") : ((e && e.message) || L("e_send"));
+    }
+    $("sendBtn").disabled = false;
+    return;
   }
-  if(!email || email.indexOf("@") < 1){ $("authErr").textContent = "Enter a valid email."; return; }
+  if(!pass){ $("authErr").textContent = L("e_pwreq"); return; }
   $("sendBtn").disabled = true;
   $("authErr").textContent = "";
   try{
-    var t = await account.createEmailToken(ID.unique(), email);
-    authUserId = t.userId;
-    authEmail = email;
-    $("codeInfo").textContent = "We sent a 6-digit code to " + email + ". Check your spam folder too.";
-    $("aCode").value = "";
-    $("stepForm").style.display = "none";
-    $("stepCode").style.display = "block";
-    startTimer();
-    $("aCode").focus();
+    try{ await account.deleteSession("current"); }catch(e){}
+    await account.createEmailPasswordSession(email, pass);
+    user = await account.get();
+    if(!user.emailVerification){
+      var uid = user.$id;
+      try{ await account.deleteSession("current"); }catch(e){}
+      user = null;
+      await account.createEmailToken(uid, email);
+      authUserId = uid;
+      authEmail = email;
+      codeFlow = "verify";
+      goCodeStep();
+      toast(L("needverify"));
+    }else{
+      showApp();
+    }
   }catch(e){
-    $("authErr").textContent = e.message || "Could not send the code.";
+    user = null;
+    $("authErr").textContent = (e && e.code === 401) ? L("e_login") : ((e && e.message) || L("e_login"));
   }
   $("sendBtn").disabled = false;
+}
+
+async function emailCodeLogin(){
+  var email = $("aEmail").value.trim().toLowerCase();
+  if(!email || email.indexOf("@") < 1){ $("authErr").textContent = L("e_email"); return; }
+  $("codeLoginBtn").disabled = true;
+  $("authErr").textContent = "";
+  try{
+    var tk = await account.createEmailToken(ID.unique(), email);
+    authUserId = tk.userId;
+    authEmail = email;
+    codeFlow = "login";
+    goCodeStep();
+  }catch(e){
+    $("authErr").textContent = (e && e.message) || L("e_send");
+  }
+  $("codeLoginBtn").disabled = false;
 }
 
 function startTimer(){
@@ -516,10 +1011,10 @@ function startTimer(){
     if(s <= 0){
       clearInterval(resendTimer);
       b.disabled = false;
-      b.textContent = "Resend code";
+      b.textContent = L("a_resend");
       return;
     }
-    b.textContent = "Resend code in " + Math.floor(s / 60) + ":" + ("0" + (s % 60)).slice(-2);
+    b.textContent = L("a_resendIn", {t: Math.floor(s / 60) + ":" + ("0" + (s % 60)).slice(-2)});
   }
   tick();
   resendTimer = setInterval(tick, 1000);
@@ -529,46 +1024,41 @@ async function resendCode(){
   $("resendBtn").disabled = true;
   $("authErr").textContent = "";
   try{
-    var t = await account.createEmailToken(authUserId, authEmail);
-    authUserId = t.userId;
+    var tk = await account.createEmailToken(authUserId, authEmail);
+    authUserId = tk.userId;
     startTimer();
-    toast("New code sent.");
+    toast(L("t_newcode"));
   }catch(e){
-    $("authErr").textContent = e.message || "Could not resend the code.";
+    $("authErr").textContent = e.message || L("e_resend");
     $("resendBtn").disabled = false;
   }
 }
 
 async function verifyCode(){
   var code = $("aCode").value.replace(/\s/g, "");
-  if(code.length < 6){ $("authErr").textContent = "Enter the 6-digit code sent to you from Appwrite"; return; }
+  if(code.length < 6){ $("authErr").textContent = L("e_code6"); return; }
   $("verifyBtn").disabled = true;
   $("authErr").textContent = "";
   try{
     try{ await account.deleteSession("current"); }catch(e){}
     await account.createSession(authUserId, code);
     user = await account.get();
-
-    if(authMode === "signup"){
-      if(!user.name){
-        await account.updateName(pendFirst + " " + pendLast);
-        await account.updatePrefs({firstName: pendFirst, lastName: pendLast});
-        user = await account.get();
-      }
-    }else{
-      if(!user.name){
-        try{ await account.deleteSession("current"); }catch(e){}
-        user = null;
-        drawAuth();
-        $("authErr").textContent = "No account found for this email. Please create an account first.";
-        $("verifyBtn").disabled = false;
-        return;
-      }
+    if(codeFlow === "signup"){
+      var np = pendName.split(" ");
+      await account.updatePrefs({firstName: np[0], lastName: np.slice(1).join(" "), age: pendAge});
+      user = await account.get();
+    }else if(!user.name){
+      try{ await account.deleteSession("current"); }catch(e){}
+      user = null;
+      drawAuth();
+      $("authErr").textContent = L("e_noacc");
+      $("verifyBtn").disabled = false;
+      return;
     }
     clearInterval(resendTimer);
     showApp();
   }catch(e){
-    $("authErr").textContent = e.message || "The code is wrong or expired.";
+    $("authErr").textContent = (e && e.message) || L("e_badcode");
   }
   $("verifyBtn").disabled = false;
 }
@@ -579,6 +1069,13 @@ async function logout(){
   messages = [];
   chats = [];
   chatId = null;
+  setLimit("msg", 0);
+  setLimit("img", 0);
+  setLimit("file", 0);
+  me = null;
+  drawPlanBtn();
+  hidePromo();
+  $("limitBar").style.display = "none";
   closeSide();
   authMode = "signin";
   showAuth();
@@ -589,7 +1086,7 @@ function showConnectError(){
   $("app").style.display = "none";
   var b = $("boot");
   b.style.display = "block";
-  b.innerHTML = '<div id="bootMsg">Cannot connect to Nesty right now.<br> try to restart your router or mobile data, check data ballance or Check your internet and try again.<br><button onclick="location.reload()">Retry</button></div>';
+  b.innerHTML = '<div id="bootMsg">Cannot connect to Nesty right now.<br>Check your internet and try again.<br><button onclick="location.reload()">Retry</button></div>';
 }
 
 function oauthLogin(name, label){
@@ -645,8 +1142,8 @@ async function init(){
 function chatTitle(){
   for(var i = 0; i < messages.length; i++){
     if(messages[i].role === "user" && messages[i].text){
-      var t = messages[i].text.replace(/\s+/g, " ").trim();
-      return t.length > 40 ? t.slice(0, 40) + "..." : t;
+      var s = messages[i].text.replace(/\s+/g, " ").trim();
+      return s.length > 40 ? s.slice(0, 40) + "..." : s;
     }
   }
   return "New chat";
@@ -692,22 +1189,23 @@ function renderList(){
   if(!shown.length){
     var em = document.createElement("div");
     em.id = "empty";
-    em.textContent = chats.length ? "No chats match." : "No saved chats yet, start chatting with Nesty.";
+    em.textContent = chats.length ? L("nomatch") : L("none");
     list.appendChild(em);
     return;
   }
   shown.forEach(function(c){
     var it = document.createElement("div");
     it.className = "item" + (c.$id === chatId ? " cur" : "");
-    var t = document.createElement("button");
-    t.className = "t";
-    t.textContent = c.Title || "Chat";
-    t.onclick = function(){ openChat(c.$id); };
+    var b = document.createElement("button");
+    b.className = "t";
+    b.dir = "auto";
+    b.textContent = c.Title || "Chat";
+    b.onclick = function(){ openChat(c.$id); };
     var x = document.createElement("button");
     x.className = "x";
     x.innerHTML = "&times;";
     x.onclick = function(){ removeChat(c.$id); };
-    it.appendChild(t);
+    it.appendChild(b);
     it.appendChild(x);
     list.appendChild(it);
   });
@@ -725,7 +1223,7 @@ function openChat(id){
 }
 
 async function removeChat(id){
-  if(!confirm("Delete this chat?")) return;
+  if(!confirm(L("conf_chat"))) return;
   try{
     await db.deleteDocument(DB, TABLE, id);
     if(id === chatId){ messages = []; chatId = null; renderAll(); }
@@ -753,9 +1251,6 @@ box.addEventListener("input", function(){
 
 function esc(s){
   return s.replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");
-}
-function inline(s){
-  return esc(s).replace(/`([^`\n]+)`/g,"<code>$1</code>").replace(/\*\*([^*\n]+)\*\*/g,"<b>$1</b>");
 }
 
 function mdInline(s){
@@ -848,16 +1343,16 @@ function copyText(text, btn){
   function done(){
     if(!btn) return;
     var old = btn.textContent;
-    btn.textContent = "Copied to clipboard";
+    btn.textContent = L("copied");
     setTimeout(function(){ btn.textContent = old; }, 1500);
   }
   function fallback(){
-    var t = document.createElement("textarea");
-    t.value = text;
-    document.body.appendChild(t);
-    t.select();
+    var ta = document.createElement("textarea");
+    ta.value = text;
+    document.body.appendChild(ta);
+    ta.select();
     try{ document.execCommand("copy"); }catch(e){}
-    t.remove();
+    ta.remove();
     done();
   }
   if(navigator.clipboard && navigator.clipboard.writeText){
@@ -868,14 +1363,14 @@ function copyText(text, btn){
 }
 
 function apiContent(m){
-  var t = m.text;
+  var s = m.text;
   if(m.file){
-    t = "[Attached file: " + m.file.name + "]\n" + m.file.text + "\n[End of file]\n\n" + m.text;
+    s = "[Attached file: " + m.file.name + "]\n" + m.file.text + "\n[End of file]\n\n" + m.text;
   }
   if(m.image && !m.image.data){
-    t = "[The user attached a picture named " + m.image.name + ", which is no longer available.]\n\n" + t;
+    s = "[The user attached a picture named " + m.image.name + ", which is no longer available.]\n\n" + s;
   }
-  return t;
+  return s;
 }
 
 function packMessages(){
@@ -900,13 +1395,10 @@ function apiMessages(){
   });
 }
 
-function hasLiveImage(){
-  return messages.some(function(m){ return m.role === "user" && m.image && m.image.data; });
-}
-
 function buildUser(m, i){
   var d = document.createElement("div");
   d.className = "msg user";
+  d.dir = "auto";
   if(m.file){
     var tag = document.createElement("span");
     tag.className = "fileTag";
@@ -923,7 +1415,7 @@ function buildUser(m, i){
     }else{
       var tg = document.createElement("span");
       tg.className = "fileTag";
-      tg.textContent = "Picture: " + m.image.name + " (not saved)";
+      tg.textContent = L("notsaved", {n: m.image.name});
       d.appendChild(tg);
       d.appendChild(document.createElement("br"));
     }
@@ -948,6 +1440,7 @@ function buildUser(m, i){
 function buildBot(m, isLast){
   var d = document.createElement("div");
   d.className = "msg bot";
+  d.dir = "auto";
   if(m.genImage){
     if(m.genImage.data){
       var gi = document.createElement("img");
@@ -962,12 +1455,12 @@ function buildBot(m, isLast){
       dl.style.textDecoration = "none";
       dl.href = m.genImage.data;
       dl.download = "nesty-picture.jpg";
-      dl.textContent = "Download";
+      dl.textContent = L("download");
       ga.appendChild(dl);
       if(isLast){
         var mk = document.createElement("button");
         mk.className = "cpbtn";
-        mk.textContent = "Make another";
+        mk.textContent = L("another");
         mk.onclick = function(){ regenerate(); };
         ga.appendChild(mk);
       }
@@ -975,12 +1468,12 @@ function buildBot(m, isLast){
     }else{
       var gn = document.createElement("div");
       gn.className = "gnote";
-      gn.textContent = "This picture was made earlier and is not kept in your history.";
+      gn.textContent = L("oldpic");
       d.appendChild(gn);
       var again = document.createElement("button");
       again.className = "cpbtn";
-      again.textContent = "Create it again";
-      again.onclick = function(){ if(!loading) makeImage(m.genImage.prompt); };
+      again.textContent = L("again");
+      again.onclick = function(){ if(!loading) makeImageChecked(m.genImage.prompt); };
       d.appendChild(again);
     }
     return d;
@@ -989,57 +1482,38 @@ function buildBot(m, isLast){
   for(var i = 0; i < parts.length; i++){
     if(i % 2 === 1){
       var code = parts[i];
-      var lang = "";
       var nl = code.indexOf("\n");
       if(nl > -1 && nl <= 15 && code.slice(0, nl).trim().indexOf(" ") === -1){
-        lang = code.slice(0, nl).trim().toLowerCase();
         code = code.slice(nl + 1);
       }
       code = code.replace(/\n+$/,"");
-      var fname = guessName(lang, parts[i - 1]);
       var wrap = document.createElement("div");
       wrap.className = "code";
       var bar = document.createElement("div");
       bar.className = "codebar";
-      var ll = document.createElement("span");
-      ll.className = "codelang";
-      ll.textContent = lang || "code";
-      bar.appendChild(ll);
       var cb = document.createElement("button");
       cb.className = "cpbtn";
-      cb.textContent = "Copy";
+      cb.textContent = L("copy");
       (function(c, b){ b.onclick = function(){ copyText(c, b); }; })(code, cb);
       bar.appendChild(cb);
-      if(code.length > 20){
-        var ob = document.createElement("button");
-        ob.className = "cpbtn";
-        ob.textContent = "Open";
-        (function(n, c, b){ b.onclick = function(){ wsOpen(n, c); }; })(fname, code, ob);
-        bar.appendChild(ob);
-        var db2 = document.createElement("button");
-        db2.className = "cpbtn";
-        db2.textContent = "Download";
-        (function(n, c, b){ b.onclick = function(){ saveBlob(c, n, "text/plain"); }; })(fname, code, db2);
-        bar.appendChild(db2);
-      }
       var pre = document.createElement("pre");
       pre.textContent = code;
       wrap.appendChild(bar);
       wrap.appendChild(pre);
       d.appendChild(wrap);
     }else{
-      var t = parts[i].replace(/^\n+|\n+$/g,"");
-      if(!t) continue;
+      var s = parts[i].replace(/^\n+|\n+$/g,"");
+      if(!s) continue;
       var tx = document.createElement("div");
       tx.className = "txt";
-      tx.innerHTML = mdToHtml(t);
+      tx.innerHTML = mdToHtml(s);
       d.appendChild(tx);
     }
   }
   if(m.sources && m.sources.length){
     var sd = document.createElement("div");
     sd.className = "src";
-    sd.appendChild(document.createTextNode("Sources: "));
+    sd.appendChild(document.createTextNode(L("sources")));
     m.sources.forEach(function(so){
       if(!so || !/^https?:\/\//.test(so.uri || "")) return;
       var a = document.createElement("a");
@@ -1055,18 +1529,13 @@ function buildBot(m, isLast){
   act.className = "actions";
   var cp = document.createElement("button");
   cp.className = "cpbtn";
-  cp.textContent = "Copy";
+  cp.textContent = L("copy");
   cp.onclick = function(){ copyText(m.content, cp); };
   act.appendChild(cp);
-  var sv = document.createElement("button");
-  sv.className = "cpbtn";
-  sv.textContent = "Save as";
-  sv.onclick = function(){ showSaveMenu(sv, m.content); };
-  act.appendChild(sv);
   if(isLast){
     var rg = document.createElement("button");
     rg.className = "cpbtn";
-    rg.textContent = "Regenerate your question";
+    rg.textContent = L("regen");
     rg.onclick = function(){ regenerate(); };
     act.appendChild(rg);
   }
@@ -1076,25 +1545,31 @@ function buildBot(m, isLast){
 
 function regenerate(){
   if(loading) return;
-  if(limitUntil > Date.now()){ showLimit(); return; }
   var last = messages[messages.length - 1];
   if(!last || last.role !== "assistant") return;
   if(last.genImage){
+    if(imgLimitUntil > Date.now()){ showLimit("img"); return; }
     var pr = last.genImage.prompt;
     messages.pop();
     makeImage(pr);
     return;
   }
+  if(limitUntil > Date.now()){ showLimit("msg"); return; }
   messages.pop();
   ask();
+}
+
+function makeImageChecked(prompt){
+  if(imgLimitUntil > Date.now()){ showLimit("img"); return; }
+  makeImage(prompt);
 }
 
 function setSendIcon(){
   $("send").innerHTML = loading ? "&#9632;" : "&#8593;";
 }
 
-function useSuggestion(t){
-  box.value = t;
+function useSuggestion(txt){
+  box.value = txt;
   send();
 }
 
@@ -1103,14 +1578,14 @@ function renderAll(){
   chat.innerHTML = "";
   if(!messages.length && !loading){
     var n = firstName();
-    var title = n ? "Hello " + esc(n) + ", how are you doing?" : "What can I help with?";
-    var sub = n ? "What can I help you with today?" : "Ask me anything.";
+    var title = n ? L("hello", {n: esc(n)}) : L("help");
+    var sub = n ? L("help2") : L("ask");
     chat.innerHTML = '<div id="welcome"><img src="/icon-192.png" alt=""><h2>' + title + '</h2><div>' + sub + '</div><div class="sugs" id="sugs"></div></div>';
-    var ideas = ["Help me write an email", "Explain something simply", "Make me a study plan", "Tell me a fun fact", "ask me riddles", "who are you"];
-    ideas.forEach(function(t){
+    ["i1","i2","i3","i4"].forEach(function(k){
       var b = document.createElement("button");
-      b.textContent = t;
-      b.onclick = function(){ useSuggestion(t); };
+      var label = L(k);
+      b.textContent = label;
+      b.onclick = function(){ useSuggestion(label); };
       $("sugs").appendChild(b);
     });
     return;
@@ -1122,7 +1597,7 @@ function renderAll(){
   if(loading){
     var w = document.createElement("div");
     w.className = "msg bot";
-    w.textContent = creatingImg ? "Creating your picture, please wait..." : (searchingNow ? "Searching the web..." : "Thinking...");
+    w.textContent = creatingImg ? L("creating") : (searchingNow ? L("searching") : L("thinking"));
     chat.appendChild(w);
   }
   chat.scrollTop = chat.scrollHeight;
@@ -1138,21 +1613,21 @@ try{
 
 function drawWeb(){
   var b = $("webBtn");
-  b.textContent = "Web search: " + (webMode === "auto" ? "Auto" : (webMode === "on" ? "On" : "Off"));
+  b.textContent = L("web") + ": " + (webMode === "auto" ? L("auto") : (webMode === "on" ? L("on") : L("off")));
   b.className = webMode === "on" ? "on" : (webMode === "off" ? "off" : "");
 }
 function cycleWeb(){
   webMode = webMode === "auto" ? "on" : (webMode === "on" ? "off" : "auto");
   try{ localStorage.setItem("nestyWeb", webMode); }catch(e){}
   drawWeb();
-  toast(webMode === "auto" ? "Nesty will search the web when a question needs current information."
-        : (webMode === "on" ? "Nesty will search the web for every question." : "Web search is off."));
+  toast(webMode === "auto" ? L("w_auto") : (webMode === "on" ? L("w_on") : L("w_off")));
 }
 var AUTO_WEB = /\b(today|tonight|latest|recent|recently|news|current|currently|right now|this week|this month|this year|yesterday|tomorrow|2025|2026|price|prices|weather|forecast|score|scores|results|fixtures|trending|exchange rate|election|stock|release date|how much (is|does|are)|who is the (current|new)|who won|habari za|bei ya)\b/i;
+var AUTO_WEB2 = /(actualit|aujourd|dernières|noticias|hoy|últimas|notícias|hoje|nachrichten|heute|aktuell|новости|сегодня|أخبار|اليوم|الآن|समाचार|आज|新闻|今天|最新|ニュース|今日|뉴스|오늘|haberler|bugün|berita|hari ini|leo|sasa hivi)/i;
 function needsWeb(text){
   if(webMode === "on") return true;
   if(webMode === "off") return false;
-  return AUTO_WEB.test(text || "");
+  return AUTO_WEB.test(text || "") || AUTO_WEB2.test(text || "");
 }
 function todayText(){
   try{
@@ -1161,7 +1636,6 @@ function todayText(){
 }
 
 var jwtCache = {token: "", exp: 0};
-var limitUntil = 0;
 
 async function getJwt(){
   if(jwtCache.token && jwtCache.exp > Date.now()) return jwtCache.token;
@@ -1170,19 +1644,46 @@ async function getJwt(){
   return r.jwt;
 }
 
-function timeText(ms){
-  var d = new Date(ms);
-  var h = d.getHours(), m = ("0" + d.getMinutes()).slice(-2);
-  var ap = h >= 12 ? "PM" : "AM";
-  h = h % 12; if(h === 0) h = 12;
-  return h + ":" + m + " " + ap;
+/* ---------- Limits (set by the server for each plan; every window is 5 hours) ---------- */
+var limitUntil = 0, imgLimitUntil = 0, fileLimitUntil = 0, limitTimer = null;
+var LIM_KEYS = {msg: "nestyLimit", img: "nestyImgLimit", file: "nestyFileLimit"};
+try{
+  limitUntil = parseInt(localStorage.getItem("nestyLimit"), 10) || 0;
+  imgLimitUntil = parseInt(localStorage.getItem("nestyImgLimit"), 10) || 0;
+  fileLimitUntil = parseInt(localStorage.getItem("nestyFileLimit"), 10) || 0;
+}catch(e){}
+function setLimit(kind, until){
+  if(kind === "img") imgLimitUntil = until; else if(kind === "file") fileLimitUntil = until; else limitUntil = until;
+  try{ localStorage.setItem(LIM_KEYS[kind] || LIM_KEYS.msg, String(until)); }catch(e){}
 }
-
-function showLimit(){
+function timeText(ms){
+  try{ return new Date(ms).toLocaleTimeString([], {hour: "numeric", minute: "2-digit"}); }
+  catch(e){ return new Date(ms).toTimeString().slice(0, 5); }
+}
+function whenText(ms){
+  var d = new Date(ms);
+  if(d.toDateString() === new Date().toDateString()) return timeText(ms);
+  try{ return d.toLocaleDateString([], {day: "numeric", month: "short"}) + ", " + timeText(ms); }
+  catch(e){ return timeText(ms); }
+}
+function fullWhen(ms){
+  try{ return new Date(ms).toLocaleString([], {dateStyle: "medium", timeStyle: "short"}); }
+  catch(e){ return new Date(ms).toString(); }
+}
+function leftText(ms){
+  var mins = Math.max(1, Math.ceil((ms - Date.now()) / 60000));
+  var h = Math.floor(mins / 60), mm = mins % 60;
+  return h ? h + "h " + mm + "m" : mm + "m";
+}
+function showLimit(kind){
+  var until = kind === "img" ? imgLimitUntil : (kind === "file" ? fileLimitUntil : limitUntil);
   var bar = $("limitBar");
-  if(limitUntil > Date.now()){
-    bar.textContent = "You have reached the message limit for now go to settings to upgrade to ultra or premium or wait until " + timeText(limitUntil) + ".";
+  clearTimeout(limitTimer);
+  if(until > Date.now()){
+    hidePromo();
+    $("limitTxt").textContent = L(kind === "img" ? "lim_img" : (kind === "file" ? "lim_file" : "lim_msg"), {t: whenText(until), r: leftText(until)});
     bar.style.display = "block";
+    limitTimer = setTimeout(function(){ bar.style.display = "none"; }, until - Date.now() + 500);
   }else{
     bar.style.display = "none";
   }
@@ -1207,6 +1708,8 @@ async function ask(){
       body: JSON.stringify({
         userName: firstName(),
         today: todayText(),
+        instructions: (user.prefs && user.prefs.instructions) || "",
+        memory: getMem(),
         search: wantSearch,
         messages: apiMessages()
       })
@@ -1214,6 +1717,8 @@ async function ask(){
     var data = await res.json();
     if(data.limited){
       loading = false;
+      searchingNow = false;
+      aborter = null;
       var last = messages.pop();
       if(last && last.role === "user"){
         box.value = last.text;
@@ -1224,12 +1729,13 @@ async function ask(){
         }
         if(last.image){
           pendingImage = last.image;
-          $("chipName").textContent = "Picture: " + last.image.name;
+          $("chipName").textContent = last.image.name;
           $("chip").style.display = "flex";
         }
       }
-      limitUntil = data.resetAt || (Date.now() + 2 * 3600 * 1000);
-      showLimit();
+      var kd = data.kind === "file" ? "file" : "msg";
+      setLimit(kd, data.resetAt || (Date.now() + 5 * 3600 * 1000));
+      showLimit(kd);
       renderAll();
       return;
     }
@@ -1237,22 +1743,33 @@ async function ask(){
       loading = false;
       messages.pop();
       renderAll();
-      toast("Your session ended. Please sign in again.");
+      toast(L("session"));
       jwtCache = {token: "", exp: 0};
       setTimeout(function(){ location.reload(); }, 1800);
       return;
     }
+    if(data.needVerify){
+      loading = false;
+      messages.pop();
+      renderAll();
+      toast(L("needverify"));
+      logout();
+      return;
+    }
     reply = data.reply || "Sorry, something went wrong.";
     sources = data.sources || [];
+    if(data.remember && data.remember.length) addFacts(data.remember);
+    noteUsage(data);
     if(typeof data.left === "number" && data.left <= 5 && data.left >= 0){
-      toast(data.left + " message" + (data.left === 1 ? "" : "s") + " left before a short break.");
+      toast(L("left_m", {n: data.left}));
     }
   }catch(e){
     if(e && e.name === "AbortError"){
       loading = false;
+      searchingNow = false;
       aborter = null;
       renderAll();
-      toast("Stopped.");
+      toast(L("stopped"));
       saveChat();
       return;
     }
@@ -1268,214 +1785,19 @@ async function ask(){
   saveChat();
 }
 
-/* ---------- Code and files workspace ---------- */
-var EXT = {html:"index.html",htm:"index.html",css:"style.css",js:"script.js",javascript:"script.js",mjs:"script.mjs",ts:"script.ts",typescript:"script.ts",jsx:"app.jsx",tsx:"app.tsx",json:"data.json",py:"main.py",python:"main.py",md:"notes.md",markdown:"notes.md",txt:"notes.txt",text:"notes.txt",csv:"data.csv",xml:"data.xml",svg:"image.svg",sql:"query.sql",java:"Main.java",c:"main.c",cpp:"main.cpp","c++":"main.cpp",cs:"Program.cs",php:"index.php",bash:"script.sh",sh:"script.sh",shell:"script.sh",yaml:"config.yaml",yml:"config.yml",kotlin:"Main.kt",kt:"Main.kt",swift:"main.swift",go:"main.go",rust:"main.rs",rs:"main.rs",ruby:"main.rb",rb:"main.rb",dart:"main.dart",r:"script.r"};
-
-function guessName(lang, before){
-  var re = /[\w-]+(?:\.[\w-]+)*\.(?:html?|css|mjs|js|tsx?|jsx|json|py|md|txt|csv|xml|svg|sql|java|cpp|cs|c|php|sh|ya?ml|kt|swift|go|rs|rb|dart|r)\b/gi;
-  var all = (before || "").slice(-300).match(re);
-  if(all && all.length) return all[all.length - 1];
-  return EXT[(lang || "").toLowerCase()] || "file.txt";
-}
-function extOf(name){
-  var i = (name || "").lastIndexOf(".");
-  return i > -1 ? name.slice(i + 1).toLowerCase() : "";
-}
-function saveBlob(text, name, type){
-  var b = new Blob([text], {type: type + ";charset=utf-8"});
-  var a = document.createElement("a");
-  a.href = URL.createObjectURL(b);
-  a.download = name;
-  document.body.appendChild(a);
-  a.click();
-  setTimeout(function(){ URL.revokeObjectURL(a.href); a.remove(); }, 1000);
-}
-
-function wsSaveLocal(){
-  try{ localStorage.setItem("nestyWs", JSON.stringify({name: $("wsName").value, text: $("wsText").value})); }catch(e){}
-}
-function wsOpen(name, text){
-  $("wsName").value = name || "index.html";
-  $("wsText").value = text || "";
-  $("wsOutWrap").style.display = "none";
-  $("ws").style.display = "block";
-  wsSaveLocal();
-  closeSide();
-}
-function wsOpenLast(){
-  var o = {};
-  try{ o = JSON.parse(localStorage.getItem("nestyWs") || "{}"); }catch(e){}
-  wsOpen(o.name || "index.html", o.text || "");
-}
-function wsClose(){
-  wsSaveLocal();
-  $("ws").style.display = "none";
-}
-function wsNew(){
-  if($("wsText").value.trim() && !confirm("Start a new empty file? The text in the editor will be cleared.")) return;
-  $("wsName").value = "index.html";
-  $("wsText").value = "";
-  $("wsOutWrap").style.display = "none";
-  wsSaveLocal();
-}
-function wsCopy(){ copyText($("wsText").value, null); toast("Copied."); }
-function wsDownload(){
-  if(!$("wsText").value){ toast("There is nothing to download yet."); return; }
-  saveBlob($("wsText").value, $("wsName").value || "file.txt", "text/plain");
-}
-function wsBig(){ $("wsFrame").classList.toggle("big"); }
-
-$("wsText").addEventListener("input", wsSaveLocal);
-$("wsName").addEventListener("input", wsSaveLocal);
-$("wsOpenInput").addEventListener("change", function(){
-  var f = $("wsOpenInput").files[0];
-  $("wsOpenInput").value = "";
-  if(!f) return;
-  if(f.size > 1000000){ toast("That file is too big (max 1 MB)."); return; }
-  var r = new FileReader();
-  r.onload = function(){
-    $("wsName").value = f.name;
-    $("wsText").value = String(r.result || "");
-    $("wsOutWrap").style.display = "none";
-    wsSaveLocal();
-  };
-  r.onerror = function(){ toast("Could not open that file."); };
-  r.readAsText(f);
-});
-
-var CAP = '(function(){function s(t,a){try{parent.postMessage({nesty:1,t:t,m:Array.prototype.map.call(a,function(x){try{return typeof x==="object"?JSON.stringify(x):String(x)}catch(e){return String(x)}}).join(" ")},"*")}catch(e){}}["log","info","warn","error"].forEach(function(k){var o=console[k];console[k]=function(){s(k,arguments);try{o.apply(console,arguments)}catch(e){}}});window.addEventListener("error",function(e){s("error",[e.message+" (line "+e.lineno+")"])});window.addEventListener("unhandledrejection",function(e){s("error",["Unhandled: "+((e.reason&&e.reason.message)||e.reason)])})})();';
-
-function wsRun(){
-  var name = $("wsName").value || "";
-  var text = $("wsText").value;
-  var ext = extOf(name);
-  if(!text.trim()){ toast("Nothing to run yet."); return; }
-  var capTag = "<scr" + "ipt>" + CAP + "</scr" + "ipt>";
-  var doc = "";
-  if(ext === "html" || ext === "htm"){
-    var hi = text.search(/<head[^>]*>/i);
-    if(hi > -1){
-      var he = text.indexOf(">", hi) + 1;
-      doc = text.slice(0, he) + capTag + text.slice(he);
-    }else{
-      doc = capTag + text;
-    }
-  }else if(ext === "svg"){
-  doc = "<!doctype html><html><body style='margin:0;display:flex;justify-content:center'>" + text + "</body></html>";
-  }else if(ext === "js" || ext === "mjs"){
-    doc = "<!doctype html><html><head><meta charset='utf-8'>" + capTag + "</head><body style='font-family:sans-serif;padding:10px'><scr" + "ipt>" + text.replace(/<\/script/gi, "<\\/script") + "\n</scr" + "ipt></body></html>";
-  }else if(ext === "md" || ext === "markdown"){
-    doc = "<!doctype html><html><head><meta charset='utf-8'><meta name='viewport' content='width=device-width,initial-scale=1'><style>body{font-family:sans-serif;padding:12px;line-height:1.6}table{border-collapse:collapse}td,th{border:1px solid #ccc;padding:6px 10px}code{background:#eee;padding:1px 4px}</style></head><body>" + mdToHtml(text) + "</body></html>";
-  }else if(ext === "css"){
-    toast("CSS needs an HTML file to show. Put your CSS inside a style tag in an HTML file.");
-    return;
-  }else if(ext === "py"){
-    toast("Running Python is not available yet. You can copy or download the file.");
-    return;
-  }else{
-    toast("Preview works for HTML, JavaScript, SVG and Markdown files.");
-    return;
-  }
-  $("wsLog").textContent = "";
-  $("wsOutWrap").style.display = "block";
-  $("wsFrame").srcdoc = doc;
-  $("wsOutWrap").scrollIntoView({behavior: "smooth"});
-}
-
-window.addEventListener("message", function(e){
-  var d = e.data;
-  if(!d || d.nesty !== 1) return;
-  var fr = $("wsFrame");
-  if(!fr || e.source !== fr.contentWindow) return;
-  var log = $("wsLog");
-  log.textContent += (d.t === "error" ? "Error: " : (d.t === "warn" ? "Warning: " : "")) + d.m + "\n";
-  log.scrollTop = log.scrollHeight;
-});
-
-function wsAskNesty(){
-  var ask = $("wsAsk").value.trim();
-  var text = $("wsText").value;
-  if(loading){ toast("Please wait for the current answer to finish."); return; }
-  if(!text.trim()){ toast("Write or open a file first."); return; }
-  if(!ask){ toast("Tell Nesty what to change, for example: make the button green."); return; }
-  pendingImage = null;
-  pendingFile = {name: $("wsName").value || "file.txt", text: text.slice(0, 20000)};
-  showChip(pendingFile.name);
-  box.value = ask + "\n\n(Please return the complete updated file in one code block.)";
-  $("wsAsk").value = "";
-  wsClose();
-  send();
-}
-
-/* ---------- Save an answer as a file ---------- */
-function mdFull(text){
-  var parts = text.split("```");
-  var out = "";
-  for(var i = 0; i < parts.length; i++){
-    if(i % 2 === 1){
-      var c = parts[i];
-      var nl = c.indexOf("\n");
-      if(nl > -1 && nl <= 15 && c.slice(0, nl).trim().indexOf(" ") === -1) c = c.slice(nl + 1);
-      out += "<pre>" + esc(c.replace(/\n+$/, "")) + "</pre>";
-    }else if(parts[i].trim()){
-      out += mdToHtml(parts[i].replace(/^\n+|\n+$/g, ""));
-    }
-  }
-  return out;
-}
-function htmlDoc(text){
-  return "<!doctype html><html><head><meta charset='utf-8'><title>Nesty AI</title><style>body{font-family:Arial,sans-serif;line-height:1.6;max-width:800px;margin:20px auto;padding:0 14px}table{border-collapse:collapse}td,th{border:1px solid #bbb;padding:6px 10px;text-align:left}pre{background:#f4f4f4;padding:10px;white-space:pre-wrap}code{background:#f4f4f4}</style></head><body>" + mdFull(text) + "</body></html>";
-}
-function plainText(text){
-  return text.replace(/```[\w+-]*\n?/g, "").replace(/\*\*/g, "").replace(/^#{1,6}\s+/gm, "");
-}
-function printDoc(text){
-  var w = window.open("", "_blank");
-  if(!w){ toast("Please allow pop-ups to save as PDF."); return; }
-  w.document.write(htmlDoc(text));
-  w.document.close();
-  toast("In the print screen, choose Save as PDF.");
-  setTimeout(function(){ try{ w.focus(); w.print(); }catch(e){} }, 600);
-}
-function showSaveMenu(btn, text){
-  var m = $("saveMenu");
-  m.innerHTML = "";
-  var items = [
-    ["Text file (.txt)", function(){ saveBlob(plainText(text), "nesty-answer.txt", "text/plain"); }],
-    ["Markdown (.md)", function(){ saveBlob(text, "nesty-answer.md", "text/markdown"); }],
-    ["Word document (.doc)", function(){ saveBlob(htmlDoc(text), "nesty-answer.doc", "application/msword"); }],
-    ["Web page (.html)", function(){ saveBlob(htmlDoc(text), "nesty-answer.html", "text/html"); }],
-    ["PDF (print and save)", function(){ printDoc(text); }]
-  ];
-  items.forEach(function(it){
-    var b = document.createElement("button");
-    b.textContent = it[0];
-    b.onclick = function(){ m.style.display = "none"; it[1](); };
-    m.appendChild(b);
-  });
-  var r = btn.getBoundingClientRect();
-  m.style.display = "block";
-  m.style.left = Math.max(8, Math.min(r.left, window.innerWidth - 230)) + "px";
-  m.style.top = Math.max(8, Math.min(r.bottom + 4, window.innerHeight - 260)) + "px";
-}
-document.addEventListener("pointerdown", function(e){
-  var m = $("saveMenu");
-  if(m.style.display === "block" && !m.contains(e.target) && !(e.target.className === "cpbtn" && e.target.textContent === "Save as")) m.style.display = "none";
-});
-
 /* ---------- Picture maker ---------- */
 var imageNext = false;
 var creatingImg = false;
 var IMG_RE = /^\s*(\/image\s+|(please\s+|can you\s+|could you\s+|kindly\s+)?((draw|sketch|paint|chora)\b(?!\s+(a\s+|an\s+|the\s+)?(conclusions?|tables?|charts?|graphs?|lines?|diagrams?|comparisons?|inferences?|attention))|(generate|create|make|design|tengeneza)\s+(me\s+)?(an?\s+|the\s+|some\s+)?([\w'-]+\s+){0,3}?(image|images|picture|pictures|photo|illustration|drawing|painting|logo|poster|wallpaper|portrait|cartoon|artwork|picha)\b))/i;
-function wantsImage(t){ return IMG_RE.test(t || ""); }
+function wantsImage(s){ return IMG_RE.test(s || ""); }
 function drawImg(){
   $("imgBtn").className = imageNext ? "on" : "";
-  $("imgBtn").textContent = imageNext ? "Image mode: on" : "Make an image";
+  $("imgBtn").textContent = imageNext ? L("img_on") : L("img");
 }
 function toggleImg(){
   imageNext = !imageNext;
   drawImg();
-  if(imageNext) toast("Describe the picture you want step by step, then send.Nesty can make mistakes");
+  if(imageNext) toast(L("img_tip"));
 }
 
 async function makeImage(prompt){
@@ -1498,15 +1820,16 @@ async function makeImage(prompt){
       loading = false; creatingImg = false; aborter = null;
       var lastU = messages.pop();
       if(lastU && lastU.role === "user") box.value = lastU.text;
+      setLimit("img", data.resetAt || (Date.now() + 5 * 3600 * 1000));
+      showLimit("img");
       renderAll();
-      toast("Picture limit reached for now. Try again at " + timeText(data.resetAt || (Date.now() + 2 * 3600 * 1000)) + ".");
       return;
     }
     if(data.needLogin){
       loading = false; creatingImg = false; aborter = null;
       messages.pop();
       renderAll();
-      toast("Your session ended. Please sign in again.");
+      toast(L("session"));
       jwtCache = {token: "", exp: 0};
       setTimeout(function(){ location.reload(); }, 1800);
       return;
@@ -1514,16 +1837,16 @@ async function makeImage(prompt){
     if(data.image){
       messages.push({role:"assistant", content:"[Nesty created a picture for: " + prompt + "]", genImage:{data:data.image, prompt:prompt}});
       if(typeof data.left === "number" && data.left <= 2){
-        toast(data.left + " picture" + (data.left === 1 ? "" : "s") + " left before a short break.");
+        toast(L("left_i", {n: data.left}));
       }
     }else{
-      messages.push({role:"assistant", content: data.reply || "I could not make the picture. Please try again after a few minutes."});
+      messages.push({role:"assistant", content: data.reply || "I could not make the picture. Please try again."});
     }
   }catch(e){
     if(e && e.name === "AbortError"){
       loading = false; creatingImg = false; aborter = null;
       renderAll();
-      toast("Stopped.");
+      toast(L("stopped"));
       return;
     }
     messages.push({role:"assistant", content:"Network error. Please try again."});
@@ -1537,14 +1860,20 @@ async function makeImage(prompt){
 
 function send(){
   if(loading){ if(aborter) aborter.abort(); return; }
-  if(limitUntil > Date.now()){ showLimit(); return; }
   var text = box.value.trim();
   if(!text && !pendingFile && !pendingImage) return;
-  if(!text) text = pendingImage ? "Please look at this picture and tell me what you see." : "Please read this and tell me what it says.";
+  if(!text) text = pendingImage ? L("p_pic") : L("p_file");
+  var asImage = !pendingFile && !pendingImage && (imageNext || wantsImage(text));
+  if(asImage){
+    if(imgLimitUntil > Date.now()){ showLimit("img"); return; }
+  }else if(limitUntil > Date.now()){
+    showLimit("msg");
+    return;
+  }
+  if(!asImage && (pendingFile || pendingImage) && fileLimitUntil > Date.now()){ showLimit("file"); return; }
   messages.push({role:"user", text:text, file:pendingFile, image:pendingImage});
   box.value = "";
   box.style.height = "auto";
-  var asImage = !pendingFile && !pendingImage && (imageNext || wantsImage(text));
   removeFile();
   if(asImage){
     imageNext = false;
@@ -1594,9 +1923,10 @@ function menuEdit(){
 }
 function closeEditor(){ $("editor").style.display = "none"; }
 function saveEdit(){
-  var t = $("editBox").value.trim();
-  if(!t) return;
-  messages[editIdx].text = t;
+  var s = $("editBox").value.trim();
+  if(!s) return;
+  if(limitUntil > Date.now()){ showLimit("msg"); return; }
+  messages[editIdx].text = s;
   messages = messages.slice(0, editIdx + 1);
   closeEditor();
   ask();
@@ -1670,7 +2000,7 @@ function readText(file){
   return new Promise(function(resolve, reject){
     var r = new FileReader();
     r.onload = function(){ resolve(r.result); };
-    r.onerror = function(){ reject(new Error("Could not read this file.")); };
+    r.onerror = function(){ reject(new Error(L("read_fail"))); };
     r.readAsText(file);
   });
 }
@@ -1688,37 +2018,37 @@ fileInput.addEventListener("change", async function(){
   var lower = name.toLowerCase();
   try{
     if(f.type.indexOf("image/") === 0){
-      if(f.size > 20 * 1000000){ toast("That picture is too big (max 20 MB)."); return; }
-      showChip("Preparing picture...");
+      if(f.size > 20 * 1000000){ toast(L("pic_big")); return; }
+      showChip(L("preparing"));
       var data = await fitImage(f, 1280, false, 0.82);
       pendingFile = null;
       pendingImage = {name: name, data: data};
-      showChip("Picture: " + name);
+      showChip(name);
       return;
     }
     if(lower.slice(-4) === ".doc" || lower.slice(-4) === ".ppt" || lower.slice(-4) === ".xls" || lower.slice(-5) === ".pptx" || lower.slice(-5) === ".xlsx"){
-      toast("This file type is not supported yet. Use a picture, PDF, Word (.docx) or text file.");
+      toast(L("unsupported"));
       return;
     }
-    if(f.size > 15 * 1000000){ toast("That file is too big (max 15 MB)."); return; }
+    if(f.size > 15 * 1000000){ toast(L("file_big")); return; }
     var text = "";
-    showChip("Reading " + name + "...");
+    showChip(L("reading", {n: name}));
     if(lower.slice(-4) === ".pdf" || f.type === "application/pdf"){
       text = await readPdf(f);
       if(text.replace(/\s/g, "").length < 20){
         removeFile();
-        toast("This PDF has no readable text. It may be scanned pictures.");
+        toast(L("pdf_empty"));
         return;
       }
     }else if(lower.slice(-5) === ".docx"){
       text = await readDocx(f);
       if(text.replace(/\s/g, "").length < 5){
         removeFile();
-        toast("I could not find any text in this Word file.");
+        toast(L("docx_empty"));
         return;
       }
     }else{
-      if(f.size > 1000000){ removeFile(); toast("Text files can be up to 1 MB."); return; }
+      if(f.size > 1000000){ removeFile(); toast(L("txt_big")); return; }
       text = await readText(f);
     }
     if(text.length > 20000){ text = text.slice(0, 20000) + "\n...[file cut because it is long]"; }
@@ -1727,7 +2057,7 @@ fileInput.addEventListener("change", async function(){
     showChip(name);
   }catch(e){
     removeFile();
-    toast((e && e.message) || "Could not read this file.");
+    toast((e && e.message) || L("read_fail"));
   }
 });
 
@@ -1746,7 +2076,7 @@ function initialOf(){
 function avatarNode(size){
   var p = (user && user.prefs) || {};
   var d = document.createElement("div");
-  d.style.cssText = "width:" + size + "px;height:" + size + "px;border-radius:50%;overflow:hidden;background:#1a1a1a;color:#fff;display:flex;align-items:center;justify-content:center;font-weight:600;flex:none;font-size:" + Math.round(size * 0.45) + "px";
+  d.style.cssText = "width:" + size + "px;height:" + size + "px;border-radius:50%;overflow:hidden;background:var(--btn);color:var(--btnText);display:flex;align-items:center;justify-content:center;font-weight:600;flex:none;font-size:" + Math.round(size * 0.45) + "px";
   function fallback(){ d.innerHTML = ""; d.textContent = initialOf(); }
   if(p.avatar){
     var im = document.createElement("img");
@@ -1788,19 +2118,20 @@ async function fetchGoogleAvatar(){
   if(info && info.picture){ await savePrefs({avatar: info.picture}); }
 }
 
-function sMsg(t){
-  $("sMsg").textContent = t || "";
-  if(t) setTimeout(function(){ if($("sMsg").textContent === t) $("sMsg").textContent = ""; }, 3500);
+function sMsg(s){
+  $("sMsg").textContent = s || "";
+  if(s) setTimeout(function(){ if($("sMsg").textContent === s) $("sMsg").textContent = ""; }, 3500);
 }
 
 function notifText(){
-  if(!("Notification" in window)) return "Notifications are not supported on this device.";
-  if(Notification.permission === "granted") return "👍On. You get a notification when an answer arrives while Nesty is in the background.";
-  if(Notification.permission === "denied") return "Blocked. To turn them on, open your phone or Chrome site settings for Nesty and allow notifications.";
-  return "Off. Turn them on to get a notification when an answer arrives while Nesty is in the background.";
+  if(!("Notification" in window)) return L("n_na");
+  if(Notification.permission === "granted") return L("n_on");
+  if(Notification.permission === "denied") return L("n_denied");
+  return L("n_off");
 }
 
 function drawSettings(){
+  fillLangs();
   var ab = $("avBig");
   ab.innerHTML = "";
   ab.appendChild(avatarNode(84));
@@ -1808,9 +2139,13 @@ function drawSettings(){
   var p = user.prefs || {};
   $("sFirst").value = p.firstName || parts[0] || "";
   $("sLast").value = p.lastName || parts.slice(1).join(" ") || "";
-  $("sEmail").textContent = user.email ? "Signed in as " + user.email : "";
+  $("sEmail").textContent = user.email ? L("s_signed", {e: user.email}) : "";
   $("sNotif").textContent = notifText();
   $("sNotifBtn").style.display = ("Notification" in window && Notification.permission === "default") ? "inline-block" : "none";
+  $("sInstr").value = p.instructions || "";
+  drawMemory();
+  markSwatches();
+  drawSub();
 }
 
 function openSettings(){
@@ -1828,14 +2163,14 @@ async function askNotif(){
 
 async function saveName(){
   var f = $("sFirst").value.trim(), l = $("sLast").value.trim();
-  if(!f){ sMsg("Please enter your first name."); return; }
+  if(!f){ sMsg(L("name_need")); return; }
   try{
     await account.updateName((f + " " + l).trim());
     await savePrefs({firstName: f, lastName: l});
     renderSide();
     drawSettings();
     renderAll();
-    sMsg("Name saved.");
+    sMsg(L("name_saved"));
   }catch(e){
     sMsg("Could not save: " + (e.message || "error"));
   }
@@ -1845,13 +2180,13 @@ $("avFile").addEventListener("change", async function(){
   var f = $("avFile").files[0];
   $("avFile").value = "";
   if(!f) return;
-  if(f.type.indexOf("image/") !== 0){ sMsg("Please choose a picture."); return; }
+  if(f.type.indexOf("image/") !== 0){ sMsg(L("pick_pic")); return; }
   try{
     var data = await fitImage(f, 144, true, 0.8);
     await savePrefs({avatar: data});
     renderSide();
     drawSettings();
-    sMsg("Photo updated.");
+    sMsg(L("photo_ok"));
   }catch(e){
     sMsg("Could not save photo: " + (e.message || "error"));
   }
@@ -1862,7 +2197,7 @@ async function removeAvatar(){
     await savePrefs({avatar: ""});
     renderSide();
     drawSettings();
-    sMsg("Photo removed.");
+    sMsg(L("photo_rm"));
   }catch(e){
     sMsg("Could not remove photo: " + (e.message || "error"));
   }
@@ -1884,21 +2219,21 @@ async function wipeChats(){
 }
 
 async function deleteAllChats(){
-  if(!confirm("Delete ALL your saved chats? This cannot be undone.")) return;
-  sMsg("Deleting wait a few momment...");
+  if(!confirm(L("conf_all"))) return;
+  sMsg(L("deleting"));
   try{
     await wipeChats();
-    sMsg("All chats deleted contact Red elementteam to recover.");
+    sMsg(L("chats_deleted"));
   }catch(e){
     sMsg("Could not delete: " + (e.message || "error"));
   }
 }
 
 async function deleteAccount(){
-  if(!confirm("Delete your account? Your chats will be removed and you will not be able to sign in again.")) return;
-  var word = prompt("Type DELETE to confirm.");
+  if(!confirm(L("conf_acc"))) return;
+  var word = prompt(L("type_del"));
   if(!word || word.trim().toUpperCase() !== "DELETE") return;
-  sMsg("Deleting...");
+  sMsg(L("deleting"));
   try{
     await wipeChats();
     await account.updateStatus();
@@ -1911,7 +2246,7 @@ async function deleteAccount(){
   closeSettings();
   authMode = "signin";
   showAuth();
-  $("authErr").textContent = "Your account was deleted successfully.";
+  $("authErr").textContent = L("acc_deleted");
 }
 
 $("q").addEventListener("input", renderList);
@@ -1932,7 +2267,7 @@ function toggleMic(){
   if(!SR){ alert("Voice input is not supported in this browser."); return; }
   if(listening){ rec.stop(); return; }
   rec = new SR();
-  rec.lang = "en-US";
+  rec.lang = voiceLang;
   rec.interimResults = false;
   rec.onstart = function(){ listening = true; micBtn.classList.add("on"); };
   rec.onend = function(){ listening = false; micBtn.classList.remove("on"); };
@@ -1945,62 +2280,271 @@ function toggleMic(){
   rec.start();
 }
 
+function drawSpk(){
+  var b = $("spk");
+  b.textContent = L("voice") + ": " + (speakOn ? L("on") : L("off"));
+  b.classList.toggle("on", speakOn);
+}
 function toggleSpeak(){
   speakOn = !speakOn;
-  var b = $("spk");
-  b.textContent = "Voice: " + (speakOn ? "On" : "Off");
-  b.classList.toggle("on", speakOn);
+  drawSpk();
   if(!speakOn && window.speechSynthesis) speechSynthesis.cancel();
 }
 function speak(text){
   if(!window.speechSynthesis) return;
   var clean = text.replace(/```[\s\S]*?```/g, " code block ").replace(/[*`#]/g, "");
   speechSynthesis.cancel();
-  speechSynthesis.speak(new SpeechSynthesisUtterance(clean));
+  var u = new SpeechSynthesisUtterance(clean);
+  u.lang = voiceLang;
+  speechSynthesis.speak(u);
 }
 
-drawWeb();
-drawImg();
+/* ---------- Custom instructions and memory ---------- */
+function getMem(){
+  var m = user && user.prefs && user.prefs.memory;
+  return Array.isArray(m) ? m : [];
+}
+function drawMemory(){
+  var holder = $("memList");
+  holder.innerHTML = "";
+  var m = getMem();
+  if(!m.length){
+    holder.innerHTML = '<div class="muted2">' + L("s_mem_none") + '</div>';
+    $("memClear").style.display = "none";
+    return;
+  }
+  $("memClear").style.display = "inline-block";
+  m.forEach(function(f, i){
+    var r = document.createElement("div");
+    r.className = "memItem";
+    var s = document.createElement("span");
+    s.dir = "auto";
+    s.textContent = f;
+    var x = document.createElement("button");
+    x.innerHTML = "&times;";
+    x.onclick = function(){ delMem(i); };
+    r.appendChild(s);
+    r.appendChild(x);
+    holder.appendChild(r);
+  });
+}
+async function delMem(i){
+  var m = getMem().slice();
+  m.splice(i, 1);
+  try{ await savePrefs({memory: m}); drawMemory(); }
+  catch(e){ sMsg("Could not delete: " + (e.message || "error")); }
+}
+async function clearMemory(){
+  if(!confirm(L("conf_mem"))) return;
+  try{ await savePrefs({memory: []}); drawMemory(); sMsg(L("mem_cleared")); }
+  catch(e){ sMsg("Could not clear: " + (e.message || "error")); }
+}
+async function saveInstr(){
+  try{
+    await savePrefs({instructions: $("sInstr").value.trim().slice(0, 600)});
+    sMsg(L("instr_ok"));
+  }catch(e){
+    sMsg("Could not save: " + (e.message || "error"));
+  }
+}
+async function addFacts(list){
+  var m = getMem().slice();
+  var changed = false;
+  list.forEach(function(f){
+    f = String(f).trim().slice(0, 200);
+    if(f && m.indexOf(f) < 0){ m.push(f); changed = true; }
+  });
+  if(!changed) return;
+  while(m.length > 30) m.shift();
+  try{ await savePrefs({memory: m}); toast(L("mem_saved")); }catch(e){}
+}
+
+/* ---------- Voice language and feedback ---------- */
+var VOICE_LANGS = [
+  ["en-US","English"],["sw-KE","Kiswahili"],["fr-FR","Français (French)"],["ar-SA","العربية (Arabic)"],
+  ["es-ES","Español (Spanish)"],["pt-BR","Português (Portuguese)"],["hi-IN","हिन्दी (Hindi)"],
+  ["zh-CN","中文 (Chinese)"],["de-DE","Deutsch (German)"],["it-IT","Italiano (Italian)"],
+  ["ru-RU","Русский (Russian)"],["ja-JP","日本語 (Japanese)"],["ko-KR","한국어 (Korean)"],
+  ["tr-TR","Türkçe (Turkish)"],["id-ID","Bahasa Indonesia"],["bn-BD","বাংলা (Bengali)"],
+  ["ur-PK","اردو (Urdu)"],["am-ET","አማርኛ (Amharic)"],["zu-ZA","isiZulu"],["af-ZA","Afrikaans"],
+  ["nl-NL","Nederlands (Dutch)"],["pl-PL","Polski (Polish)"],["vi-VN","Tiếng Việt (Vietnamese)"],
+  ["th-TH","ไทย (Thai)"],["fil-PH","Filipino"],["ha-NG","Hausa"],["yo-NG","Yorùbá"],["so-SO","Soomaali"]
+];
+var voiceLang = "en-US";
+try{ voiceLang = localStorage.getItem("nestyVoiceLang") || UI_VOICE[uiLang] || "en-US"; }catch(e){}
+function fillLangs(){
+  [["sLang", VOICE_LANGS], ["sUi", UI_LANGS], ["aLang", UI_LANGS]].forEach(function(pair){
+    var s = $(pair[0]);
+    if(!s.options.length){
+      pair[1].forEach(function(l){
+        var o = document.createElement("option");
+        o.value = l[0]; o.textContent = l[1];
+        s.appendChild(o);
+      });
+    }
+  });
+  $("sLang").value = voiceLang;
+  $("sUi").value = uiLang;
+  $("aLang").value = uiLang;
+}
+function setVoiceLang(v){
+  voiceLang = v;
+  try{ localStorage.setItem("nestyVoiceLang", v); }catch(e){}
+  toast(L("vlang_ok"));
+}
+function sendFeedback(){
+  var body = L("fb_body") + "\n\n\n---\nAccount: " + (user ? user.email : "") + "\nVersion: " + VERSION + "\nDevice: " + navigator.userAgent;
+  location.href = "mailto:isenyealvin@gmail.com?subject=" + encodeURIComponent("Nesty AI feedback") + "&body=" + encodeURIComponent(body);
+}
+
+/* ---------- Plans, usage, activation codes ---------- */
+var PAY_NUMBER = "0701244268";
+var PLAN_DATA = {
+  free: {n: "Free", msg: 40, file: 30, img: 6},
+  premium: {n: "Premium", msg: 60, file: 50, img: 6, m: 50, y: 600},
+  ultra: {n: "Ultra", msg: 80, file: 70, img: 20, m: 100, y: 36000}
+};
+var me = null, plansOpen = false, plansFocus = "", promoTimer = null;
+function money(n){ return "KSh " + String(n).replace(/\B(?=(\d{3})+(?!\d))/g, ","); }
+function curPlan(){ return (me && PLAN_DATA[me.plan]) ? me.plan : "free"; }
+function curPlanText(){
+  var cp = curPlan();
+  if(cp === "free"){
+    var t = L("on_free");
+    if(me && me.expiredPlan && PLAN_DATA[me.expiredPlan]) t += " " + L("expired_note", {plan: PLAN_DATA[me.expiredPlan].n, t: fullWhen(me.expiredAt)});
+    return t;
+  }
+  return L("on_plan", {plan: PLAN_DATA[cp].n, t: fullWhen(me.expiresAt)});
+}
+function drawPlanBtn(){
+  var b = $("planBtn");
+  if(!b) return;
+  var cp = curPlan();
+  b.textContent = cp === "free" ? L("upgrade") : PLAN_DATA[cp].n;
+  b.className = "hbtn " + (cp === "free" ? "up" : "plan");
+}
+function drawSub(){ if($("subTxt")) $("subTxt").textContent = curPlanText(); }
+async function api(path, payload){
+  var jwt = await getJwt();
+  var res = await fetch(path, {method: "POST", headers: {"Content-Type": "application/json", "X-Nesty-Token": jwt}, body: JSON.stringify(payload || {})});
+  return res.json();
+}
+async function loadMe(){
+  try{
+    var d = await api("/api/me");
+    if(d && d.plan){ me = d; drawPlanBtn(); drawSub(); if(plansOpen) renderPlans(); }
+  }catch(e){}
+}
+function noteUsage(d){
+  if(!d || !d.plan) return;
+  if(!me || me.plan !== d.plan){ loadMe(); }
+  if(d.plan === "free" && typeof d.used === "number" && d.used > 0 && d.used % 10 === 0) showPromo();
+}
+function showPromo(){
+  $("promoTxt").textContent = L("promo");
+  $("promoBar").style.display = "block";
+  clearTimeout(promoTimer);
+  promoTimer = setTimeout(hidePromo, 30000);
+}
+function hidePromo(){
+  clearTimeout(promoTimer);
+  if($("promoBar")) $("promoBar").style.display = "none";
+}
+function renderPlans(){
+  var body = $("plansBody");
+  if(!body) return;
+  var cp = curPlan();
+  $("curPlan").textContent = curPlanText();
+  var h = "";
+  if(me && me.usage){
+    h += '<div class="pcard"><h3>' + L("use_title") + '</h3><ul>';
+    [["msg","k_msg"],["file","k_file"],["img","k_img"]].forEach(function(k){
+      var u = me.usage[k[0]] || {used: 0, limit: 0, resetAt: 0};
+      h += '<li>' + (u.resetAt && u.used
+        ? L("use_line", {k: L(k[1]), u: u.used, l: u.limit, t: whenText(u.resetAt)})
+        : L("use_line0", {k: L(k[1]), u: u.used, l: u.limit})) + '</li>';
+    });
+    h += '</ul></div>';
+  }
+  ["free","premium","ultra"].forEach(function(id){
+    var p = PLAN_DATA[id];
+    h += '<div class="pcard' + (id === cp ? ' cur' : '') + (id === plansFocus ? ' focus' : '') + '" id="pc_' + id + '"><h3>' + p.n + (id === cp ? ' · ' + L("current") : '') + '</h3>';
+    h += '<div class="price">' + (id === "free" ? L("free_price") : money(p.m) + ' / ' + L("monthly") + ' · ' + money(p.y) + ' / ' + L("yearly")) + '</div>';
+    h += '<ul><li>' + L("pl_msg", {n: p.msg}) + '</li><li>' + L("pl_file", {n: p.file}) + '</li><li>' + L("pl_img", {n: p.img}) + '</li></ul></div>';
+  });
+  h += '<div class="muted2">' + L("pl_win") + '</div>';
+  body.innerHTML = h;
+  $("howList").innerHTML = '<li>' + L("how1", {num: PAY_NUMBER}) + '</li><li>' + L("how2") + '</li><li>' + L("how3") + '</li><li>' + L("how4") + '</li>';
+}
+function openPlans(focus){
+  closeSide();
+  closeSettings();
+  plansOpen = true;
+  plansFocus = focus || "";
+  hidePromo();
+  renderPlans();
+  $("plans").style.display = "block";
+  if(user) loadMe();
+  if(focus){
+    setTimeout(function(){
+      var el = $("pc_" + focus);
+      if(el) el.scrollIntoView({behavior: "smooth", block: "start"});
+    }, 60);
+  }
+}
+function closePlans(){
+  plansOpen = false;
+  $("plans").style.display = "none";
+}
+function sendProof(){
+  var body = "Hello Red element,\n\nI paid KSh ____ to " + PAY_NUMBER + " for the ______ plan (monthly / yearly).\nMy Nesty email: " + (user ? user.email : "") + "\nPayment confirmation message:\n\n";
+  location.href = "mailto:isenyealvin@gmail.com?subject=" + encodeURIComponent("Nesty AI payment") + "&body=" + encodeURIComponent(body);
+}
+async function redeemCode(){
+  var code = $("actCode").value.trim();
+  if(!code) return;
+  var msg = $("actMsg");
+  $("actBtn").disabled = true;
+  msg.className = "muted2";
+  msg.textContent = "...";
+  try{
+    var d = await api("/api/redeem", {code: code});
+    if(d.ok){
+      $("actCode").value = "";
+      msg.className = "muted2 ok";
+      msg.textContent = L("act_ok", {plan: PLAN_DATA[d.plan] ? PLAN_DATA[d.plan].n : d.plan, t: fullWhen(d.expiresAt)});
+      setLimit("msg", 0); setLimit("img", 0); setLimit("file", 0);
+      $("limitBar").style.display = "none";
+      await loadMe();
+    }else{
+      msg.className = "muted2 bad";
+      msg.textContent = d.error || L("act_fail");
+    }
+  }catch(e){
+    msg.className = "muted2 bad";
+    msg.textContent = L("act_fail");
+  }
+  $("actBtn").disabled = false;
+}
+async function changePassword(){
+  var op = $("pwOld").value, np = $("pwNew").value, nc = $("pwNew2").value;
+  if(np.length < 8){ sMsg(L("e_pass")); return; }
+  if(np !== nc){ sMsg(L("e_match")); return; }
+  try{
+    if(op) await account.updatePassword(np, op); else await account.updatePassword(np);
+    $("pwOld").value = ""; $("pwNew").value = ""; $("pwNew2").value = "";
+    sMsg(L("pw_ok"));
+  }catch(e){
+    sMsg((e && e.message) || "error");
+  }
+}
+
+buildSwatches();
+markSwatches();
+fillLangs();
+applyLang();
 init();
 </script>
 <script src="/notify.js"></script>
-<script>
-function setTheme(color){
-  document.documentElement.style.setProperty("--accent", color);
-  try{ localStorage.setItem("nestyTheme", color); }catch(e){}
-  if(typeof sMsg === "function") sMsg("Theme colour saved.");
-}
-function saveLang(){
-  var el = document.getElementById("sLang");
-  if(!el) return;
-  try{ localStorage.setItem("nestyLang", el.value); }catch(e){}
-  if(typeof sMsg === "function") sMsg("Language preference saved.");
-}
-async function startPayment(plan, yearly){
-  var phoneEl = document.getElementById("mpesaPhone");
-  var phone = phoneEl ? phoneEl.value.trim() : "";
-  if(!phone){ if(typeof sMsg === "function") sMsg("Please enter your M-Pesa phone number."); return; }
-  try{
-    var jwt = await getJwt();
-    var res = await fetch("/api/mpesa/stk", {
-      method: "POST",
-      headers: {"Content-Type":"application/json", "X-Nesty-Token": jwt},
-      body: JSON.stringify({phone: phone, plan: plan, yearly: !!yearly})
-    });
-    var d = await res.json();
-    if(d.ok){ if(typeof sMsg === "function") sMsg("Check your phone for the M-Pesa prompt."); }
-    else { if(typeof sMsg === "function") sMsg("Could not start payment."); }
-  }catch(e){
-    if(typeof sMsg === "function") sMsg("Network error.");
-  }
-}
-try{
-  var saved = localStorage.getItem("nestyTheme");
-  if(saved) document.documentElement.style.setProperty("--accent", saved);
-  var lang = localStorage.getItem("nestyLang");
-  var sel = document.getElementById("sLang");
-  if(lang && sel) sel.value = lang;
-}catch(e){}
-</script>
 </body>
 </html>
