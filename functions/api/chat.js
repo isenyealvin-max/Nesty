@@ -268,7 +268,7 @@ export async function onRequestPost(context) {
     if (tav) {
       system +=
         " Here are fresh web search results" + (today ? " (retrieved " + today + ")" : "") +
-        ". Use them to answer the user's question with current facts, and mention the source names. If they do not answer the question, say so.\n\n" +
+        ". Use them to answer the user's question with current facts, mention the source names only if asked. If they do not answer the question, say so.\n\n" +
         tav.map(function (r, i) {
           return (i + 1) + ". " + r.title + " (" + r.uri + ")\n" + r.text;
         }).join("\n\n");
