@@ -536,8 +536,11 @@ async function handleImage(request, env) {
   } catch (e) {
     return json({ reply: "Bad request. Please try again." }, 400);
   }
+
   const prompt = String(body.prompt || "").trim().slice(0, 600);
-  if (!prompt) return json({ reply: "Tell me what picture to make." }, 400);
+  const inputImage = body.image || null;   // base64 data URL or pure base64
+
+  if (!prompt) return json({ reply: "Tell me what picture to make or how to edit it." }, 400);
   if (!env.AI) return json({ reply: "The picture maker is not set up yet." });
   if (BLOCK.test(prompt)) {
     return json({ reply: "I can't make that kind of picture. Please try something else." });
@@ -564,20 +567,40 @@ async function handleImage(request, env) {
   }
 
   try {
-    const out = await env.AI.run("@cf/black-forest-labs/flux-1-schnell", {
-      prompt: english,
-      steps: 4,
-    });
+    let out;
+
+    if (inputImage) {
+      // ===== IMAGE EDITING (img2img) =====
+      // Remove data URL prefix if present
+      let b64 = inputImage.replace(/^data:image\/\w+;base64,/, "");
+
+      out = await env.AI.run("@cf/black-forest-labs/flux-2-dev", {
+        prompt: english,
+        input_image: b64,          // some models use this name
+        // alternative key some models expect:
+        // image: b64,
+        steps: 20,
+      });
+    } else {
+      // ===== NORMAL TEXT-TO-IMAGE =====
+      out = await env.AI.run("@cf/black-forest-labs/flux-1-schnell", {
+        prompt: english,
+        steps: 4,
+      });
+    }
+
     const b64 = await toBase64(out);
     if (!b64) throw new Error("empty");
+
     return json({
       image: "data:image/jpeg;base64," + b64,
       left: stb ? Math.max(0, limit - used) : undefined,
     });
   } catch (e) {
     if (stb) await stb.refund();
+    console.error("Image error:", e);
     return json({
-      reply: "The picture maker is busy or has reached its free limit for today. Please try again later.",
+      reply: "The picture maker is busy or could not edit the image. Please try again later.",
     });
   }
 }
