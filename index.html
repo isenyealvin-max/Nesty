@@ -1960,44 +1960,24 @@ async function addLogo(dataUrl){
     c.width = pic.width; c.height = pic.height;
     var g = c.getContext("2d");
     g.drawImage(pic, 0, 0);
-    var size = Math.max(26, Math.round(Math.min(c.width, c.height) * 0.07));
-    var pad = Math.round(size * 0.3);
-    var fs = Math.round(size * 0.46);
-    g.font = "600 " + fs + "px system-ui, sans-serif";
-    var label = "Nesty AI";
-    var tw = g.measureText(label).width;
-    var bw = pad + size + pad + tw + pad, bh = size + pad * 2;
-    var x0 = c.width - bw - pad, y0 = c.height - bh - pad, r = bh / 2;
-    g.fillStyle = "rgba(0,0,0,0.45)";
-    g.beginPath();
-    g.moveTo(x0 + r, y0);
-    g.arcTo(x0 + bw, y0, x0 + bw, y0 + bh, r);
-    g.arcTo(x0 + bw, y0 + bh, x0, y0 + bh, r);
-    g.arcTo(x0, y0 + bh, x0, y0, r);
-    g.arcTo(x0, y0, x0 + bw, y0, r);
-    g.closePath();
-    g.fill();
-    g.save();
-    g.beginPath();
-    var lx = x0 + pad, ly = y0 + pad, lr = size * 0.22;
-    g.moveTo(lx + lr, ly);
-    g.arcTo(lx + size, ly, lx + size, ly + size, lr);
-    g.arcTo(lx + size, ly + size, lx, ly + size, lr);
-    g.arcTo(lx, ly + size, lx, ly, lr);
-    g.arcTo(lx, ly, lx + size, ly, lr);
-    g.closePath();
-    g.clip();
+
+    // Only the logo, small, bottom-right
+    var size = Math.max(28, Math.round(Math.min(c.width, c.height) * 0.07));
+    var pad = Math.round(size * 0.35);
+    var lx = c.width - size - pad;
+    var ly = c.height - size - pad;
+
+    g.shadowColor = "rgba(0,0,0,0.35)";
+    g.shadowBlur = 6;
+    g.shadowOffsetX = 0;
+    g.shadowOffsetY = 1;
+
     g.drawImage(logo, lx, ly, size, size);
-    g.restore();
-    g.fillStyle = "#ffffff";
-    g.textBaseline = "middle";
-    g.fillText(label, lx + size + pad, y0 + bh / 2 + 1);
     return c.toDataURL("image/jpeg", 0.92);
   }catch(e){
     return dataUrl;
   }
 }
-
 async function makeImage(prompt){
   if(loading) return;
   loading = true;
