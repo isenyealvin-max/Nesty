@@ -1978,7 +1978,7 @@ async function addLogo(dataUrl){
     return dataUrl;
   }
 }
-async function makeImage(prompt){
+async function makeImage(prompt, imageData){
   if(loading) return;
   loading = true;
   creatingImg = true;
@@ -1987,11 +1987,14 @@ async function makeImage(prompt){
   renderAll();
   try{
     var jwt = await getJwt();
+    var body = { prompt: prompt };
+    if(imageData) body.image = imageData;
+
     var res = await fetch("/api/image", {
       method: "POST",
       headers: {"Content-Type":"application/json", "X-Nesty-Token": jwt},
       signal: aborter.signal,
-      body: JSON.stringify({prompt: prompt})
+      body: JSON.stringify(body)
     });
     var data = await res.json();
     if(data.limited){
@@ -2013,7 +2016,11 @@ async function makeImage(prompt){
       return;
     }
     if(data.image){
-      messages.push({role:"assistant", content:"[Nesty created a picture for: " + prompt + "]", genImage:{data:await addLogo(data.image), prompt:prompt}});
+      messages.push({
+        role:"assistant",
+        content: imageData ? "[Nesty edited the picture: " + prompt + "]" : "[Nesty created a picture for: " + prompt + "]",
+        genImage:{data: await addLogo(data.image), prompt: prompt}
+      });
       if(typeof data.left === "number" && data.left <= 2){
         toast(L("left_i", {n: data.left}));
       }
@@ -2029,12 +2036,10 @@ async function makeImage(prompt){
     }
     messages.push({role:"assistant", content:"Network error. Please try again."});
   }
-  loading = false;
-  creatingImg = false;
-  aborter = null;
+  loading = false; creatingImg = false; aborter = null;
   renderAll();
   saveChat();
-}
+          }
   
 var LOGO_RE = /\b(your|nesty(\s+ai)?(['’]s)?)\s+(own\s+|official\s+)?logo\b|\blogo\s+(of|for)\s+(you|nesty(\s+ai)?)\b/i;
 STR.en.own_logo = "This is my logo.";
@@ -2064,12 +2069,24 @@ function send(){
   box.value = "";
   box.style.height = "auto";
   removeFile();
-  if(asImage){
+if(asImage){
     imageNext = false;
     drawImg();
     makeImage(text.replace(/^\s*\/image\s+/i, ""));
     return;
   }
+
+  // NEW: photo + instruction = edit the photo
+  if(pendingImage && text){
+    var imgData = pendingImage.data;
+    messages.push({role:"user", text:text, file:null, image:pendingImage});
+    box.value = "";
+    box.style.height = "auto";
+    removeFile();
+    makeImage(text, imgData);
+    return;
+  }
+
   ask();
 }
 
