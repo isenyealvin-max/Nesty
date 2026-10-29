@@ -167,6 +167,7 @@ header{display:flex;justify-content:space-between;align-items:center;padding:10p
 #actMsg.ok{color:#43a047}
 #actMsg.bad{color:#e53935}
 #actCode{width:100%;padding:12px;border:1px solid var(--border);border-radius:10px;font-size:16px;letter-spacing:2px;text-transform:uppercase;margin:8px 0;background:var(--card);color:var(--text);font-family:inherit}
+#authOk{color:#43a047;font-size:14px;margin:6px 0}
 </style>
 </head>
 <body>
@@ -180,13 +181,13 @@ header{display:flex;justify-content:space-between;align-items:center;padding:10p
     <p class="sub" id="authSub"></p>
 
     <div id="stepForm">
-      <input id="aName" data-ph="a_name" style="display:none" autocomplete="name">
+      <input id="aFirst" data-ph="a_first" style="display:none" autocomplete="given-name">
+      <input id="aLast" data-ph="a_last" style="display:none" autocomplete="family-name">
       <input id="aAge" type="number" inputmode="numeric" min="13" max="120" data-ph="a_age" style="display:none">
       <input id="aEmail" type="email" data-ph="a_email" autocomplete="email">
       <input id="aPass" type="password" data-ph="a_pass" autocomplete="current-password">
-      <input id="aPass2" type="password" data-ph="a_pass2" style="display:none" autocomplete="new-password">
       <button class="pbtn" id="sendBtn" onclick="submitAuth()"></button>
-      <button class="lbtn" id="codeLoginBtn" onclick="emailCodeLogin()"></button>
+      <button class="lbtn" id="forgotBtn" onclick="forgotPassword()"></button>
       <div class="or" data-i="a_or"></div>
       <button class="gbtn" onclick="googleLogin()"><svg width="20" height="20" viewBox="0 0 48 48"><path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/><path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/><path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/><path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/></svg><span data-i="a_google"></span></button>
       <button class="gbtn" id="fbBtn" style="margin-top:10px;display:none" onclick="facebookLogin()"><svg width="20" height="20" viewBox="0 0 24 24"><path fill="#1877F2" d="M24 12.07C24 5.4 18.63 0 12 0S0 5.4 0 12.07C0 18.1 4.39 23.1 10.13 24v-8.44H7.08v-3.49h3.05V9.41c0-3.02 1.79-4.69 4.53-4.69 1.31 0 2.68.24 2.68.24v2.97h-1.51c-1.49 0-1.96.93-1.96 1.88v2.26h3.33l-.53 3.49h-2.8V24C19.61 23.1 24 18.1 24 12.07z"/></svg>Continue with Facebook</button>
@@ -201,6 +202,27 @@ header{display:flex;justify-content:space-between;align-items:center;padding:10p
       <button class="lbtn" onclick="backToForm()" data-i="a_change"></button>
     </div>
 
+    <div id="stepPw" style="display:none">
+      <p id="pwInfo" style="text-align:center;color:var(--muted);font-size:14px;margin:0 0 14px"></p>
+      <input id="pwFirst" data-ph="a_first" style="display:none" autocomplete="given-name">
+      <input id="pwLast" data-ph="a_last" style="display:none" autocomplete="family-name">
+      <input id="pwAge" type="number" inputmode="numeric" min="13" max="120" data-ph="a_age" style="display:none">
+      <input id="pwA" type="password" data-ph="pw_new" autocomplete="new-password">
+      <input id="pwB" type="password" data-ph="pw_new2" autocomplete="new-password">
+      <div class="muted2" data-i="pw_rules"></div>
+      <button class="pbtn" id="pwBtn" onclick="savePassword()" data-i="pw_set_btn"></button>
+      <button class="lbtn" onclick="logout()" data-i="logout"></button>
+    </div>
+
+    <div id="stepReset" style="display:none">
+      <input id="rsA" type="password" data-ph="pw_new" autocomplete="new-password">
+      <input id="rsB" type="password" data-ph="pw_new2" autocomplete="new-password">
+      <div class="muted2" data-i="pw_rules"></div>
+      <button class="pbtn" id="rsBtn" onclick="doReset()" data-i="rs_btn"></button>
+      <button class="lbtn" onclick="leaveReset()" data-i="back_signin"></button>
+    </div>
+
+    <div id="authOk"></div>
     <div id="authErr"></div>
     <select id="aLang" class="sel" onchange="setUiLang(this.value)"></select>
     <div class="legal" id="legal"></div>
@@ -379,7 +401,7 @@ header{display:flex;justify-content:space-between;align-items:center;padding:10p
 <div id="updateBar"></div>
 
 <script>
-var VERSION = "V9";
+var VERSION = "V10";
 
 /* ---------- Interface languages ---------- */
 var STR = {
@@ -634,7 +656,7 @@ Object.assign(STR.en, {
 a_name:"Full name",a_age:"Age",a_pass:"Password",a_pass2:"Confirm password",a_codelogin:"Email me a sign-in code instead",
 e_fullname:"Enter your full name (first and second name).",e_age:"Enter a valid age (13 or older).",e_pass:"Password must be at least 8 characters.",e_match:"The passwords do not match.",
 e_exists:"An account with this email already exists. Please sign in.",e_pwreq:"Enter your email and password.",
-e_login:"Wrong email or password. If you signed up with a code or Google, tap “Email me a sign-in code instead” or Continue with Google, then set a password in Settings.",
+e_login:"Wrong email or password. If you forgot your password, tap Forgot password.",
 needverify:"Please verify your email to continue.",
 upgrade:"Upgrade",plans_btn:"Plans & upgrade",btn_premium:"Premium Features",btn_ultra:"Ultra Features",
 promo:"You are using the Free plan. Upgrade to Premium and get sorted, or get more than Premium with Ultra!",
@@ -649,8 +671,15 @@ act_title:"Activation code",act_ph:"XXXX-XXXX-XXXX-XXXX",act_btn:"Activate",act_
 on_free:"You are on the Free plan.",on_plan:"You are on the {plan} plan until {t}.",expired_note:"Your {plan} plan expired on {t}.",
 use_title:"Your usage",k_msg:"Messages",k_file:"File attachments",k_img:"Images",use_line:"{k}: {u} / {l} · resets {t}",use_line0:"{k}: {u} / {l}",
 s_sub:"Subscription",s_sub_btn:"View plans / enter code",
-s_pw:"Password",s_pw_d:"Set or change your password. Leave the current password empty if you signed up with a code or Google.",
-pw_new:"New password",pw_new2:"Confirm new password",pw_old:"Current password (if you have one)",pw_btn:"Save password",pw_ok:"Password saved."
+s_pw:"Password",s_pw_d:"Change your password. Use at least 8 characters with an uppercase letter, a lowercase letter, a number and a special character.",
+pw_new:"New password",pw_new2:"Confirm new password",pw_old:"Current password",pw_btn:"Save password",pw_ok:"Password saved.",
+a_forgot:"Forgot password?",e_rules:"Password must be at least 8 characters and include an uppercase letter, a lowercase letter, a number and a special character.",
+pw_rules:"Password rules: at least 8 characters, with an uppercase letter, a lowercase letter, a number and a special character.",
+pw_create:"Create your password",pw_complete:"Complete your account",pw_create_d:"Your email is verified. Now create a password. You will use it to sign in.",pw_set_btn:"Save and continue",
+rs_title:"Reset your password",rs_btn:"Set new password",back_signin:"Back to sign in",
+reset_sent:"If an account exists for this email, a password reset email is on its way. Check your spam folder too.",reset_ok:"Password updated. Please sign in with your new password.",
+e_exists2:"An account with this email already exists. Please sign in, or use Forgot password.",e_need_email:"Enter your email first.",e_oldpw:"Enter your current password.",
+e_unverified:"This email is not verified yet. Tap Create account and use the same email to verify it."
 });
 var UI_LANGS = [["en","English"],["sw","Kiswahili"],["fr","Français"],["es","Español"],["pt","Português"],["ar","العربية"],["hi","हिन्दी"]];
 var UI_VOICE = {en:"en-US",sw:"sw-KE",fr:"fr-FR",es:"es-ES",pt:"pt-BR",ar:"ar-SA",hi:"hi-IN"};
@@ -864,27 +893,33 @@ if("serviceWorker" in navigator){
 }
 
 /* ---------- Account (email code, no password) ---------- */
-var pendName = "", pendAge = 0, codeFlow = "login";
+var pendAge = 0, resetUid = "", resetSec = "";
+function pwProblem(p){
+  return (p.length < 8 || !/[A-Z]/.test(p) || !/[a-z]/.test(p) || !/[0-9]/.test(p) || !/[^A-Za-z0-9]/.test(p)) ? "e_rules" : "";
+}
 function drawAuthText(){
   var su = authMode === "signup";
   $("authSub").textContent = L(su ? "a_create" : "a_welcome");
-  $("sendBtn").textContent = L(su ? "a_createLink" : "a_signin");
-  $("codeLoginBtn").textContent = L("a_codelogin");
+  $("sendBtn").textContent = L(su ? "a_send" : "a_signin");
+  $("forgotBtn").textContent = L("a_forgot");
   $("authSwitch").innerHTML = su
     ? L("a_have") + ' <a href="#" onclick="switchAuth();return false">' + L("a_signin") + '</a>'
     : L("a_new") + ' <a href="#" onclick="switchAuth();return false">' + L("a_createLink") + '</a>';
 }
 function drawAuth(){
   var su = authMode === "signup";
-  $("aName").style.display = su ? "block" : "none";
+  $("aFirst").style.display = su ? "block" : "none";
+  $("aLast").style.display = su ? "block" : "none";
   $("aAge").style.display = su ? "block" : "none";
-  $("aPass2").style.display = su ? "block" : "none";
-  $("codeLoginBtn").style.display = su ? "none" : "block";
-  $("aPass").autocomplete = su ? "new-password" : "current-password";
+  $("aPass").style.display = su ? "none" : "block";
+  $("forgotBtn").style.display = su ? "none" : "block";
   drawAuthText();
   $("authErr").textContent = "";
+  $("authOk").textContent = "";
   $("stepForm").style.display = "block";
   $("stepCode").style.display = "none";
+  $("stepPw").style.display = "none";
+  $("stepReset").style.display = "none";
 }
 function switchAuth(){
   authMode = authMode === "signup" ? "signin" : "signup";
@@ -929,34 +964,32 @@ function goCodeStep(){
   $("aCode").focus();
 }
 
+/* Create account: first name, second name, age, email -> email code -> set password.
+   Sign in: email + password only. */
 async function submitAuth(){
   var email = $("aEmail").value.trim().toLowerCase();
-  var pass = $("aPass").value;
   if(!email || email.indexOf("@") < 1){ $("authErr").textContent = L("e_email"); return; }
+  $("authOk").textContent = "";
   if(authMode === "signup"){
-    var name = $("aName").value.trim().replace(/\s+/g, " ");
-    var age = parseInt($("aAge").value, 10);
-    if(name.length < 3 || name.indexOf(" ") < 1){ $("authErr").textContent = L("e_fullname"); return; }
-    if(!(age >= 13 && age <= 120)){ $("authErr").textContent = L("e_age"); return; }
-    if(pass.length < 8){ $("authErr").textContent = L("e_pass"); return; }
-    if(pass !== $("aPass2").value){ $("authErr").textContent = L("e_match"); return; }
+    pendFirst = $("aFirst").value.trim().replace(/\s+/g, " ");
+    pendLast = $("aLast").value.trim().replace(/\s+/g, " ");
+    pendAge = parseInt($("aAge").value, 10);
+    if(!pendFirst || !pendLast){ $("authErr").textContent = L("e_names"); return; }
+    if(!(pendAge >= 13 && pendAge <= 120)){ $("authErr").textContent = L("e_age"); return; }
     $("sendBtn").disabled = true;
     $("authErr").textContent = "";
     try{
-      var nu = await account.create(ID.unique(), email, pass, name);
-      authUserId = nu.$id;
+      var tk = await account.createEmailToken(ID.unique(), email);
+      authUserId = tk.userId;
       authEmail = email;
-      pendName = name;
-      pendAge = age;
-      await account.createEmailToken(authUserId, email);
-      codeFlow = "signup";
       goCodeStep();
     }catch(e){
-      $("authErr").textContent = (e && e.code === 409) ? L("e_exists") : ((e && e.message) || L("e_send"));
+      $("authErr").textContent = (e && e.message) || L("e_send");
     }
     $("sendBtn").disabled = false;
     return;
   }
+  var pass = $("aPass").value;
   if(!pass){ $("authErr").textContent = L("e_pwreq"); return; }
   $("sendBtn").disabled = true;
   $("authErr").textContent = "";
@@ -965,16 +998,11 @@ async function submitAuth(){
     await account.createEmailPasswordSession(email, pass);
     user = await account.get();
     if(!user.emailVerification){
-      var uid = user.$id;
       try{ await account.deleteSession("current"); }catch(e){}
       user = null;
-      await account.createEmailToken(uid, email);
-      authUserId = uid;
-      authEmail = email;
-      codeFlow = "verify";
-      goCodeStep();
-      toast(L("needverify"));
+      $("authErr").textContent = L("e_unverified");
     }else{
+      if(!(user.prefs && user.prefs.pwSet === true)){ try{ await savePrefs({pwSet: true}); }catch(e){} }
       showApp();
     }
   }catch(e){
@@ -984,21 +1012,110 @@ async function submitAuth(){
   $("sendBtn").disabled = false;
 }
 
-async function emailCodeLogin(){
+/* Appwrite emails the reset link. The link opens this site with ?reset=1&userId=...&secret=... */
+async function forgotPassword(){
   var email = $("aEmail").value.trim().toLowerCase();
-  if(!email || email.indexOf("@") < 1){ $("authErr").textContent = L("e_email"); return; }
-  $("codeLoginBtn").disabled = true;
+  if(!email || email.indexOf("@") < 1){ $("authErr").textContent = L("e_need_email"); return; }
+  $("forgotBtn").disabled = true;
+  $("authErr").textContent = "";
+  $("authOk").textContent = "";
+  try{
+    await account.createRecovery(email, location.origin + "/?reset=1");
+    $("authOk").textContent = L("reset_sent");
+  }catch(e){
+    if(e && e.code === 404){ $("authOk").textContent = L("reset_sent"); }
+    else{ $("authErr").textContent = (e && e.message) || L("e_send"); }
+  }
+  $("forgotBtn").disabled = false;
+}
+function showOnlyAuth(step){
+  clearInterval(resendTimer);
+  $("boot").style.display = "none";
+  $("app").style.display = "none";
+  $("auth").style.display = "flex";
+  $("stepForm").style.display = step === "form" ? "block" : "none";
+  $("stepCode").style.display = step === "code" ? "block" : "none";
+  $("stepPw").style.display = step === "pw" ? "block" : "none";
+  $("stepReset").style.display = step === "reset" ? "block" : "none";
+  $("authErr").textContent = "";
+  $("authOk").textContent = "";
+}
+function showReset(){
+  showOnlyAuth("reset");
+  $("authSub").textContent = L("rs_title");
+}
+async function doReset(){
+  var a = $("rsA").value, b = $("rsB").value;
+  if(pwProblem(a)){ $("authErr").textContent = L("e_rules"); return; }
+  if(a !== b){ $("authErr").textContent = L("e_match"); return; }
+  $("rsBtn").disabled = true;
   $("authErr").textContent = "";
   try{
-    var tk = await account.createEmailToken(ID.unique(), email);
-    authUserId = tk.userId;
-    authEmail = email;
-    codeFlow = "login";
-    goCodeStep();
+    await account.updateRecovery(resetUid, resetSec, a);
+    resetUid = ""; resetSec = "";
+    $("rsA").value = ""; $("rsB").value = "";
+    authMode = "signin";
+    drawAuth();
+    $("authOk").textContent = L("reset_ok");
   }catch(e){
     $("authErr").textContent = (e && e.message) || L("e_send");
   }
-  $("codeLoginBtn").disabled = false;
+  $("rsBtn").disabled = false;
+}
+function leaveReset(){
+  authMode = "signin";
+  drawAuth();
+}
+
+/* Everyone (new accounts, Google accounts, older accounts) must set a password before using Nesty. */
+function afterLogin(){
+  var pf = (user && user.prefs) || {};
+  if(pf.pwSet === true){ showApp(); } else { showSetPassword(); }
+}
+function showSetPassword(){
+  var pf = (user && user.prefs) || {};
+  var needName = !(user && user.name) && !(pendFirst && pendLast);
+  var needAge = !pf.age && !(pendAge >= 13);
+  showOnlyAuth("pw");
+  $("pwFirst").style.display = needName ? "block" : "none";
+  $("pwLast").style.display = needName ? "block" : "none";
+  $("pwAge").style.display = needAge ? "block" : "none";
+  $("authSub").textContent = L((needName || needAge) ? "pw_complete" : "pw_create");
+  $("pwInfo").textContent = L("pw_create_d");
+  $("pwA").value = "";
+  $("pwB").value = "";
+}
+async function savePassword(){
+  var a = $("pwA").value, b = $("pwB").value;
+  var pf = (user && user.prefs) || {};
+  var needName = !(user && user.name) && !(pendFirst && pendLast);
+  var needAge = !pf.age && !(pendAge >= 13);
+  var first = pendFirst || pf.firstName || "", last = pendLast || pf.lastName || "", age = pendAge || pf.age || 0;
+  if(needName){
+    first = $("pwFirst").value.trim(); last = $("pwLast").value.trim();
+    if(!first || !last){ $("authErr").textContent = L("e_names"); return; }
+  }
+  if(needAge){
+    age = parseInt($("pwAge").value, 10);
+    if(!(age >= 13 && age <= 120)){ $("authErr").textContent = L("e_age"); return; }
+  }
+  if(pwProblem(a)){ $("authErr").textContent = L("e_rules"); return; }
+  if(a !== b){ $("authErr").textContent = L("e_match"); return; }
+  $("pwBtn").disabled = true;
+  $("authErr").textContent = "";
+  try{
+    await account.updatePassword(a);
+    if(!user.name && first){ await account.updateName((first + " " + last).trim()); }
+    var ch = {pwSet: true};
+    if(first){ ch.firstName = first; ch.lastName = last; }
+    if(age){ ch.age = age; }
+    await savePrefs(ch);
+    pendFirst = ""; pendLast = ""; pendAge = 0;
+    showApp();
+  }catch(e){
+    $("authErr").textContent = (e && e.message) || L("e_send");
+  }
+  $("pwBtn").disabled = false;
 }
 
 function startTimer(){
@@ -1034,6 +1151,7 @@ async function resendCode(){
   }
 }
 
+/* The email code is only used to create an account. Existing accounts cannot sign in with it. */
 async function verifyCode(){
   var code = $("aCode").value.replace(/\s/g, "");
   if(code.length < 6){ $("authErr").textContent = L("e_code6"); return; }
@@ -1043,20 +1161,16 @@ async function verifyCode(){
     try{ await account.deleteSession("current"); }catch(e){}
     await account.createSession(authUserId, code);
     user = await account.get();
-    if(codeFlow === "signup"){
-      var np = pendName.split(" ");
-      await account.updatePrefs({firstName: np[0], lastName: np.slice(1).join(" "), age: pendAge});
-      user = await account.get();
-    }else if(!user.name){
+    if(user.prefs && user.prefs.pwSet === true){
       try{ await account.deleteSession("current"); }catch(e){}
       user = null;
       drawAuth();
-      $("authErr").textContent = L("e_noacc");
+      $("authErr").textContent = L("e_exists2");
       $("verifyBtn").disabled = false;
       return;
     }
     clearInterval(resendTimer);
-    showApp();
+    showSetPassword();
   }catch(e){
     $("authErr").textContent = (e && e.message) || L("e_badcode");
   }
@@ -1104,6 +1218,12 @@ function facebookLogin(){ oauthLogin("facebook", "Facebook"); }
 async function init(){
   var qs = new URLSearchParams(location.search);
   var uid = qs.get("userId"), sec = qs.get("secret");
+  if(qs.get("reset") === "1" && uid && sec){
+    resetUid = uid; resetSec = sec;
+    history.replaceState(null, "", "/");
+    showReset();
+    return;
+  }
   if(uid && sec){
     try{
       try{ await account.deleteSession("current"); }catch(e){}
@@ -1111,7 +1231,7 @@ async function init(){
       user = await account.get();
       try{ await fetchGoogleAvatar(); }catch(e){}
       history.replaceState(null, "", "/");
-      showApp();
+      afterLogin();
       return;
     }catch(e){
       history.replaceState(null, "", "/");
@@ -1128,7 +1248,7 @@ async function init(){
   }
   try{
     user = await account.get();
-    showApp();
+    afterLogin();
   }catch(e){
     if(e && (e.code === 401 || e.code === 403)){
       showAuth();
@@ -1754,6 +1874,13 @@ async function ask(){
       renderAll();
       toast(L("needverify"));
       logout();
+      return;
+    }
+    if(data.needPassword){
+      loading = false;
+      messages.pop();
+      renderAll();
+      showSetPassword();
       return;
     }
     reply = data.reply || "Sorry, something went wrong.";
@@ -2487,6 +2614,7 @@ async function api(path, payload){
 async function loadMe(){
   try{
     var d = await api("/api/me");
+    if(d && d.needPassword){ showSetPassword(); return; }
     if(d && d.plan){ me = d; drawPlanBtn(); drawSub(); if(plansOpen) renderPlans(); }
   }catch(e){}
 }
@@ -2583,10 +2711,11 @@ async function redeemCode(){
 }
 async function changePassword(){
   var op = $("pwOld").value, np = $("pwNew").value, nc = $("pwNew2").value;
-  if(np.length < 8){ sMsg(L("e_pass")); return; }
+  if(!op){ sMsg(L("e_oldpw")); return; }
+  if(pwProblem(np)){ sMsg(L("e_rules")); return; }
   if(np !== nc){ sMsg(L("e_match")); return; }
   try{
-    if(op) await account.updatePassword(np, op); else await account.updatePassword(np);
+    await account.updatePassword(np, op);
     $("pwOld").value = ""; $("pwNew").value = ""; $("pwNew2").value = "";
     sMsg(L("pw_ok"));
   }catch(e){

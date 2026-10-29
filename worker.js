@@ -162,9 +162,9 @@ async function verify(token, origin) {
     if (!res.ok) return null;
     const u = await res.json();
     if (!u || !u.$id) return null;
-    const user = { $id: u.$id, verified: u.emailVerification === true };
+    const user = { $id: u.$id, verified: u.emailVerification === true, pwSet: !!(u.prefs && u.prefs.pwSet === true) };
     if (tokenCache.size > 500) tokenCache.clear();
-    tokenCache.set(token, { user: user, exp: Date.now() + (user.verified ? 5 * 60 * 1000 : 15 * 1000) });
+    tokenCache.set(token, { user: user, exp: Date.now() + (user.verified && user.pwSet ? 5 * 60 * 1000 : 15 * 1000) });
     return user;
   } catch (e) {
     return null;
@@ -188,6 +188,11 @@ async function needUser(request) {
   if (!user.verified) {
     return {
       res: json({ reply: "Please verify your email first.", error: "Please verify your email first.", needVerify: true }, 403),
+    };
+  }
+  if (!user.pwSet) {
+    return {
+      res: json({ reply: "Please create your password first.", error: "Please create your password first.", needPassword: true }, 403),
     };
   }
   return { user: user };
