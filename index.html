@@ -401,7 +401,7 @@ header{display:flex;justify-content:space-between;align-items:center;padding:10p
 <div id="updateBar"></div>
 
 <script>
-var VERSION = "V10";
+var VERSION = "V11";
 
 /* ---------- Interface languages ---------- */
 var STR = {
@@ -1562,6 +1562,22 @@ function buildBot(m, isLast){
   d.className = "msg bot";
   d.dir = "auto";
   if(m.genImage){
+    if(m.genImage.own){
+  var oi = document.createElement("img");
+  oi.className = "gimg"; oi.style.width = "220px";
+  oi.src = m.genImage.url; oi.alt = "Nesty AI logo";
+  d.appendChild(oi);
+  var oc = document.createElement("div");
+  oc.className = "gnote"; oc.textContent = L("own_logo");
+  d.appendChild(oc);
+  var oa = document.createElement("div"); oa.className = "actions";
+  var od = document.createElement("a");
+  od.className = "cpbtn"; od.style.textDecoration = "none";
+  od.href = m.genImage.url; od.download = "nesty-logo.png";
+  od.textContent = L("download");
+  oa.appendChild(od); d.appendChild(oa);
+  return d;
+    }
     if(m.genImage.data){
       var gi = document.createElement("img");
       gi.className = "gimg";
@@ -2039,12 +2055,23 @@ async function makeImage(prompt){
   renderAll();
   saveChat();
 }
-
+  
+var LOGO_RE = /\b(your|nesty(\s+ai)?(['’]s)?)\s+(own\s+|official\s+)?logo\b|\blogo\s+(of|for)\s+(you|nesty(\s+ai)?)\b/i;
+STR.en.own_logo = "This is my logo.";
 function send(){
   if(loading){ if(aborter) aborter.abort(); return; }
   var text = box.value.trim();
   if(!text && !pendingFile && !pendingImage) return;
   if(!text) text = pendingImage ? L("p_pic") : L("p_file");
+  if(!pendingFile && !pendingImage && LOGO_RE.test(text)){
+  messages.push({role:"user", text:text, file:null, image:null});
+  box.value = ""; box.style.height = "auto";
+  imageNext = false; drawImg();
+  messages.push({role:"assistant", content:"[Nesty showed its own logo]",
+    genImage:{own:true, url:"/icon-512.png", prompt:"Nesty logo"}});
+  renderAll(); saveChat();
+  return;
+  }
   var asImage = !pendingFile && !pendingImage && (imageNext || wantsImage(text));
   if(asImage){
     if(imgLimitUntil > Date.now()){ showLimit("img"); return; }
