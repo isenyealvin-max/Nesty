@@ -195,7 +195,8 @@ export async function onRequestPost(context) {
       " You have live Google Search for this answer. Use it to give current, accurate information and mention dates when they matter.";
   } else {
     system +=
-      " You cannot browse the internet in this answer, so your knowledge may be out of date; when a question needs current facts (news, prices, recent events, who currently holds a job), say that clearly and suggest the user turn on Web search.";
+      " You cannot browse the internet in this answer, so your knowledge may be out of date; when a question needs current facts (news, prices, recent events, who currently holds a job), say that clearly and suggest the user turn on Web search." +
+      " You have NO internet access in this answer. Never say or imply that you checked, double-checked or looked up any website, sports page or source. Never present league tables, scores, fixtures, results, standings, prices, exchange rates, weather, news or who currently holds a job as current facts from memory. For such questions say plainly that you cannot check live data in this answer, tell the user to set Web search to On, and give only general background you are sure of, clearly marked as possibly outdated.";
   }
   if (name) {
     system += " The user's first name is " + name + ". Use it naturally and sparingly, not in every message.";
@@ -268,13 +269,15 @@ export async function onRequestPost(context) {
     if (tav) {
       system +=
         " Here are fresh web search results" + (today ? " (retrieved " + today + ")" : "") +
-        ". Use them to answer the user's question with current facts, mention the source names only if asked. If they do not answer the question, say so.\n\n" +
+        ". Use them to answer the user's question with current facts, and mention the source names. If they do not answer the question, say so.\n\n" +
         tav.map(function (r, i) {
           return (i + 1) + ". " + r.title + " (" + r.uri + ")\n" + r.text;
         }).join("\n\n");
       webSources = tav.map(function (r) { return { title: r.title, uri: r.uri }; });
     } else {
       searchFailed = true;
+      system += " IMPORTANT: the live web search FAILED for this answer, so you have NO search results and NO internet access. Ignore the earlier statement that you have live Google Search." +
+        " You have NO internet access in this answer. Never say or imply that you checked, double-checked or looked up any website, sports page or source. Never present league tables, scores, fixtures, results, standings, prices, exchange rates, weather, news or who currently holds a job as current facts from memory. For such questions say plainly that you cannot check live data in this answer, tell the user to set Web search to On, and give only general background you are sure of, clearly marked as possibly outdated.";
       searchNote = errs.slice(0, 2).join(" | ").slice(0, 260);
     }
   }
