@@ -243,7 +243,6 @@ header{display:flex;justify-content:space-between;align-items:center;padding:10p
   <div id="inputWrap">
     <div id="promoBar"><button class="x" onclick="hidePromo()">&times;</button><div id="promoTxt"></div><div class="upRow"><button onclick="openPlans('premium')" data-i="btn_premium"></button><button onclick="openPlans('ultra')" data-i="btn_ultra"></button></div></div>
     <div id="limitBar"><div id="limitTxt"></div><div class="upRow"><button onclick="openPlans('ultra')" data-i="btn_ultra"></button><button onclick="openPlans('premium')" data-i="btn_premium"></button></div></div>
-    <div id="modeRow"><button id="webBtn" onclick="cycleWeb()"></button><button id="imgBtn" onclick="toggleImg()"></button></div>
     <div id="chip"><span id="chipName"></span><button onclick="removeFile()">&times;</button></div>
     <div id="bar">
       <button class="ibtn" onclick="document.getElementById('file').click()">+</button>
@@ -662,13 +661,13 @@ upgrade:"Upgrade",plans_btn:"Plans & upgrade",btn_premium:"Premium Features",btn
 promo:"You are using the Free plan. Upgrade to Premium and get sorted, or get more than Premium with Ultra!",
 lim_file:"You have reached the file attachment limit for now. You can attach files again at {t} (in {r}).",
 plans_title:"Plans",current:"Current",free_price:"Free",monthly:"month",yearly:"year",
-pl_msg:"{n} messages per 1 hour",pl_file:"{n} file attachments per 1 hour",pl_img:"{n} image creations per 1 hour",
-pl_win:"Each limit resets exactly 1 hour after its window starts (your first use). The exact reset time is shown when you reach a limit.",
+pl_msg:"{n} messages per 5 hours",pl_file:"{n} file attachments per 5 hours",pl_img:"{n} image creations per 5 hours",
+pl_win:"Each limit resets exactly 5 hours after its window starts (your first use). The exact reset time is shown when you reach a limit.",
 how_title:"How to upgrade",how1:"Pay the plan price directly to {num}.",how2:"Send your payment confirmation and your Nesty email to the administrator.",
 how3:"The administrator checks the payment and sends you a unique activation code.",how4:"Enter the code below. Your plan activates automatically.",
 replaces:"Activating a higher plan replaces your current plan. Activating the same plan again adds time.",proof_btn:"Send payment proof by email",
 act_title:"Activation code",act_ph:"XXXX-XXXX-XXXX-XXXX",act_btn:"Activate",act_ok:"{plan} plan activated until {t}.",act_fail:"Could not activate this code.",
-on_free:"You are on the Nesty Free plan, dont just stay free, upgrade to premium or ultra and get sorted.",on_plan:"You are on the {plan} plan until {t}.",expired_note:"Your {plan} plan expired on {t}.",
+on_free:"You are on the Free plan.",on_plan:"You are on the {plan} plan until {t}.",expired_note:"Your {plan} plan expired on {t}.",
 use_title:"Your usage",k_msg:"Messages",k_file:"File attachments",k_img:"Images",use_line:"{k}: {u} / {l} · resets {t}",use_line0:"{k}: {u} / {l}",
 s_sub:"Subscription",s_sub_btn:"View plans / enter code",
 s_pw:"Password",s_pw_d:"Change your password. Use at least 8 characters with an uppercase letter, a lowercase letter, a number and a special character.",
@@ -1563,20 +1562,20 @@ function buildBot(m, isLast){
   d.dir = "auto";
   if(m.genImage){
     if(m.genImage.own){
-  var oi = document.createElement("img");
-  oi.className = "gimg"; oi.style.width = "220px";
-  oi.src = m.genImage.url; oi.alt = "Nesty AI logo";
-  d.appendChild(oi);
-  var oc = document.createElement("div");
-  oc.className = "gnote"; oc.textContent = L("own_logo");
-  d.appendChild(oc);
-  var oa = document.createElement("div"); oa.className = "actions";
-  var od = document.createElement("a");
-  od.className = "cpbtn"; od.style.textDecoration = "none";
-  od.href = m.genImage.url; od.download = "nesty-logo.png";
-  od.textContent = L("download");
-  oa.appendChild(od); d.appendChild(oa);
-  return d;
+      var oi = document.createElement("img");
+      oi.className = "gimg"; oi.style.width = "220px";
+      oi.src = m.genImage.url; oi.alt = "Nesty AI logo";
+      d.appendChild(oi);
+      var oc = document.createElement("div");
+      oc.className = "gnote"; oc.textContent = L("own_logo");
+      d.appendChild(oc);
+      var oa = document.createElement("div"); oa.className = "actions";
+      var od = document.createElement("a");
+      od.className = "cpbtn"; od.style.textDecoration = "none";
+      od.href = m.genImage.url; od.download = "nesty-logo.png";
+      od.textContent = L("download");
+      oa.appendChild(od); d.appendChild(oa);
+      return d;
     }
     if(m.genImage.data){
       var gi = document.createElement("img");
@@ -1683,6 +1682,7 @@ function regenerate(){
   if(loading) return;
   var last = messages[messages.length - 1];
   if(!last || last.role !== "assistant") return;
+  if(last.genImage && last.genImage.own) return;
   if(last.genImage){
     if(imgLimitUntil > Date.now()){ showLimit("img"); return; }
     var pr = last.genImage.prompt;
@@ -1742,13 +1742,12 @@ function renderAll(){
 /* ---------- Web search switch ---------- */
 var webMode = "auto";
 var searchingNow = false;
-try{
-  var savedWeb = localStorage.getItem("nestyWeb");
-  if(savedWeb === "on" || savedWeb === "off" || savedWeb === "auto") webMode = savedWeb;
-}catch(e){}
+/* No button any more: Nesty always decides by itself (Auto). */
+try{ localStorage.removeItem("nestyWeb"); }catch(e){}
 
 function drawWeb(){
   var b = $("webBtn");
+  if(!b) return;
   b.textContent = L("web") + ": " + (webMode === "auto" ? L("auto") : (webMode === "on" ? L("on") : L("off")));
   b.className = webMode === "on" ? "on" : (webMode === "off" ? "off" : "");
 }
@@ -1758,7 +1757,7 @@ function cycleWeb(){
   drawWeb();
   toast(webMode === "auto" ? L("w_auto") : (webMode === "on" ? L("w_on") : L("w_off")));
 }
-var AUTO_WEB = /\b(today|tonight|latest|recent|recently|news|current|currently|right now|this week|this month|this year|yesterday|tomorrow|2025|2026|price|prices|weather|forecast|score|scores|results|fixtures|trending|exchange rate|election|stock|release date|how much (is|does|are)|who is the (current|new)|who won|habari za|bei ya|premier league|champions league|la liga|serie a|bundesliga|league table|table|standings|fixture|match|matches|matchday|live|nba|nfl|bitcoin|crypto|stocks|exchange|rate|rates|breaking|headlines|who is winning)\b/i;
+var AUTO_WEB = /\b(today|tonight|latest|recent|recently|news|current|currently|right now|this week|this month|this year|yesterday|tomorrow|2025|2026|price|prices|weather|forecast|score|scores|results|fixtures|trending|exchange rate|election|stock|release date|how much (is|does|are)|who is the (current|new)|who won|habari za|bei ya|premier league|champions league|la liga|serie a|bundesliga|league table|table|standings|fixture|match|matches|matchday|live|nba|nfl|bitcoin|crypto|stocks|exchange|rate|rates|breaking|headlines|who is winning|who is the|who's the|president|prime minister|ceo of|champions?|net worth|how old is|released|new version)\b/i;
 var AUTO_WEB2 = /(actualit|aujourd|dernières|noticias|hoy|últimas|notícias|hoje|nachrichten|heute|aktuell|новости|сегодня|أخبار|اليوم|الآن|समाचार|आज|新闻|今天|最新|ニュース|今日|뉴스|오늘|haberler|bugün|berita|hari ini|leo|sasa hivi)/i;
 function needsWeb(text){
   if(webMode === "on") return true;
@@ -1934,8 +1933,10 @@ var creatingImg = false;
 var IMG_RE = /^\s*(\/image\s+|(please\s+|can you\s+|could you\s+|kindly\s+)?((draw|sketch|paint|chora)\b(?!\s+(a\s+|an\s+|the\s+)?(conclusions?|tables?|charts?|graphs?|lines?|diagrams?|comparisons?|inferences?|attention))|(generate|create|make|design|tengeneza)\s+(me\s+)?(an?\s+|the\s+|some\s+)?([\w'-]+\s+){0,3}?(image|images|picture|pictures|photo|illustration|drawing|painting|logo|poster|wallpaper|portrait|cartoon|artwork|picha)\b))/i;
 function wantsImage(s){ return IMG_RE.test(s || ""); }
 function drawImg(){
-  $("imgBtn").className = imageNext ? "on" : "";
-  $("imgBtn").textContent = imageNext ? L("img_on") : L("img");
+  var b = $("imgBtn");
+  if(!b) return;
+  b.className = imageNext ? "on" : "";
+  b.textContent = imageNext ? L("img_on") : L("img");
 }
 function toggleImg(){
   imageNext = !imageNext;
@@ -1960,25 +1961,45 @@ async function addLogo(dataUrl){
     c.width = pic.width; c.height = pic.height;
     var g = c.getContext("2d");
     g.drawImage(pic, 0, 0);
-
-    // Only the logo, small, bottom-right
-    var size = Math.max(28, Math.round(Math.min(c.width, c.height) * 0.07));
-    var pad = Math.round(size * 0.35);
-    var lx = c.width - size - pad;
-    var ly = c.height - size - pad;
-
-    g.shadowColor = "rgba(0,0,0,0.35)";
-    g.shadowBlur = 6;
-    g.shadowOffsetX = 0;
-    g.shadowOffsetY = 1;
-
+    var size = Math.max(26, Math.round(Math.min(c.width, c.height) * 0.07));
+    var pad = Math.round(size * 0.3);
+    var fs = Math.round(size * 0.46);
+    g.font = "600 " + fs + "px system-ui, sans-serif";
+    var label = "Nesty AI";
+    var tw = g.measureText(label).width;
+    var bw = pad + size + pad + tw + pad, bh = size + pad * 2;
+    var x0 = c.width - bw - pad, y0 = c.height - bh - pad, r = bh / 2;
+    g.fillStyle = "rgba(0,0,0,0.45)";
+    g.beginPath();
+    g.moveTo(x0 + r, y0);
+    g.arcTo(x0 + bw, y0, x0 + bw, y0 + bh, r);
+    g.arcTo(x0 + bw, y0 + bh, x0, y0 + bh, r);
+    g.arcTo(x0, y0 + bh, x0, y0, r);
+    g.arcTo(x0, y0, x0 + bw, y0, r);
+    g.closePath();
+    g.fill();
+    g.save();
+    g.beginPath();
+    var lx = x0 + pad, ly = y0 + pad, lr = size * 0.22;
+    g.moveTo(lx + lr, ly);
+    g.arcTo(lx + size, ly, lx + size, ly + size, lr);
+    g.arcTo(lx + size, ly + size, lx, ly + size, lr);
+    g.arcTo(lx, ly + size, lx, ly, lr);
+    g.arcTo(lx, ly, lx + size, ly, lr);
+    g.closePath();
+    g.clip();
     g.drawImage(logo, lx, ly, size, size);
+    g.restore();
+    g.fillStyle = "#ffffff";
+    g.textBaseline = "middle";
+    g.fillText(label, lx + size + pad, y0 + bh / 2 + 1);
     return c.toDataURL("image/jpeg", 0.92);
   }catch(e){
     return dataUrl;
   }
 }
-async function makeImage(prompt, imageData){
+
+async function makeImage(prompt){
   if(loading) return;
   loading = true;
   creatingImg = true;
@@ -1987,14 +2008,11 @@ async function makeImage(prompt, imageData){
   renderAll();
   try{
     var jwt = await getJwt();
-    var body = { prompt: prompt };
-    if(imageData) body.image = imageData;
-
     var res = await fetch("/api/image", {
       method: "POST",
       headers: {"Content-Type":"application/json", "X-Nesty-Token": jwt},
       signal: aborter.signal,
-      body: JSON.stringify(body)
+      body: JSON.stringify({prompt: prompt})
     });
     var data = await res.json();
     if(data.limited){
@@ -2016,11 +2034,7 @@ async function makeImage(prompt, imageData){
       return;
     }
     if(data.image){
-      messages.push({
-        role:"assistant",
-        content: imageData ? "[Nesty edited the picture: " + prompt + "]" : "[Nesty created a picture for: " + prompt + "]",
-        genImage:{data: await addLogo(data.image), prompt: prompt}
-      });
+      messages.push({role:"assistant", content:"[Nesty created a picture for: " + prompt + "]", genImage:{data:await addLogo(data.image), prompt:prompt}});
       if(typeof data.left === "number" && data.left <= 2){
         toast(L("left_i", {n: data.left}));
       }
@@ -2036,26 +2050,30 @@ async function makeImage(prompt, imageData){
     }
     messages.push({role:"assistant", content:"Network error. Please try again."});
   }
-  loading = false; creatingImg = false; aborter = null;
+  loading = false;
+  creatingImg = false;
+  aborter = null;
   renderAll();
   saveChat();
-          }
-  
+}
+
+/* Asking for Nesty's own logo shows the real logo file (no picture quota used). */
 var LOGO_RE = /\b(your|nesty(\s+ai)?(['’]s)?)\s+(own\s+|official\s+)?logo\b|\blogo\s+(of|for)\s+(you|nesty(\s+ai)?)\b/i;
 STR.en.own_logo = "This is my logo.";
+
 function send(){
   if(loading){ if(aborter) aborter.abort(); return; }
   var text = box.value.trim();
   if(!text && !pendingFile && !pendingImage) return;
   if(!text) text = pendingImage ? L("p_pic") : L("p_file");
   if(!pendingFile && !pendingImage && LOGO_RE.test(text)){
-  messages.push({role:"user", text:text, file:null, image:null});
-  box.value = ""; box.style.height = "auto";
-  imageNext = false; drawImg();
-  messages.push({role:"assistant", content:"[Nesty showed its own logo]",
-    genImage:{own:true, url:"/icon-512.png", prompt:"Nesty logo"}});
-  renderAll(); saveChat();
-  return;
+    messages.push({role:"user", text:text, file:null, image:null});
+    box.value = ""; box.style.height = "auto";
+    imageNext = false; drawImg();
+    messages.push({role:"assistant", content:"[Nesty showed its own logo]",
+      genImage:{own:true, url:"/icon-512.png", prompt:"Nesty logo"}});
+    renderAll(); saveChat();
+    return;
   }
   var asImage = !pendingFile && !pendingImage && (imageNext || wantsImage(text));
   if(asImage){
@@ -2069,24 +2087,12 @@ function send(){
   box.value = "";
   box.style.height = "auto";
   removeFile();
-if(asImage){
+  if(asImage){
     imageNext = false;
     drawImg();
     makeImage(text.replace(/^\s*\/image\s+/i, ""));
     return;
   }
-
-  // NEW: photo + instruction = edit the photo
-  if(pendingImage && text){
-    var imgData = pendingImage.data;
-    messages.push({role:"user", text:text, file:null, image:pendingImage});
-    box.value = "";
-    box.style.height = "auto";
-    removeFile();
-    makeImage(text, imgData);
-    return;
-  }
-
   ask();
 }
 
