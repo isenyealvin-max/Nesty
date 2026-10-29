@@ -171,7 +171,7 @@ header{display:flex;justify-content:space-between;align-items:center;padding:10p
 </head>
 <body>
 
-<div id="boot">Loading...please wait</div>
+<div id="boot">Loading...</div>
 
 <div id="auth">
   <div id="authCard">
@@ -379,7 +379,7 @@ header{display:flex;justify-content:space-between;align-items:center;padding:10p
 <div id="updateBar"></div>
 
 <script>
-var VERSION = "V7";
+var VERSION = "V9";
 
 /* ---------- Interface languages ---------- */
 var STR = {
@@ -394,12 +394,12 @@ voice:"Voice",on:"On",off:"Off",new:"+ New",ph:"Message Nesty",web:"Web search",
 side_new:"+ New chat",search:"Search chats",settings:"Settings",install:"Install Nesty app",logout:"Log out",none:"No saved chats yet.",nomatch:"No chats match.",
 hello:"Hello {n}, how are you doing?",help:"What can I help with?",help2:"What can I help you with today?",ask:"Ask me anything.",
 i1:"Help me write an email",i2:"Explain something simply",i3:"Make me a study plan",i4:"Tell me a fun fact",
-creating:"Creating your picture...wait",searching:"Searching the web...",thinking:"Thinking...",
+creating:"Creating your picture...",searching:"Searching the web...",thinking:"Thinking...",
 copy:"Copy",copied:"Copied",regen:"Regenerate",download:"Download",another:"Make another",oldpic:"This picture was made earlier and is not kept in your history.",again:"Create it again",sources:"Sources: ",notsaved:"Picture: {n} (not saved)",
 edit:"Edit",copytext:"Copy text",delete:"Delete",cancel:"Cancel",send:"Send",
 w_auto:"Nesty will search the web when a question needs current information.",w_on:"Nesty will search the web for every question.",w_off:"Web search is off.",
-stopped:"Stopped.",session:"Your session ended. Please sign in again.",left_m:"Messages left before a short break: {n} is it low? upgrade to ultra or premium",left_i:"Pictures left before a short break: {n}",
-lim_msg:"You have reached the message limit for now. You can chat again at {t} (in {r}).",lim_img:"You have reached the picture limit for now, upgrade to ultra or You can make pictures again at {t} (in {r}).",
+stopped:"Stopped.",session:"Your session ended. Please sign in again.",left_m:"Messages left before a short break: {n}",left_i:"Pictures left before a short break: {n}",
+lim_msg:"You have reached the message limit for now. You can chat again at {t} (in {r}).",lim_img:"You have reached the picture limit for now. You can make pictures again at {t} (in {r}).",
 pic_big:"That picture is too big (max 20 MB).",preparing:"Preparing picture...",unsupported:"This file type is not supported yet. Use a picture, PDF, Word (.docx) or text file.",
 file_big:"That file is too big (max 15 MB).",reading:"Reading {n}...",pdf_empty:"This PDF has no readable text. It may be scanned pictures.",docx_empty:"I could not find any text in this Word file.",txt_big:"Text files can be up to 1 MB.",read_fail:"Could not read this file.",
 p_pic:"Please look at this picture and tell me what you see.",p_file:"Please read this and tell me what it says.",
@@ -414,7 +414,7 @@ n_denied:"Blocked. To turn them on, open your phone or Chrome site settings for 
 s_data:"Your data",s_data_d:"Deleting chats cannot be undone.",s_delchats:"Delete all my chats",s_delacc:"Delete my account",
 s_data_note:"Deleting your account removes your chats and closes your account. To have every trace removed, contact us using the email on our {p} page.",
 s_about:"About",s_made:"Made by Red element",
-name_saved:"Name saved.",name_need:"Please enter your first name.",photo_ok:"Photo updated successfully.",photo_rm:"Photo removed.",instr_ok:"Instructions saved.",mem_cleared:"Memory cleared.",mem_saved:"Saved to memory.",
+name_saved:"Name saved.",name_need:"Please enter your first name.",photo_ok:"Photo updated.",photo_rm:"Photo removed.",instr_ok:"Instructions saved.",mem_cleared:"Memory cleared.",mem_saved:"Saved to memory.",
 vlang_ok:"Voice language saved.",deleting:"Deleting...",chats_deleted:"All chats deleted.",conf_all:"Delete ALL your saved chats? This cannot be undone.",
 conf_acc:"Delete your account? Your chats will be removed and you will not be able to sign in again.",type_del:"Type DELETE to confirm.",acc_deleted:"Your account was deleted.",
 conf_mem:"Clear everything Nesty remembers about you?",conf_chat:"Delete this chat?",pick_pic:"Please choose a picture.",upd:"New version available. Tap to refresh.",updating:"Updating..."
@@ -1622,7 +1622,7 @@ function cycleWeb(){
   drawWeb();
   toast(webMode === "auto" ? L("w_auto") : (webMode === "on" ? L("w_on") : L("w_off")));
 }
-var AUTO_WEB = /\b(today|tonight|latest|recent|recently|news|current|currently|right now|this week|this month|this year|yesterday|tomorrow|2025|2026|price|prices|weather|forecast|score|scores|results|fixtures|trending|exchange rate|election|stock|release date|how much (is|does|are)|who is the (current|new)|who won|habari za|bei ya)\b/i;
+var AUTO_WEB = /\b(today|tonight|latest|recent|recently|news|current|currently|right now|this week|this month|this year|yesterday|tomorrow|2025|2026|price|prices|weather|forecast|score|scores|results|fixtures|trending|exchange rate|election|stock|release date|how much (is|does|are)|who is the (current|new)|who won|habari za|bei ya|premier league|champions league|la liga|serie a|bundesliga|league table|table|standings|fixture|match|matches|matchday|live|nba|nfl|bitcoin|crypto|stocks|exchange|rate|rates|breaking|headlines|who is winning)\b/i;
 var AUTO_WEB2 = /(actualit|aujourd|dernières|noticias|hoy|últimas|notícias|hoje|nachrichten|heute|aktuell|новости|сегодня|أخبار|اليوم|الآن|समाचार|आज|新闻|今天|最新|ニュース|今日|뉴스|오늘|haberler|bugün|berita|hari ini|leo|sasa hivi)/i;
 function needsWeb(text){
   if(webMode === "on") return true;
@@ -1800,6 +1800,61 @@ function toggleImg(){
   if(imageNext) toast(L("img_tip"));
 }
 
+/* Every picture Nesty makes gets a small Nesty logo at the bottom right. */
+function loadPic(src){
+  return new Promise(function(resolve, reject){
+    var im = new Image();
+    im.onload = function(){ resolve(im); };
+    im.onerror = function(){ reject(new Error("image")); };
+    im.src = src;
+  });
+}
+async function addLogo(dataUrl){
+  try{
+    var pic = await loadPic(dataUrl);
+    var logo = await loadPic("/icon-192.png");
+    var c = document.createElement("canvas");
+    c.width = pic.width; c.height = pic.height;
+    var g = c.getContext("2d");
+    g.drawImage(pic, 0, 0);
+    var size = Math.max(26, Math.round(Math.min(c.width, c.height) * 0.07));
+    var pad = Math.round(size * 0.3);
+    var fs = Math.round(size * 0.46);
+    g.font = "600 " + fs + "px system-ui, sans-serif";
+    var label = "Nesty AI";
+    var tw = g.measureText(label).width;
+    var bw = pad + size + pad + tw + pad, bh = size + pad * 2;
+    var x0 = c.width - bw - pad, y0 = c.height - bh - pad, r = bh / 2;
+    g.fillStyle = "rgba(0,0,0,0.45)";
+    g.beginPath();
+    g.moveTo(x0 + r, y0);
+    g.arcTo(x0 + bw, y0, x0 + bw, y0 + bh, r);
+    g.arcTo(x0 + bw, y0 + bh, x0, y0 + bh, r);
+    g.arcTo(x0, y0 + bh, x0, y0, r);
+    g.arcTo(x0, y0, x0 + bw, y0, r);
+    g.closePath();
+    g.fill();
+    g.save();
+    g.beginPath();
+    var lx = x0 + pad, ly = y0 + pad, lr = size * 0.22;
+    g.moveTo(lx + lr, ly);
+    g.arcTo(lx + size, ly, lx + size, ly + size, lr);
+    g.arcTo(lx + size, ly + size, lx, ly + size, lr);
+    g.arcTo(lx, ly + size, lx, ly, lr);
+    g.arcTo(lx, ly, lx + size, ly, lr);
+    g.closePath();
+    g.clip();
+    g.drawImage(logo, lx, ly, size, size);
+    g.restore();
+    g.fillStyle = "#ffffff";
+    g.textBaseline = "middle";
+    g.fillText(label, lx + size + pad, y0 + bh / 2 + 1);
+    return c.toDataURL("image/jpeg", 0.92);
+  }catch(e){
+    return dataUrl;
+  }
+}
+
 async function makeImage(prompt){
   if(loading) return;
   loading = true;
@@ -1835,7 +1890,7 @@ async function makeImage(prompt){
       return;
     }
     if(data.image){
-      messages.push({role:"assistant", content:"[Nesty created a picture for: " + prompt + "]", genImage:{data:data.image, prompt:prompt}});
+      messages.push({role:"assistant", content:"[Nesty created a picture for: " + prompt + "]", genImage:{data:await addLogo(data.image), prompt:prompt}});
       if(typeof data.left === "number" && data.left <= 2){
         toast(L("left_i", {n: data.left}));
       }
