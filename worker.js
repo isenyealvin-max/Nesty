@@ -1,16 +1,4 @@
-import { DurableObject } from "cloudflare:workers";
-import { onRequestPost } from "./functions/api/chat.js";
-
-const APPWRITE = "https://sgp.cloud.appwrite.io/v1";
-const PROJECT = "6adc585d003ae0c1be08";
-
-const ICONS = {
-  "/icon-192.png": "/icon-192-1.png",
-  "/icon-512.png": "/icon-512-1.png",
-};
-
-/* ---------- Plans (the server is the only place these limits are enforced) ---------- */
-const WINDOW_MS = 5 * 60 * 60 * 1000; // every usage window is 1 hour
+const WINDOW_MS = 60 * 60 * 1000;
 const PLANS = {
   free: { name: "Free", msg: 40, file: 30, img: 6 },
   premium: { name: "Premium", msg: 60, file: 50, img: 6 },
@@ -22,7 +10,6 @@ const PRICES = {
   ultra: { monthly: 100, yearly: 36000 },
 };
 
-/* Adds one calendar month or one year, keeping the day of the month when possible. */
 function addPeriod(fromMs, period) {
   const d = new Date(fromMs);
   const day = d.getUTCDate();
@@ -34,9 +21,7 @@ function addPeriod(fromMs, period) {
   return d.getTime();
 }
 
-/* One small object per name. Used for message, file and picture counters, plans and codes. */
 export class Limiter extends DurableObject {
-  /* ----- usage windows: a window starts at the first use and ends exactly windowMs later ----- */
   async hit(limit, windowMs) {
     const now = Date.now();
     let st = (await this.ctx.storage.get("w")) || { start: now, count: 0 };
@@ -63,7 +48,6 @@ export class Limiter extends DurableObject {
     return { count: st.count, resetAt: st.start + windowMs };
   }
 
-  /* ----- a user's plan ----- */
   async getPlan() {
     const p = await this.ctx.storage.get("plan");
     if (!p) return { plan: "free", expiresAt: 0 };
@@ -74,10 +58,7 @@ export class Limiter extends DurableObject {
   async canActivate(plan) {
     const cur = await this.getPlan();
     if (RANK[cur.plan] > RANK[plan]) {
-      return {
-        ok: false,
-        error: "You already have an active " + PLANS[cur.plan].name + " plan. Use this code after it ends.",
-      };
+      return { ok: false, error: "You already have an active " + PLANS[cur.plan].name + " plan. Use this code after it ends." };
     }
     return { ok: true };
   }
@@ -89,12 +70,11 @@ export class Limiter extends DurableObject {
     }
     const now = Date.now();
     const base = cur.plan === plan && cur.expiresAt > now ? cur.expiresAt : now;
-    const rec = { plan: plan, period: period, expiresAt: addPeriod(base, period), activatedAt: now };
+    const rec = { plan, period, expiresAt: addPeriod(base, period), activatedAt: now };
     await this.ctx.storage.put("plan", rec);
     return Object.assign({ ok: true }, rec);
   }
 
-  /* ----- activation codes (only a hash of each code is stored) ----- */
   async addCodes(entries) {
     for (const e of entries) {
       await this.ctx.storage.put("c:" + e.h, {
@@ -125,7 +105,7 @@ export class Limiter extends DurableObject {
   async listCodes() {
     const m = await this.ctx.storage.list({ prefix: "c:" });
     const out = [];
-    m.forEach(function (v, k) {
+    m.forEach((v, k) => {
       out.push({
         id: k.slice(2, 10),
         plan: v.plan,
@@ -136,7 +116,7 @@ export class Limiter extends DurableObject {
         usedAt: v.usedAt || 0,
       });
     });
-    out.sort(function (a, b) { return b.createdAt - a.createdAt; });
+    out.sort((a, b) => b.createdAt - a.createdAt);
     return out.slice(0, 200);
   }
 }
@@ -152,9 +132,9 @@ async function verify(token, origin) {
   const hit = tokenCache.get(token);
   if (hit && hit.exp > Date.now()) return hit.user;
   try {
-    const res = await fetch(APPWRITE + "/account", {
+    const res = await fetch("https://sgp.cloud.appwrite.io/v1/account", {
       headers: {
-        "X-Appwrite-Project": PROJECT,
+        "X-Appwrite-Project": "6adc585d003ae0c1be08",
         "X-Appwrite-JWT": token,
         Origin: origin,
       },
@@ -164,7 +144,7 @@ async function verify(token, origin) {
     if (!u || !u.$id) return null;
     const user = { $id: u.$id, verified: u.emailVerification === true, pwSet: !!(u.prefs && u.prefs.pwSet === true) };
     if (tokenCache.size > 500) tokenCache.clear();
-    tokenCache.set(token, { user: user, exp: Date.now() + (user.verified && user.pwSet ? 5 * 60 * 1000 : 15 * 1000) });
+    tokenCache.set(token, { user, exp: Date.now() + (user.verified && user.pwSet ? 5 * 60 * 1000 : 15 * 1000) });
     return user;
   } catch (e) {
     return null;
@@ -172,34 +152,19 @@ async function verify(token, origin) {
 }
 
 function json(obj, status) {
-  return new Response(JSON.stringify(obj), {
-    status: status || 200,
-    headers: { "Content-Type": "application/json" },
-  });
+  return new Response(JSON.stringify(obj), { status: status || 200, headers: { "Content-Type": "application/json" } });
 }
 
-/* Returns {user} or {res}. A signed-in user must also have a verified email. */
 async function needUser(request) {
   const origin = new URL(request.url).origin;
   const user = await verify(request.headers.get("X-Nesty-Token"), origin);
-  if (!user) {
-    return { res: json({ reply: "Please sign in again.", error: "Please sign in again.", needLogin: true }, 401) };
-  }
-  if (!user.verified) {
-    return {
-      res: json({ reply: "Please verify your email first.", error: "Please verify your email first.", needVerify: true }, 403),
-    };
-  }
-  if (!user.pwSet) {
-    return {
-      res: json({ reply: "Please create your password first.", error: "Please create your password first.", needPassword: true }, 403),
-    };
-  }
-  return { user: user };
+  if (!user) return { res: json({ reply: "Please sign in again.", error: "Please sign in again.", needLogin: true }, 401) };
+  if (!user.verified) return { res: json({ reply: "Please verify your email first.", error: "Please verify your email first.", needVerify: true }, 403) };
+  if (!user.pwSet) return { res: json({ reply: "Please create your password first.", error: "Please create your password first.", needPassword: true }, 403) };
+  return { user };
 }
 
-/* ---------- Reading privacy.html and terms.html so Nesty can explain them ---------- */
-const POLICY_RE = /(privacy|terms|policy|policies|conditions|data protection|personal (data|information)|cookies|children|minors|liability|acceptable use|delete my (data|account)|refund|legal|faragha|masharti|confidentialit|conditions d'utilisation|privacidad|términos|termos|الخصوصية|الشروط|गोपनीयता)/i;
+const POLICY_RE = /(privacy|terms|policy|policies|conditions|data protection|personal (data|information)|cookies|children|minors|liability|acceptable use|delete my (data|account)|refund|legal|far|consent|terms of service)/i;
 let policyCache = { at: 0, privacy: "", terms: "" };
 
 function htmlToText(h) {
@@ -250,27 +215,25 @@ function lastUserText(messages) {
   for (let i = list.length - 1; i >= 0; i--) {
     if (list[i] && list[i].role === "user") {
       const c = list[i].content;
-      if (Array.isArray(c)) return c.map(function (p) { return (p && p.text) || ""; }).join(" ");
+      if (Array.isArray(c)) return c.map((p) => (p && p.text) || "").join(" ");
       return String(c || "");
     }
   }
   return "";
 }
 
-/* A message counts as having an attachment when it carries a picture or the file marker. */
 function hasAttachment(messages) {
   const list = Array.isArray(messages) ? messages : [];
   for (let i = list.length - 1; i >= 0; i--) {
     const m = list[i];
     if (m && m.role === "user") {
-      if (Array.isArray(m.content) && m.content.some(function (p) { return p && p.type === "image_url"; })) return true;
+      if (Array.isArray(m.content) && m.content.some((p) => p && p.type === "image_url")) return true;
       return /^\s*\[Attached file:/.test(lastUserText([m]));
     }
   }
   return false;
 }
 
-/* ---------- Chat ---------- */
 async function handleChat(request, env, ctx) {
   const auth = await needUser(request);
   if (auth.res) return auth.res;
@@ -282,6 +245,7 @@ async function handleChat(request, env, ctx) {
   } catch (e) {
     return json({ reply: "Bad request. Please try again." }, 400);
   }
+
   const origin = new URL(request.url).origin;
   delete body.planInfo;
   delete body.policyText;
@@ -324,12 +288,8 @@ async function handleChat(request, env, ctx) {
     if (pt.privacy || pt.terms) body.policyText = { privacy: pt.privacy, terms: pt.terms };
   }
 
-  const req2 = new Request(request.url, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(body),
-  });
-  const res = await onRequestPost({ request: req2, env: env, ctx: ctx });
+  const req2 = new Request(request.url, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) });
+  const res = await onRequestPost({ request: req2, env, ctx });
   if (!mstub) return res;
   try {
     const d = await res.clone().json();
@@ -348,7 +308,6 @@ async function handleChat(request, env, ctx) {
   }
 }
 
-/* ---------- Plan status and usage ---------- */
 async function handleMe(request, env) {
   const auth = await needUser(request);
   if (auth.res) return auth.res;
@@ -375,7 +334,6 @@ async function handleMe(request, env) {
   });
 }
 
-/* ---------- Activation codes ---------- */
 const ALPHA = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
 function genCode() {
   const b = new Uint8Array(16);
@@ -392,7 +350,7 @@ function normCode(s) {
 }
 async function sha256hex(s) {
   const b = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(s));
-  return Array.from(new Uint8Array(b)).map(function (x) { return x.toString(16).padStart(2, "0"); }).join("");
+  return Array.from(new Uint8Array(b)).map((x) => x.toString(16).padStart(2, "0")).join("");
 }
 
 async function handleRedeem(request, env) {
@@ -406,9 +364,7 @@ async function handleRedeem(request, env) {
 
   const attempts = stub(env, "redeem|" + id);
   const a = await attempts.hit(10, 60 * 60 * 1000);
-  if (!a.ok) {
-    return json({ ok: false, error: "Too many attempts. Please try again later." }, 429);
-  }
+  if (!a.ok) return json({ ok: false, error: "Too many attempts. Please try again later." }, 429);
 
   const code = normCode(body.code);
   if (code.length !== 16) return json({ ok: false, error: "That code is not valid." });
@@ -431,7 +387,6 @@ async function handleRedeem(request, env) {
   return json({ ok: true, plan: act.plan, period: act.period, expiresAt: act.expiresAt });
 }
 
-/* ---------- Administrator tools (need the ADMIN_KEY secret) ---------- */
 function safeEq(a, b) {
   const x = new TextEncoder().encode(String(a));
   const y = new TextEncoder().encode(String(b));
@@ -450,9 +405,7 @@ async function handleAdmin(request, env, action) {
     return json({ error: g.ok ? "Wrong admin key." : "Too many wrong attempts. Try again later." }, g.ok ? 401 : 429);
   }
   const codes = stub(env, "codes");
-  if (action === "list") {
-    return json({ codes: await codes.listCodes() });
-  }
+  if (action === "list") return json({ codes: await codes.listCodes() });
   let body;
   try { body = await request.json(); } catch (e) { return json({ error: "Bad request." }, 400); }
   const plan = String(body.plan || "");
@@ -465,34 +418,26 @@ async function handleAdmin(request, env, action) {
   for (let i = 0; i < count; i++) {
     const c = genCode();
     made.push(fmtCode(c));
-    entries.push({ h: await sha256hex(c), plan: plan, period: period, label: label });
+    entries.push({ h: await sha256hex(c), plan, period, label });
   }
   await codes.addCodes(entries);
-  return json({ codes: made, plan: plan, period: period, price: PRICES[plan][period] });
+  return json({ codes: made, plan, period, price: PRICES[plan][period] });
 }
 
-/* ---------- Picture maker (Cloudflare Workers AI, FLUX) ---------- */
 const BLOCK = /\b(nude|naked|nsfw|porn\w*|sexual|sexy|erotic|explicit|topless|gore|beheading|rape|loli\w*|child\s*abuse)\b/i;
 
 async function improvePrompt(env, prompt) {
   if (!env.GROQ_API_KEY) return prompt;
   try {
     const ctrl = new AbortController();
-    const timer = setTimeout(function () { ctrl.abort(); }, 8000);
+    const timer = setTimeout(() => ctrl.abort(), 8000);
     const res = await fetch("https://api.groq.com/openai/v1/chat/completions", {
       method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: "Bearer " + env.GROQ_API_KEY,
-      },
+      headers: { "Content-Type": "application/json", Authorization: "Bearer " + env.GROQ_API_KEY },
       body: JSON.stringify({
         model: "openai/gpt-oss-20b",
         messages: [
-          {
-            role: "system",
-            content:
-              "You write prompts for an AI image generator. Turn the user's request, in any language, into ONE vivid English image prompt of at most 60 words. Describe the subject, style, lighting and mood. Do not include real people's names, written text or logos. Output only the prompt.",
-          },
+          { role: "system", content: "Turn the user request into one vivid English image prompt under 60 words." },
           { role: "user", content: prompt },
         ],
         reasoning_effort: "low",
@@ -519,9 +464,7 @@ async function toBase64(out) {
   if (!buf) return "";
   let s = "";
   const chunk = 0x8000;
-  for (let i = 0; i < buf.length; i += chunk) {
-    s += String.fromCharCode.apply(null, buf.subarray(i, i + chunk));
-  }
+  for (let i = 0; i < buf.length; i += chunk) s += String.fromCharCode.apply(null, buf.subarray(i, i + chunk));
   return btoa(s);
 }
 
@@ -538,13 +481,11 @@ async function handleImage(request, env) {
   }
 
   const prompt = String(body.prompt || "").trim().slice(0, 600);
-  const inputImage = body.image || null;   // base64 data URL or pure base64
+  const inputImage = body.image || null;
 
   if (!prompt) return json({ reply: "Tell me what picture to make or how to edit it." }, 400);
   if (!env.AI) return json({ reply: "The picture maker is not set up yet." });
-  if (BLOCK.test(prompt)) {
-    return json({ reply: "I can't make that kind of picture. Please try something else." });
-  }
+  if (BLOCK.test(prompt)) return json({ reply: "I can't make that kind of picture. Please try something else." });
 
   let stb = null;
   let used = 0;
@@ -554,9 +495,7 @@ async function handleImage(request, env) {
     limit = (PLANS[plan.plan] || PLANS.free).img;
     stb = stub(env, "img|" + user.$id);
     const r = await stb.hit(limit, WINDOW_MS);
-    if (!r.ok) {
-      return json({ reply: "limit", limited: true, kind: "img", resetAt: r.resetAt, plan: plan.plan }, 429);
-    }
+    if (!r.ok) return json({ reply: "limit", limited: true, kind: "img", resetAt: r.resetAt, plan: plan.plan }, 429);
     used = r.used;
   }
 
@@ -568,40 +507,19 @@ async function handleImage(request, env) {
 
   try {
     let out;
-
     if (inputImage) {
-      // ===== IMAGE EDITING (img2img) =====
-      // Remove data URL prefix if present
-      let b64 = inputImage.replace(/^data:image\/\w+;base64,/, "");
-
-      out = await env.AI.run("@cf/black-forest-labs/flux-2-dev", {
-        prompt: english,
-        input_image: b64,          // some models use this name
-        // alternative key some models expect:
-        // image: b64,
-        steps: 20,
-      });
+      const b64 = String(inputImage).replace(/^data:image\/\w+;base64,/, "");
+      out = await env.AI.run("@cf/black-forest-labs/flux-2-dev", { prompt: english, input_image: b64, steps: 20 });
     } else {
-      // ===== NORMAL TEXT-TO-IMAGE =====
-      out = await env.AI.run("@cf/black-forest-labs/flux-1-schnell", {
-        prompt: english,
-        steps: 4,
-      });
+      out = await env.AI.run("@cf/black-forest-labs/flux-1-schnell", { prompt: english, steps: 4 });
     }
-
     const b64 = await toBase64(out);
     if (!b64) throw new Error("empty");
-
-    return json({
-      image: "data:image/jpeg;base64," + b64,
-      left: stb ? Math.max(0, limit - used) : undefined,
-    });
+    return json({ image: "data:image/jpeg;base64," + b64, left: stb ? Math.max(0, limit - used) : undefined });
   } catch (e) {
     if (stb) await stb.refund();
     console.error("Image error:", e);
-    return json({
-      reply: "The picture maker is busy or could not edit the image. Please try again later.",
-    });
+    return json({ reply: "The picture maker is busy or could not edit the image. Please try again later." });
   }
 }
 
@@ -611,23 +529,23 @@ export default {
     const path = url.pathname;
 
     const postOnly = {
-      "/api/chat": function () { return handleChat(request, env, ctx); },
-      "/.netlify/functions/chat": function () { return handleChat(request, env, ctx); },
-      "/api/image": function () { return handleImage(request, env); },
-      "/api/me": function () { return handleMe(request, env); },
-      "/api/redeem": function () { return handleRedeem(request, env); },
-      "/api/admin/generate": function () { return handleAdmin(request, env, "generate"); },
-      "/api/admin/list": function () { return handleAdmin(request, env, "list"); },
+      "/api/chat": () => handleChat(request, env, ctx),
+      "/.netlify/functions/chat": () => handleChat(request, env, ctx),
+      "/api/image": () => handleImage(request, env),
+      "/api/me": () => handleMe(request, env),
+      "/api/redeem": () => handleRedeem(request, env),
+      "/api/admin/generate": () => handleAdmin(request, env, "generate"),
+      "/api/admin/list": () => handleAdmin(request, env, "list"),
     };
+
     if (postOnly[path]) {
-      if (request.method !== "POST") {
-        return new Response("Method not allowed", { status: 405 });
-      }
+      if (request.method !== "POST") return new Response("Method not allowed", { status: 405 });
       return postOnly[path]();
     }
 
-    if (ICONS[path]) {
-      url.pathname = ICONS[path];
+    if (path === "/icon-192.png" || path === "/icon-512.png") {
+      const mapping = { "/icon-192.png": "/icon-192-1.png", "/icon-512.png": "/icon-512-1.png" };
+      url.pathname = mapping[path] || path;
       return env.ASSETS.fetch(new Request(url.toString(), request));
     }
 
