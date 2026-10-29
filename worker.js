@@ -10,7 +10,7 @@ const ICONS = {
 };
 
 /* ---------- Plans (the server is the only place these limits are enforced) ---------- */
-const WINDOW_MS = 5 * 60 * 60 * 1000; // every usage window is 5 hours
+const WINDOW_MS = 5 * 60 * 60 * 1000; // every usage window is 1 hour
 const PLANS = {
   free: { name: "Free", msg: 40, file: 30, img: 6 },
   premium: { name: "Premium", msg: 60, file: 50, img: 6 },
