@@ -207,6 +207,11 @@ body{font-size:16px}
 #srcList a b{display:block;font-size:14.5px}
 #srcList a span{font-size:12.5px;color:var(--muted)}
 .codebar{gap:4px;align-items:center}
+header{display:flex;flex-wrap:nowrap;align-items:center;gap:6px;padding:8px 10px}
+header>div:first-child,header>div:last-child{display:flex;gap:6px;flex:none;align-items:center}
+header .hbtn{margin:0;padding:7px 10px;font-size:13px;white-space:nowrap}
+.logo{flex:1;min-width:0;text-align:center;font-size:16px;line-height:1.15;display:flex;flex-direction:column;align-items:center;white-space:nowrap}
+.mtag{margin:3px 0 0;padding:1px 7px;font-size:10px}
 </style>
 </head>
 <body>
@@ -2539,7 +2544,8 @@ function toggleMic(){
 
 function drawSpk(){
   var b = $("spk");
-  b.textContent = L("voice") + ": " + (speakOn ? L("on") : L("off"));
+  b.textContent = speakOn ? "\ud83d\udd0a" : "\ud83d\udd07";
+  b.title = L("voice") + ": " + (speakOn ? L("on") : L("off"));
   b.classList.toggle("on", speakOn);
 }
 function toggleSpeak(){
@@ -2740,13 +2746,15 @@ function renderPlans(){
   if(me && me.usage){
     h += '<div class="pcard"><h3>' + L("use_title") + '</h3><ul>';
     [["msg","k_msg"],["file","k_file"],["img","k_img"]].forEach(function(k){
-      var u = me.usage[k[0]] || {used: 0, limit: 0, resetAt: 0};
+      var pl0 = PLAN_DATA[cp] || PLAN_DATA.free;
+      var u = me.usage[k[0]] || {used: 0, limit: pl0[k[0]], resetAt: 0};
       h += '<li>' + (u.resetAt && u.used
         ? L("use_line", {k: L(k[1]), u: u.used, l: u.limit, t: whenText(u.resetAt)})
         : L("use_line0", {k: L(k[1]), u: u.used, l: u.limit})) + '</li>';
     });
     h += '</ul></div>';
   }
+  if(me && me.limiter === false){ h += '<div class="pcard" style="border-color:#e53935"><b>Usage counter not connected.</b><div class="muted2">The server cannot count your messages yet, so limits are not enforced. (Admin: check that the LIMITER Durable Object binding exists in Cloudflare.)</div></div>'; }
   ["free","premium","ultra"].forEach(function(id){
     var p = PLAN_DATA[id];
     h += '<div class="pcard' + (id === cp ? ' cur' : '') + (id === plansFocus ? ' focus' : '') + '" id="pc_' + id + '"><h3>' + p.n + (id === cp ? ' · ' + L("current") : '') + '</h3>';

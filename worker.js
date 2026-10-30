@@ -354,7 +354,7 @@ async function handleMe(request, env) {
   const auth = await needUser(request);
   if (auth.res) return auth.res;
   const id = auth.user.$id;
-  if (!env.LIMITER) return json({ plan: "free", usage: {} });
+  if (!env.LIMITER) return json({ plan: "free", usage: {}, limiter: false });
   const plan = await stub(env, "plan|" + id).getPlan();
   const lim = PLANS[plan.plan] || PLANS.free;
   const u = await Promise.all([
@@ -363,6 +363,7 @@ async function handleMe(request, env) {
     stub(env, "img|" + id).peek(WINDOW_MS),
   ]);
   return json({
+    limiter: true,
     plan: plan.plan,
     period: plan.period || "",
     expiresAt: plan.expiresAt || 0,
