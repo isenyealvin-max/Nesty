@@ -3,10 +3,35 @@
   "main": "worker.js",
   "compatibility_date": "2026-10-01",
   "keep_vars": true,
+
   "assets": {
     "directory": "./",
     "binding": "ASSETS",
-    "run_worker_first": ["/api/*", "/.netlify/*", "/icon-192.png", "/icon-512.png"]
+    "run_worker_first": [
+      "/api/*",
+      "/.netlify/*",
+      "/icon-192.png",
+      "/icon-512.png"
+    ]
   },
-  "ai": { "binding": "AI" }
+
+  "ai": {
+    "binding": "AI"
+  },
+
+  "durable_objects": {
+    "bindings": [
+      {
+        "name": "LIMITER",
+        "class_name": "Limiter"
+      }
+    ]
+  },
+
+  "exports": {
+    "Limiter": {
+      "type": "durable-object",
+      "storage": "sqlite"
+    }
+  }
 }
