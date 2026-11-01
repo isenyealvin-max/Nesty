@@ -71,7 +71,7 @@ async function searchWithGemini(env, system, userMessages, errs) {
             systemInstruction: { parts: [{ text: system }] },
             contents: toGeminiContents(userMessages),
             tools: [{ google_search: {} }],
-            generationConfig: { maxOutputTokens: 4096 },
+            generationConfig: { maxOutputTokens: 4096, temperature: 0.2 },
           }),
           signal: ctrl.signal,
         }
@@ -127,7 +127,7 @@ async function tavilySearch(env, query) {
         "Content-Type": "application/json",
         Authorization: "Bearer " + env.TAVILY_API_KEY,
       },
-      body: JSON.stringify({ query: query, search_depth: "basic", max_results: 5 }),
+      body: JSON.stringify({ query: query, search_depth: "basic", max_results: 6 }),
       signal: ctrl.signal,
     });
     clearTimeout(timer);
@@ -135,12 +135,83 @@ async function tavilySearch(env, query) {
     const data = await res.json();
     const results = (data && data.results) || [];
     if (!results.length) return null;
-    return results.slice(0, 5).map(function (r) {
-      return { title: r.title || r.url, uri: r.url, text: String(r.content || "").slice(0, 600) };
+    return results.slice(0, 6).map(function (r) {
+      return { title: r.title || r.url, uri: r.url, text: String(r.content || "").slice(0, 1200) };
     });
   } catch (e) {
     return null;
   }
+}
+
+// Live football data from football-data.org (free key in the FOOTBALL_DATA_KEY secret).
+const FD_LEAGUES = {
+  PL: /premier league|english premier|\bepl\b/i,
+  PD: /la ?liga|spanish league/i,
+  SA: /serie a/i,
+  BL1: /bundesliga/i,
+  FL1: /ligue ?1/i,
+  CL: /champions league|\bucl\b/i,
+  ELC: /\bchampionship\b/i,
+};
+const fdCache = {};
+async function fdGet(env, path) {
+  const hit = fdCache[path];
+  if (hit && hit.exp > Date.now()) return hit.data;
+  try {
+    const ctrl = new AbortController();
+    const timer = setTimeout(function () { ctrl.abort(); }, 6000);
+    const res = await fetch("https://api.football-data.org/v4" + path, {
+      headers: { "X-Auth-Token": env.FOOTBALL_DATA_KEY },
+      signal: ctrl.signal,
+    });
+    clearTimeout(timer);
+    if (!res.ok) return null;
+    const data = await res.json();
+    fdCache[path] = { data: data, exp: Date.now() + 60000 };
+    return data;
+  } catch (e) {
+    return null;
+  }
+}
+function fdDay(offset) {
+  return new Date(Date.now() + offset * 86400000).toISOString().slice(0, 10);
+}
+async function footballFacts(env, text) {
+  let code = "";
+  for (const k in FD_LEAGUES) {
+    if (FD_LEAGUES[k].test(text)) { code = k; break; }
+  }
+  if (!code) return "";
+  const out = [];
+  const st = await fdGet(env, "/competitions/" + code + "/standings");
+  const tb = st && st.standings && (st.standings.find(function (s) { return s.type === "TOTAL"; }) || st.standings[0]);
+  if (tb && tb.table && tb.table.length) {
+    const name = (st.competition && st.competition.name) || code;
+    const md = st.season && st.season.currentMatchday ? ", matchday " + st.season.currentMatchday : "";
+    out.push("STANDINGS for " + name + md + " (position. club | played, won, draw, lost | goal difference | points):\n" +
+      tb.table.map(function (r) {
+        return r.position + ". " + r.team.name + " | P" + r.playedGames + " W" + r.won + " D" + r.draw + " L" + r.lost + " | GD " + r.goalDifference + " | " + r.points + " pts";
+      }).join("\n"));
+  }
+  if (/scorer|golden boot|top goal/i.test(text)) {
+    const sc = await fdGet(env, "/competitions/" + code + "/scorers?limit=10");
+    if (sc && sc.scorers && sc.scorers.length) {
+      out.push("TOP SCORERS:\n" + sc.scorers.map(function (s, i) {
+        return (i + 1) + ". " + s.player.name + " (" + s.team.name + ") " + s.goals + " goals";
+      }).join("\n"));
+    }
+  }
+  if (/fixture|result|score|match|playing|upcoming|next game|tonight/i.test(text)) {
+    const mt = await fdGet(env, "/competitions/" + code + "/matches?dateFrom=" + fdDay(-3) + "&dateTo=" + fdDay(7));
+    if (mt && mt.matches && mt.matches.length) {
+      out.push("MATCHES from the last 3 days to the next 7 days (UTC times):\n" + mt.matches.slice(0, 25).map(function (m) {
+        const ft = m.score && m.score.fullTime;
+        const res = m.status === "FINISHED" && ft ? ft.home + "-" + ft.away : "vs";
+        return String(m.utcDate).slice(0, 16).replace("T", " ") + " " + m.homeTeam.name + " " + res + " " + m.awayTeam.name + " (" + m.status + ")";
+      }).join("\n"));
+    }
+  }
+  return out.join("\n\n");
 }
 
 // Nesty decides by itself whether a question needs live web information.
@@ -180,6 +251,8 @@ async function decideSearch(env, text) {
     return false;
   }
 }
+
+const SEARCH_RULES = " STRICT RULES FOR ANSWERS BASED ON SEARCH: use only facts that appear in the search results; never fill gaps from memory; copy numbers, names, scores and table rows exactly as found; if the results do not contain the exact data asked for (for example a full league table), say so and give only what you found instead of inventing rows; say \"as of <date>\" when facts change over time; do not write a Sources section or paste links, the app shows them.";
 
 // Everything Nesty may say about itself. The numbers here must match worker.js.
 const NESTY_FACTS =
@@ -221,7 +294,12 @@ export async function onRequestPost(context) {
     );
   });
 
-  if (!wantSearch && !hasImage) {
+  let liveFacts = "";
+  if (env.FOOTBALL_DATA_KEY && !hasImage) {
+    liveFacts = await footballFacts(env, lastText(userMessages));
+    if (liveFacts) wantSearch = false;
+  }
+  if (!liveFacts && !wantSearch && !hasImage) {
     wantSearch = await decideSearch(env, lastText(userMessages));
   }
 
@@ -257,9 +335,13 @@ SEARCH AND IDENTITY
   if (today) {
     system += " Today's date is " + today + ".";
   }
-  if (wantSearch && !hasImage) {
+  if (liveFacts) {
     system +=
-      " You have live Google Search for this answer. Use it to give current, accurate information and mention dates when they matter.";
+      " LIVE FOOTBALL DATA retrieved just now from football-data.org:\n" + liveFacts +
+      "\nAnswer football questions using ONLY this data and copy numbers exactly. For a table, show a Markdown table with the columns Pos, Club, P, W, D, L, GD, Pts for ALL teams, in this exact order; never add, drop, merge, rename or reorder teams. If something asked is not in this data, say you do not have it. Say it is live data as of today. Do not write a Sources section; the app shows it.";
+  } else if (wantSearch && !hasImage) {
+    system +=
+      " You have live Google Search for this answer. Use it to give current, accurate information and mention dates when they matter." + SEARCH_RULES;
   } else {
     system +=
       " You cannot browse the internet in this answer, so your knowledge may be out of date; when a question needs current facts (news, prices, recent events, who currently holds a job), say that clearly and suggest the user ask again including a word like \"latest\" or \"today\", so Nesty looks it up on the web." +
@@ -301,7 +383,7 @@ SEARCH AND IDENTITY
 
   let searchFailed = false;
   let searchNote = "";
-  let webSources = [];
+  let webSources = liveFacts ? [{ title: "football-data.org", uri: "https://www.football-data.org" }] : [];
 
   // 1) Live web search (Gemini with Google Search)
   if (wantSearch && !hasImage) {
@@ -327,7 +409,7 @@ SEARCH AND IDENTITY
         return String(m.content || "");
       };
       let q = textOf(users[users.length - 1]).slice(0, 300);
-      if (q.length < 25 && users.length > 1) {
+      if (q.length < 60 && users.length > 1) {
         q = (textOf(users[users.length - 2]).slice(0, 150) + " " + q).trim();
       }
       tav = await tavilySearch(env, q);
@@ -336,7 +418,7 @@ SEARCH AND IDENTITY
     if (tav) {
       system +=
         " Here are fresh web search results" + (today ? " (retrieved " + today + ")" : "") +
-        ". Use them to answer the user's question with current facts, and mention the source names. If they do not answer the question, say so.\n\n" +
+        ". Use them to answer the user's question with current facts. If they do not answer the question, say so." + SEARCH_RULES + "\n\n" +
         tav.map(function (r, i) {
           return (i + 1) + ". " + r.title + " (" + r.uri + ")\n" + r.text;
         }).join("\n\n");
@@ -407,7 +489,7 @@ SEARCH AND IDENTITY
           "Content-Type": "application/json",
           Authorization: "Bearer " + p.key,
         },
-        body: JSON.stringify(Object.assign({ model: p.model, messages: messages }, p.extra)),
+        body: JSON.stringify(Object.assign({ model: p.model, messages: messages }, p.extra, webSources.length ? { temperature: 0.2 } : {})),
         signal: ctrl.signal,
       });
       clearTimeout(timer);
