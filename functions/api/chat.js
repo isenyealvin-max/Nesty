@@ -183,15 +183,20 @@ function footballIntent(text) {
   return { espn: espn, fd: fd, clubs: clubs };
 }
 
-async function jget(url, headers) {
+async function jget(url, headers, dbg) {
+  const host = url.split("/")[2];
   try {
     const ctrl = new AbortController();
     const timer = setTimeout(function () { ctrl.abort(); }, 7000);
-    const res = await fetch(url, { headers: headers || {}, signal: ctrl.signal });
+    const res = await fetch(url, {
+      headers: Object.assign({ "User-Agent": "Mozilla/5.0 (compatible; NestyAI/1.0)", Accept: "application/json" }, headers || {}),
+      signal: ctrl.signal,
+    });
     clearTimeout(timer);
-    if (!res.ok) return null;
+    if (!res.ok) { if (dbg) dbg.push(host + " " + res.status); return null; }
     return await res.json();
   } catch (e) {
+    if (dbg) dbg.push(host + " " + ((e && e.name) || "error"));
     return null;
   }
 }
@@ -199,9 +204,15 @@ function ymd(offset) {
   return new Date(Date.now() + offset * 86400000).toISOString().slice(0, 10).replace(/-/g, "");
 }
 
-async function espnScores(league, clubs) {
-  const d = await jget("https://site.api.espn.com/apis/site/v2/sports/soccer/" + league + "/scoreboard?limit=100&dates=" + ymd(-2) + "-" + ymd(7));
-  const evs = d && d.events;
+async function espnScores(league, clubs, dbg) {
+  const base = "https://site.api.espn.com/apis/site/v2/sports/soccer/" + league + "/scoreboard";
+  let d = await jget(base + "?limit=100&dates=" + ymd(-2) + "-" + ymd(7), null, dbg);
+  let evs = d && d.events;
+  if (!evs || !evs.length) {
+    d = await jget(base, null, dbg);
+    evs = d && d.events;
+  }
+  if (dbg) dbg.push("events " + (evs ? evs.length : 0));
   if (!evs || !evs.length) return "";
   const lines = [];
   evs.forEach(function (ev) {
@@ -233,6 +244,7 @@ async function espnScores(league, clubs) {
       lines.push(line);
     } catch (e) {}
   });
+  if (dbg) dbg.push("matched " + lines.length);
   return lines.slice(0, 12).join("\n");
 }
 
@@ -267,10 +279,11 @@ async function fdStandings(env, code) {
 // Returns {intent, facts, sources}. intent=true with empty facts means the feed failed.
 async function footballFacts(env, text) {
   const it = footballIntent(text);
-  if (!it) return { intent: false, facts: "", sources: [] };
+  if (!it) return { intent: false, facts: "", sources: [], diag: "" };
   const out = [];
   const sources = [];
-  const scores = await espnScores(it.espn, it.clubs);
+  const dbg = [];
+  const scores = await espnScores(it.espn, it.clubs, dbg);
   if (scores) {
     out.push("MATCHES (UTC times; 'LIVE' means in play now, 'FINAL' means finished):\n" + scores);
     sources.push({ title: "ESPN soccer scoreboard", uri: "https://www.espn.com/soccer/scoreboard" });
@@ -284,7 +297,7 @@ async function footballFacts(env, text) {
     }
     if (tbl) out.push("LEAGUE TABLE (position. club | played, won, drawn, lost | goal difference | points):\n" + tbl);
   }
-  return { intent: true, facts: out.join("\n\n"), sources: sources };
+  return { intent: true, facts: out.join("\n\n"), sources: sources, diag: dbg.join(", ") };
 }
 
 // Nesty decides by itself whether a question needs live web information.
@@ -369,11 +382,13 @@ export async function onRequestPost(context) {
 
   let liveFacts = "";
   let fbSources = [];
+  let fbDiag = "";
   let footballFailed = false;
   if (!hasImage) {
     const fb = await footballFacts(env, lastText(userMessages));
     liveFacts = fb.facts;
     fbSources = fb.sources;
+    fbDiag = fb.diag;
     footballFailed = fb.intent && !fb.facts;
     if (fb.intent) wantSearch = false;
   }
@@ -587,6 +602,7 @@ SEARCH AND IDENTITY
         data && data.choices && data.choices[0] && data.choices[0].message && data.choices[0].message.content;
       if (text && String(text).trim()) {
         let out = String(text);
+        if (footballFailed && fbDiag) out += "\n\n_(feed note: " + fbDiag + ")_";
         if (searchFailed) {
           out =
             "*I could not search the web just now, so this answer may be out of date.*" +
