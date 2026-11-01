@@ -143,75 +143,148 @@ async function tavilySearch(env, query) {
   }
 }
 
-// Live football data from football-data.org (free key in the FOOTBALL_DATA_KEY secret).
-const FD_LEAGUES = {
-  PL: /premier league|english premier|\bepl\b/i,
-  PD: /la ?liga|spanish league/i,
-  SA: /serie a/i,
-  BL1: /bundesliga/i,
-  FL1: /ligue ?1/i,
-  CL: /champions league|\bucl\b/i,
-  ELC: /\bchampionship\b/i,
-};
-const fdCache = {};
-async function fdGet(env, path) {
-  const hit = fdCache[path];
-  if (hit && hit.exp > Date.now()) return hit.data;
+// ---------- Live football: ESPN public scoreboard (no key) + football-data.org (optional key) ----------
+const FB_LEAGUES = [
+  ["eng.1", /premier league|english premier|\bepl\b/i, "PL"],
+  ["esp.1", /la ?liga|spanish league/i, "PD"],
+  ["ita.1", /serie a/i, "SA"],
+  ["ger.1", /bundesliga/i, "BL1"],
+  ["fra.1", /ligue ?1/i, "FL1"],
+  ["uefa.champions", /champions league|\bucl\b/i, "CL"],
+  ["eng.2", /\bchampionship\b/i, "ELC"],
+];
+const FB_CLUBS = [
+  ["eng.1", "PL", /\b(arsenal|liverpool|chelsea|man(?:chester)? ?(?:city|united|utd)|tottenham|spurs|newcastle|aston villa|brighton|everton|fulham|brentford|bournemouth|leeds|sunderland|nottingham forest|crystal palace|west ham|wolves|burnley|ipswich|hull city|coventry)\b/gi],
+  ["esp.1", "PD", /\b(barcelona|barca|real madrid|atletico|sevilla|valencia|villarreal|real sociedad|athletic bilbao)\b/gi],
+  ["ita.1", "SA", /\b(juventus|juve|inter milan|ac milan|napoli|roma|lazio|atalanta|fiorentina)\b/gi],
+  ["ger.1", "BL1", /\b(bayern|dortmund|leverkusen|leipzig|frankfurt)\b/gi],
+  ["fra.1", "FL1", /\b(psg|paris saint|marseille|lyon|monaco)\b/gi],
+];
+const FB_INTENT = /\b(score|scores|live|update|updates|playing|game|games|match|matches|result|results|fixture|fixtures|kick ?off|line ?ups?|table|standings?|top scorers?|golden boot|who won|winning|leading)\b/i;
+const FB_ALIAS = { "man city": "manchester city", "man utd": "manchester united", "man united": "manchester united", "manchester utd": "manchester united", "spurs": "tottenham", "barca": "barcelona", "juve": "juventus", "psg": "paris saint" };
+
+function footballIntent(text) {
+  if (!FB_INTENT.test(text)) return null;
+  let espn = "", fd = "";
+  for (const l of FB_LEAGUES) {
+    if (l[1].test(text)) { espn = l[0]; fd = l[2]; break; }
+  }
+  const clubs = [];
+  for (const cl of FB_CLUBS) {
+    const re = new RegExp(cl[2].source, "gi");
+    let m;
+    while ((m = re.exec(text))) {
+      const k = m[0].toLowerCase().replace(/\s+/g, " ");
+      clubs.push(FB_ALIAS[k] || k);
+      if (!espn) { espn = cl[0]; fd = cl[1]; }
+    }
+  }
+  if (!espn) return null;
+  return { espn: espn, fd: fd, clubs: clubs };
+}
+
+async function jget(url, headers) {
   try {
     const ctrl = new AbortController();
-    const timer = setTimeout(function () { ctrl.abort(); }, 6000);
-    const res = await fetch("https://api.football-data.org/v4" + path, {
-      headers: { "X-Auth-Token": env.FOOTBALL_DATA_KEY },
-      signal: ctrl.signal,
-    });
+    const timer = setTimeout(function () { ctrl.abort(); }, 7000);
+    const res = await fetch(url, { headers: headers || {}, signal: ctrl.signal });
     clearTimeout(timer);
     if (!res.ok) return null;
-    const data = await res.json();
-    fdCache[path] = { data: data, exp: Date.now() + 60000 };
-    return data;
+    return await res.json();
   } catch (e) {
     return null;
   }
 }
-function fdDay(offset) {
-  return new Date(Date.now() + offset * 86400000).toISOString().slice(0, 10);
+function ymd(offset) {
+  return new Date(Date.now() + offset * 86400000).toISOString().slice(0, 10).replace(/-/g, "");
 }
-async function footballFacts(env, text) {
-  let code = "";
-  for (const k in FD_LEAGUES) {
-    if (FD_LEAGUES[k].test(text)) { code = k; break; }
-  }
-  if (!code) return "";
-  const out = [];
-  const st = await fdGet(env, "/competitions/" + code + "/standings");
+
+async function espnScores(league, clubs) {
+  const d = await jget("https://site.api.espn.com/apis/site/v2/sports/soccer/" + league + "/scoreboard?limit=100&dates=" + ymd(-2) + "-" + ymd(7));
+  const evs = d && d.events;
+  if (!evs || !evs.length) return "";
+  const lines = [];
+  evs.forEach(function (ev) {
+    try {
+      const comp = ev.competitions && ev.competitions[0];
+      if (!comp) return;
+      const cs = comp.competitors || [];
+      const home = cs.filter(function (x) { return x.homeAway === "home"; })[0];
+      const away = cs.filter(function (x) { return x.homeAway === "away"; })[0];
+      if (!home || !away) return;
+      const hn = home.team.displayName, an = away.team.displayName;
+      if (clubs.length) {
+        const both = (hn + " " + an).toLowerCase();
+        if (!clubs.some(function (k) { return both.indexOf(k) > -1; })) return;
+      }
+      const st = ev.status || comp.status || {};
+      const ty = st.type || {};
+      const state = ty.state;
+      const when = String(ev.date || comp.date || "").slice(0, 16).replace("T", " ") + " UTC";
+      let line = when + " | " + hn + (state === "pre" ? " vs " : " " + home.score + "-" + away.score + " ") + an + " | " +
+        (state === "in" ? "LIVE " + (st.displayClock || ty.shortDetail || "") : state === "post" ? "FINAL (" + (ty.shortDetail || ty.detail || "FT") + ")" : "NOT STARTED");
+      const names = {};
+      cs.forEach(function (x) { names[x.team && x.team.id] = x.team && x.team.displayName; });
+      const goals = (comp.details || []).filter(function (g) { return g.scoringPlay; }).map(function (g) {
+        const who = g.athletesInvolved && g.athletesInvolved[0] && g.athletesInvolved[0].displayName;
+        return ((g.clock && g.clock.displayValue) || "") + " " + (names[g.team && g.team.id] || "") + " " + (who || "") + (g.penaltyKick ? " (pen)" : "") + (g.ownGoal ? " (own goal)" : "");
+      });
+      if (goals.length) line += "\n   Goals: " + goals.join("; ");
+      lines.push(line);
+    } catch (e) {}
+  });
+  return lines.slice(0, 12).join("\n");
+}
+
+async function espnTable(league) {
+  const d = await jget("https://site.api.espn.com/apis/v2/sports/soccer/" + league + "/standings");
+  const entries = d && d.children && d.children[0] && d.children[0].standings && d.children[0].standings.entries;
+  if (!entries || !entries.length) return "";
+  const rows = entries.map(function (e) {
+    const s = {};
+    (e.stats || []).forEach(function (x) { s[x.name] = x.value; });
+    return { name: e.team && e.team.displayName, rank: s.rank, p: s.gamesPlayed, w: s.wins, d: s.ties, l: s.losses, gd: s.pointDifferential, pts: s.points };
+  });
+  rows.sort(function (a, b) {
+    if (a.rank && b.rank) return a.rank - b.rank;
+    return (b.pts - a.pts) || (b.gd - a.gd);
+  });
+  return rows.map(function (r, i) {
+    return (i + 1) + ". " + r.name + " | P" + r.p + " W" + r.w + " D" + r.d + " L" + r.l + " | GD " + r.gd + " | " + r.pts + " pts";
+  }).join("\n");
+}
+
+async function fdStandings(env, code) {
+  if (!env.FOOTBALL_DATA_KEY) return "";
+  const st = await jget("https://api.football-data.org/v4/competitions/" + code + "/standings", { "X-Auth-Token": env.FOOTBALL_DATA_KEY });
   const tb = st && st.standings && (st.standings.find(function (s) { return s.type === "TOTAL"; }) || st.standings[0]);
-  if (tb && tb.table && tb.table.length) {
-    const name = (st.competition && st.competition.name) || code;
-    const md = st.season && st.season.currentMatchday ? ", matchday " + st.season.currentMatchday : "";
-    out.push("STANDINGS for " + name + md + " (position. club | played, won, draw, lost | goal difference | points):\n" +
-      tb.table.map(function (r) {
-        return r.position + ". " + r.team.name + " | P" + r.playedGames + " W" + r.won + " D" + r.draw + " L" + r.lost + " | GD " + r.goalDifference + " | " + r.points + " pts";
-      }).join("\n"));
+  if (!tb || !tb.table || !tb.table.length) return "";
+  return tb.table.map(function (r) {
+    return r.position + ". " + r.team.name + " | P" + r.playedGames + " W" + r.won + " D" + r.draw + " L" + r.lost + " | GD " + r.goalDifference + " | " + r.points + " pts";
+  }).join("\n");
+}
+
+// Returns {intent, facts, sources}. intent=true with empty facts means the feed failed.
+async function footballFacts(env, text) {
+  const it = footballIntent(text);
+  if (!it) return { intent: false, facts: "", sources: [] };
+  const out = [];
+  const sources = [];
+  const scores = await espnScores(it.espn, it.clubs);
+  if (scores) {
+    out.push("MATCHES (UTC times; 'LIVE' means in play now, 'FINAL' means finished):\n" + scores);
+    sources.push({ title: "ESPN soccer scoreboard", uri: "https://www.espn.com/soccer/scoreboard" });
   }
-  if (/scorer|golden boot|top goal/i.test(text)) {
-    const sc = await fdGet(env, "/competitions/" + code + "/scorers?limit=10");
-    if (sc && sc.scorers && sc.scorers.length) {
-      out.push("TOP SCORERS:\n" + sc.scorers.map(function (s, i) {
-        return (i + 1) + ". " + s.player.name + " (" + s.team.name + ") " + s.goals + " goals";
-      }).join("\n"));
+  if (/table|standings?|position|leading|top of|relegation|title race|log\b/i.test(text)) {
+    let tbl = await fdStandings(env, it.fd);
+    if (tbl) sources.push({ title: "football-data.org", uri: "https://www.football-data.org" });
+    else {
+      tbl = await espnTable(it.espn);
+      if (tbl) sources.push({ title: "ESPN standings", uri: "https://www.espn.com/soccer/standings" });
     }
+    if (tbl) out.push("LEAGUE TABLE (position. club | played, won, drawn, lost | goal difference | points):\n" + tbl);
   }
-  if (/fixture|result|score|match|playing|upcoming|next game|tonight/i.test(text)) {
-    const mt = await fdGet(env, "/competitions/" + code + "/matches?dateFrom=" + fdDay(-3) + "&dateTo=" + fdDay(7));
-    if (mt && mt.matches && mt.matches.length) {
-      out.push("MATCHES from the last 3 days to the next 7 days (UTC times):\n" + mt.matches.slice(0, 25).map(function (m) {
-        const ft = m.score && m.score.fullTime;
-        const res = m.status === "FINISHED" && ft ? ft.home + "-" + ft.away : "vs";
-        return String(m.utcDate).slice(0, 16).replace("T", " ") + " " + m.homeTeam.name + " " + res + " " + m.awayTeam.name + " (" + m.status + ")";
-      }).join("\n"));
-    }
-  }
-  return out.join("\n\n");
+  return { intent: true, facts: out.join("\n\n"), sources: sources };
 }
 
 // Nesty decides by itself whether a question needs live web information.
@@ -252,7 +325,7 @@ async function decideSearch(env, text) {
   }
 }
 
-const SEARCH_RULES = " STRICT RULES FOR ANSWERS BASED ON SEARCH: use only facts that appear in the search results; never fill gaps from memory; copy numbers, names, scores and table rows exactly as found; if the results do not contain the exact data asked for (for example a full league table), say so and give only what you found instead of inventing rows; say \"as of <date>\" when facts change over time; do not write a Sources section or paste links, the app shows them.";
+const SEARCH_RULES = " STRICT RULES FOR ANSWERS BASED ON SEARCH: use only facts that appear in the search results; never fill gaps from memory; copy numbers, names, scores and table rows exactly as found; if the results do not contain the exact data asked for (for example a full league table), say so and give only what you found instead of inventing rows; say \"as of <date>\" when facts change over time; never invent match statistics, minute-by-minute events, possession, shots, line-ups or injuries; do not write a Sources section or paste links, the app shows them.";
 
 // Everything Nesty may say about itself. The numbers here must match worker.js.
 const NESTY_FACTS =
@@ -295,11 +368,16 @@ export async function onRequestPost(context) {
   });
 
   let liveFacts = "";
-  if (env.FOOTBALL_DATA_KEY && !hasImage) {
-    liveFacts = await footballFacts(env, lastText(userMessages));
-    if (liveFacts) wantSearch = false;
+  let fbSources = [];
+  let footballFailed = false;
+  if (!hasImage) {
+    const fb = await footballFacts(env, lastText(userMessages));
+    liveFacts = fb.facts;
+    fbSources = fb.sources;
+    footballFailed = fb.intent && !fb.facts;
+    if (fb.intent) wantSearch = false;
   }
-  if (!liveFacts && !wantSearch && !hasImage) {
+  if (!liveFacts && !footballFailed && !wantSearch && !hasImage) {
     wantSearch = await decideSearch(env, lastText(userMessages));
   }
 
@@ -337,8 +415,12 @@ SEARCH AND IDENTITY
   }
   if (liveFacts) {
     system +=
-      " LIVE FOOTBALL DATA retrieved just now from football-data.org:\n" + liveFacts +
+      " LIVE FOOTBALL DATA retrieved just now from a live sports feed:\n" + liveFacts +
+      "\nGive ONLY what is in this data: scores, whether the match is live or finished, scorers and times. NEVER invent possession, shots, minute-by-minute moments, injuries, line-ups or cards; if asked for those, say you only have the score and goals. If a match is FINAL say it has finished. If the user says something different from this data, politely trust the data and mention its status." +
       "\nAnswer football questions using ONLY this data and copy numbers exactly. For a table, show a Markdown table with the columns Pos, Club, P, W, D, L, GD, Pts for ALL teams, in this exact order; never add, drop, merge, rename or reorder teams. If something asked is not in this data, say you do not have it. Say it is live data as of today. Do not write a Sources section; the app shows it.";
+  } else if (footballFailed) {
+    system +=
+      " The live football feed failed for this question. Do NOT state any live score, minute, possession, shots, scorers or line-ups, and do not guess results. Say you cannot get live match data right now and ask the user to try again in a minute.";
   } else if (wantSearch && !hasImage) {
     system +=
       " You have live Google Search for this answer. Use it to give current, accurate information and mention dates when they matter." + SEARCH_RULES;
@@ -383,7 +465,7 @@ SEARCH AND IDENTITY
 
   let searchFailed = false;
   let searchNote = "";
-  let webSources = liveFacts ? [{ title: "football-data.org", uri: "https://www.football-data.org" }] : [];
+  let webSources = liveFacts ? fbSources : [];
 
   // 1) Live web search (Gemini with Google Search)
   if (wantSearch && !hasImage) {
