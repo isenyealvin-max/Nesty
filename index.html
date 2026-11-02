@@ -1377,20 +1377,57 @@ function renderList(){
     list.appendChild(em);
     return;
   }
-.actions .cpbtn{margin-right:4px;padding:6px 10px;font-size:13px}
+shown.forEach(function(c){
     var it = document.createElement("div");
     it.className = "item" + (c.$id === chatId ? " cur" : "");
+    it.style.display = "flex";
+    it.style.alignItems = "center";
+
     var b = document.createElement("button");
     b.className = "t";
     b.dir = "auto";
-    b.textContent = c.Title || "Chat";
+    b.textContent = (c.pinned ? "📌 " : "") + (c.Title || "Chat");
     b.onclick = function(){ openChat(c.$id); };
+    it.appendChild(b);
+
+    // Rename
+    var ren = document.createElement("button");
+    ren.className = "x";
+    ren.textContent = "✎";
+    ren.title = "Rename";
+    ren.onclick = async function(e){
+      e.stopPropagation();
+      var name = prompt("New title:", c.Title || "");
+      if(!name) return;
+      try{
+        await db.updateDocument(DB, TABLE, c.$id, { Title: name.slice(0, 80) });
+        loadList();
+      }catch(err){ toast("Rename failed"); }
+    };
+    it.appendChild(ren);
+
+    // Export
+    var exp = document.createElement("button");
+    exp.className = "x";
+    exp.textContent = "↓";
+    exp.title = "Export";
+    exp.onclick = function(e){
+      e.stopPropagation();
+      var data = c.messages || "[]";
+      var blob = new Blob([data], {type: "application/json"});
+      var a = document.createElement("a");
+      a.href = URL.createObjectURL(blob);
+      a.download = (c.Title || "chat") + ".json";
+      a.click();
+    };
+    it.appendChild(exp);
+
     var x = document.createElement("button");
     x.className = "x";
     x.innerHTML = "&times;";
     x.onclick = function(){ removeChat(c.$id); };
-    it.appendChild(b);
     it.appendChild(x);
+
     list.appendChild(it);
   });
 }
