@@ -336,8 +336,8 @@ async function liveFacts(env, text){
     }catch(e){}
   }
 
-  return {facts: out.join("\n"), sources: sources};
-      }
+return {facts: out.join("\n"), sources: sources};
+}  
 // Nesty decides by itself whether a question needs live web information.
 function lastText(msgs) {
   const us = (msgs || []).filter(function (m) { return m && m.role === "user"; });
