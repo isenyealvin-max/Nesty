@@ -1753,21 +1753,58 @@ function buildBot(m, isLast){
   act.appendChild(cp);
   var srcs = (m.sources || []).filter(function(so){ return so && /^https?:\/\//.test(so.uri || ""); });
   if(srcs.length){
-    var sb = document.createElement("button");
-    sb.className = "cpbtn";
-    sb.textContent = "\ud83d\udd17 " + L("sources_btn") + " (" + srcs.length + ")";
-    sb.onclick = function(){ openSources(srcs); };
-    act.appendChild(sb);
-  }
-  if(isLast){
-    var rg = document.createElement("button");
-    rg.className = "cpbtn";
-    rg.textContent = L("regen");
-    rg.onclick = function(){ regenerate(); };
-    act.appendChild(rg);
-  }
+    var act = document.createElement("div");
+  act.className = "actions";
+  act.style.display = "flex";
+  act.style.gap = "6px";
+  act.style.flexWrap = "wrap";
+  act.style.marginTop = "6px";
+
+  // Copy
+  var cp = document.createElement("button");
+  cp.className = "cpbtn";
+  cp.textContent = L("copy") || "Copy";
+  cp.onclick = function(){ copyText(m.content, cp); };
+  act.appendChild(cp);
+
+  // WhatsApp share
+  var wa = document.createElement("button");
+  wa.className = "cpbtn";
+  wa.textContent = "WhatsApp";
+  wa.onclick = function(){
+    var text = (m.content || "").slice(0, 1500);
+    var url = "https://wa.me/?text=" + encodeURIComponent(text);
+    window.open(url, "_blank");
+  };
+  act.appendChild(wa);
+
+  // Read aloud
+  var speakBtn = document.createElement("button");
+  speakBtn.className = "cpbtn";
+  speakBtn.textContent = "🔊 Read";
+  speakBtn.onclick = function(){
+    if(!window.speechSynthesis){ toast("Voice not supported on this device"); return; }
+    speechSynthesis.cancel();
+    var u = new SpeechSynthesisUtterance(m.content || "");
+    u.lang = document.documentElement.lang || "en";
+    speechSynthesis.speak(u);
+  };
+  act.appendChild(speakBtn);
+
+  // Thumbs
+  var up = document.createElement("button");
+  up.className = "cpbtn";
+  up.textContent = "👍";
+  up.onclick = function(){ toast("Thanks for the feedback!"); up.style.opacity = "0.5"; };
+  act.appendChild(up);
+
+  var down = document.createElement("button");
+  down.className = "cpbtn";
+  down.textContent = "👎";
+  down.onclick = function(){ toast("Thanks, we’ll improve"); down.style.opacity = "0.5"; };
+  act.appendChild(down);
+
   d.appendChild(act);
-  return d;
 }
 
 function regenerate(){
