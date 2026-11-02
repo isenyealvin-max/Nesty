@@ -299,7 +299,45 @@ async function footballFacts(env, text) {
   }
   return { intent: true, facts: out.join("\n\n"), sources: sources, diag: dbg.join(", ") };
 }
+async function liveFacts(env, text){
+  const t = (text || "").toLowerCase();
+  const out = [];
+  const sources = [];
 
+  // Current time
+  if(/\b(time|date|today|now|what time|saa|tarehe|sasa)\b/i.test(t)){
+    const now = new Date();
+    out.push("Current time (UTC): " + now.toISOString().replace("T"," ").slice(0,19));
+    sources.push({title:"System clock", uri:"https://time.is"});
+  }
+
+  // KES exchange rate
+  if(/\b(kes|shilling|exchange|rate|dollar|usd|euro|bei)\b/i.test(t)){
+    try{
+      const r = await fetch("https://open.er-api.com/v6/latest/USD");
+      const d = await r.json();
+      if(d && d.rates && d.rates.KES){
+        out.push("1 USD = " + Number(d.rates.KES).toFixed(2) + " KES (live rate)");
+        sources.push({title:"ExchangeRate-API", uri:"https://www.exchangerate-api.com"});
+      }
+    }catch(e){}
+  }
+
+  // Weather (Nairobi default)
+  if(/\b(weather|rain|temperature|forecast|hali ya hewa|mvua)\b/i.test(t)){
+    try{
+      const r = await fetch("https://api.open-meteo.com/v1/forecast?latitude=-1.29&longitude=36.82&current_weather=true");
+      const d = await r.json();
+      if(d && d.current_weather){
+        const cw = d.current_weather;
+        out.push("Nairobi weather: " + cw.temperature + "°C, wind " + cw.windspeed + " km/h");
+        sources.push({title:"Open-Meteo", uri:"https://open-meteo.com"});
+      }
+    }catch(e){}
+  }
+
+  return {facts: out.join("\n"), sources: sources};
+      }
 // Nesty decides by itself whether a question needs live web information.
 function lastText(msgs) {
   const us = (msgs || []).filter(function (m) { return m && m.role === "user"; });
@@ -386,6 +424,11 @@ export async function onRequestPost(context) {
   let footballFailed = false;
   if (!hasImage) {
     const fb = await footballFacts(env, lastText(userMessages));
+   const live = await liveFacts(env, lastText(userMessages));
+    if(live.facts){
+      system += "\n\nLIVE DATA:\n" + live.facts;
+      if(live.sources && live.sources.length) webSources = (webSources || []).concat(live.sources);
+    } 
     liveFacts = fb.facts;
     fbSources = fb.sources;
     fbDiag = fb.diag;
