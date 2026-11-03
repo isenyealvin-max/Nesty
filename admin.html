@@ -54,6 +54,12 @@ td,th{padding:7px 6px;border-bottom:1px solid #ddd;text-align:left}
   <div><button class="alt" onclick="loadList()">Refresh list</button></div>
   <div id="list" style="margin-top:10px;overflow-x:auto"></div>
 </div>
+<div class="card">
+  <b>Feedback from users</b>
+  <div class="row" style="margin-top:8px"><div><select id="fbFilter" onchange="renderFb()"><option value="all">All</option><option value="down">👎 Not helpful</option><option value="up">👍 Helpful</option></select></div><div><button class="alt" style="margin-top:0" onclick="loadFeedback()">Load feedback</button></div></div>
+  <div id="fbSummary" class="muted" style="margin-top:8px"></div>
+  <div id="fbList" style="margin-top:8px"></div>
+</div>
 <div id="msg" class="muted"></div>
 </main>
 <script>
@@ -96,6 +102,32 @@ async function loadList(){
       (c.used ? '<span class="bad">Used</span><br><span class="muted">' + esc(dt(c.usedAt)) + '</span>' : '<span class="ok">Unused</span>') + '</td></tr>';
   });
   $("list").innerHTML = h + "</table>";
+}
+var fbData = [];
+async function loadFeedback(){
+  var d = await call("/api/admin/feedback", {});
+  if(!d) return;
+  fbData = d.feedback || [];
+  renderFb();
+}
+function renderFb(){
+  var f = $("fbFilter").value;
+  var up = fbData.filter(function(x){ return x.kind === "up"; }).length;
+  var down = fbData.filter(function(x){ return x.kind === "down"; }).length;
+  $("fbSummary").textContent = fbData.length + " total: \ud83d\udc4d " + up + " \u00b7 \ud83d\udc4e " + down;
+  var list = fbData.filter(function(x){ return f === "all" || x.kind === f; });
+  if(!list.length){ $("fbList").innerHTML = '<div class="muted">Nothing here yet.</div>'; return; }
+  $("fbList").innerHTML = list.map(function(x){
+    return '<div class="card" style="margin:8px 0"><div>' + (x.kind === "up" ? "\ud83d\udc4d" : "\ud83d\udc4e") + ' <span class="muted">' + esc(dt(x.t)) + ' \u00b7 user ' + esc(String(x.uid || "").slice(0, 8)) + '</span></div>' +
+      (x.reason ? '<div style="margin:6px 0"><b>' + esc(x.reason) + '</b></div>' : '<div class="muted" style="margin:6px 0">(no reason written)</div>') +
+      '<details><summary class="muted">Question and answer</summary><div class="muted" style="margin-top:6px"><b>Question:</b> ' + esc(x.question) + '</div><pre>' + esc(x.answer) + '</pre></details>' +
+      '<button class="alt" onclick="delFb(\'' + esc(x.id) + '\')">Delete</button></div>';
+  }).join("");
+}
+async function delFb(id){
+  if(!confirm("Delete this feedback?")) return;
+  var d = await call("/api/admin/feedback-delete", {id: id});
+  if(d){ fbData = fbData.filter(function(x){ return x.id !== id; }); renderFb(); }
 }
 </script>
 </body>

@@ -214,6 +214,9 @@ header .hbtn{margin:0;padding:7px 10px;font-size:13px;white-space:nowrap}
 .mtag{margin:3px 0 0;padding:1px 7px;font-size:10px}
 .docprev{padding:12px 14px;background:var(--card);max-height:420px;overflow:auto}
 .docprev h2,.docprev h3,.docprev h4{margin-top:10px}
+#fbSheet{display:none;position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:86;align-items:flex-end;justify-content:center}
+.chips{display:flex;flex-wrap:wrap;gap:6px}
+.chips .sbtn{padding:6px 11px;font-size:13px}
 </style>
 </head>
 <body>
@@ -455,11 +458,12 @@ header .hbtn{margin:0;padding:7px 10px;font-size:13px;white-space:nowrap}
 <div id="vmode"><div class="vmIn"><div id="vmOrb" class="orb listen"></div><div id="vmStatus"></div><div class="muted2" data-i="vm_hint"></div><button class="sbtn dark" style="margin-top:14px" onclick="vmStop()" data-i="vm_end"></button></div></div>
 <div id="srcSheet" onclick="if(event.target===this)closeSources()"><div class="sheet"><div class="sheetHead"><b data-i="sources_btn"></b><button class="sbtn" onclick="closeSources()" data-i="close"></button></div><div id="srcList"></div></div></div>
 <div id="prev"><div class="prevIn"><div class="sheetHead"><b data-i="prev_title"></b><button class="sbtn" onclick="closePreview()" data-i="close"></button></div><iframe id="prevFrame" sandbox="allow-scripts"></iframe></div></div>
+<div id="fbSheet" onclick="if(event.target===this)closeFeedback()"><div class="sheet"><div class="sheetHead"><b id="fbTitle"></b><button class="sbtn" onclick="closeFeedback()" data-i="close"></button></div><div class="chips" id="fbChips"></div><textarea id="fbText" maxlength="500" rows="3" dir="auto" data-ph="fb_ph" style="width:100%;margin-top:8px;padding:11px 12px;border:1.5px solid var(--border);border-radius:10px;font-size:16px;font-family:inherit;background:var(--card);color:var(--text)"></textarea><div style="display:flex;gap:8px;margin-top:10px"><button class="sbtn dark" onclick="sendFeedbackNote(true)" data-i="fb_send"></button><button class="sbtn" onclick="sendFeedbackNote(false)" data-i="fb_skip"></button></div></div></div>
 <div id="toast"></div>
 <div id="updateBar"></div>
 
 <script>
-var VERSION = "V15";
+var VERSION = "V16";
 
 /* ---------- Interface languages ---------- */
 var STR = {
@@ -1804,10 +1808,11 @@ function buildBot(m, isLast){
     fb.textContent = kind === "up" ? "\ud83d\udc4d" : "\ud83d\udc4e";
     if(m.fb === kind){ fb.style.background = "var(--btn)"; fb.style.color = "var(--btnText)"; }
     fb.onclick = function(){
-      m.fb = (m.fb === kind) ? "" : kind;
+      if(m.fb === kind){ m.fb = ""; saveChat(); renderAll(); return; }
+      m.fb = kind;
       saveChat();
       renderAll();
-      if(m.fb) toast(kind === "up" ? "Thanks!" : "Thanks, we will improve.");
+      openFeedback(m, kind);
     };
     act.appendChild(fb);
   });
@@ -2988,6 +2993,47 @@ async function downloadSheet(csv){
   }catch(e){
     saveBlob(new Blob(["\ufeff" + (sheets[0] ? sheets[0].rows.map(function(r){ return r.map(function(c){ return '"' + c.replace(/"/g, '""') + '"'; }).join(","); }).join("\n") : "")], {type: "text/csv"}), "nesty-sheet.csv");
   }
+}
+
+/* ---------- Answer feedback: thumbs + reason go to the Nesty admin page, not email ---------- */
+STR.en.fb_up_t = "Glad it helped! What was good?";
+STR.en.fb_down_t = "Sorry about that. What went wrong?";
+STR.en.fb_ph = "Tell us more (optional)";
+STR.en.fb_send = "Send";
+STR.en.fb_skip = "Skip";
+STR.en.fb_thanks = "Thanks for your feedback!";
+var FB_CHIPS = {
+  up: ["Accurate", "Easy to understand", "Helpful", "Friendly tone"],
+  down: ["Wrong answer", "Too long", "Not clear", "Did not follow my request", "Out of date"]
+};
+var fbCtx = null;
+function openFeedback(m, kind){
+  var i = messages.indexOf(m), q = "";
+  for(var j = i - 1; j >= 0; j--){ if(messages[j].role === "user"){ q = messages[j].text || ""; break; } }
+  fbCtx = {kind: kind, question: q, answer: m.content || ""};
+  $("fbTitle").textContent = L(kind === "up" ? "fb_up_t" : "fb_down_t");
+  $("fbText").value = "";
+  var c = $("fbChips");
+  c.innerHTML = "";
+  FB_CHIPS[kind].forEach(function(t){
+    var b = document.createElement("button");
+    b.className = "sbtn";
+    b.textContent = t;
+    b.onclick = function(){ var v = $("fbText").value; $("fbText").value = v ? v + ", " + t : t; };
+    c.appendChild(b);
+  });
+  $("fbSheet").style.display = "flex";
+}
+function closeFeedback(){ $("fbSheet").style.display = "none"; fbCtx = null; }
+async function sendFeedbackNote(withText){
+  var c = fbCtx;
+  if(!c) return;
+  var reason = withText ? $("fbText").value.trim() : "";
+  closeFeedback();
+  try{
+    await api("/api/feedback", {kind: c.kind, reason: reason, question: c.question, answer: c.answer});
+    toast(L("fb_thanks"));
+  }catch(e){ toast("Could not send feedback."); }
 }
 
 /* ---------- Sources sheet ---------- */

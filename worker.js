@@ -140,6 +140,26 @@ export class Limiter extends DurableObject {
     out.sort(function (a, b) { return b.createdAt - a.createdAt; });
     return out.slice(0, 200);
   }
+
+  /* ----- answer feedback (thumbs and reasons), read on the admin page ----- */
+  async addFeedback(e) {
+    const id = String(Date.now()).padStart(15, "0") + Math.random().toString(36).slice(2, 7);
+    e.id = id;
+    await this.ctx.storage.put("f:" + id, e);
+    return true;
+  }
+
+  async listFeedback(limit) {
+    const m = await this.ctx.storage.list({ prefix: "f:", reverse: true, limit: limit || 200 });
+    const out = [];
+    m.forEach(function (v) { out.push(v); });
+    return out;
+  }
+
+  async deleteFeedback(id) {
+    await this.ctx.storage.delete("f:" + id);
+    return true;
+  }
 }
 
 function stub(env, name) {
@@ -455,6 +475,15 @@ async function handleAdmin(request, env, action) {
   if (action === "list") {
     return json({ codes: await codes.listCodes() });
   }
+  if (action === "feedback") {
+    return json({ feedback: await stub(env, "feedback").listFeedback(300) });
+  }
+  if (action === "feedback_delete") {
+    let b2;
+    try { b2 = await request.json(); } catch (e) { return json({ error: "Bad request." }, 400); }
+    await stub(env, "feedback").deleteFeedback(String(b2.id || ""));
+    return json({ ok: true });
+  }
   let body;
   try { body = await request.json(); } catch (e) { return json({ error: "Bad request." }, 400); }
   const plan = String(body.plan || "");
@@ -473,6 +502,29 @@ async function handleAdmin(request, env, action) {
   return json({ codes: made, plan: plan, period: period, price: PRICES[plan][period] });
 }
 
+/* ---------- Feedback on answers (stored inside Nesty, shown on /admin.html) ---------- */
+async function handleFeedback(request, env) {
+  const auth = await needUser(request);
+  if (auth.res) return auth.res;
+  if (!env.LIMITER) return json({ ok: false });
+  let b;
+  try { b = await request.json(); } catch (e) { return json({ ok: false }, 400); }
+  const kind = b.kind === "up" ? "up" : (b.kind === "down" ? "down" : "");
+  if (!kind) return json({ ok: false }, 400);
+  const rate = await stub(env, "fbrate|" + auth.user.$id).hit(30, 60 * 60 * 1000);
+  if (!rate.ok) return json({ ok: false }, 429);
+  const clip = function (s, n) { return String(s || "").slice(0, n); };
+  await stub(env, "feedback").addFeedback({
+    t: Date.now(),
+    kind: kind,
+    reason: clip(b.reason, 600),
+    question: clip(b.question, 600),
+    answer: clip(b.answer, 1500),
+    uid: auth.user.$id,
+  });
+  return json({ ok: true });
+}
+
 export default {
   async fetch(request, env, ctx) {
     const url = new URL(request.url);
@@ -488,6 +540,9 @@ export default {
       "/api/redeem": function () { return handleRedeem(request, env); },
       "/api/admin/generate": function () { return handleAdmin(request, env, "generate"); },
       "/api/admin/list": function () { return handleAdmin(request, env, "list"); },
+      "/api/feedback": function () { return handleFeedback(request, env); },
+      "/api/admin/feedback": function () { return handleAdmin(request, env, "feedback"); },
+      "/api/admin/feedback-delete": function () { return handleAdmin(request, env, "feedback_delete"); },
     };
     if (postOnly[path]) {
       if (request.method !== "POST") {
