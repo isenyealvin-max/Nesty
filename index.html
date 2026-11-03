@@ -1788,23 +1788,19 @@ function buildBot(m, isLast){
   cp.textContent = L("copy");
   cp.onclick = function(){ copyText(m.content, cp); };
   act.appendChild(cp);
-  var srcs = (m.sources || []).filter(function(so){ return so && /^https?:\/\//.test(so.uri || ""); });
-  if(srcs.length){
-    var act = document.createElement("div");
+  var act = document.createElement("div");
   act.className = "actions";
   act.style.display = "flex";
   act.style.gap = "6px";
   act.style.flexWrap = "wrap";
   act.style.marginTop = "6px";
 
-  // Copy
   var cp = document.createElement("button");
   cp.className = "cpbtn";
   cp.textContent = L("copy") || "Copy";
   cp.onclick = function(){ copyText(m.content, cp); };
   act.appendChild(cp);
 
-  // WhatsApp
   var wa = document.createElement("button");
   wa.className = "cpbtn";
   wa.textContent = "WhatsApp";
@@ -1814,7 +1810,6 @@ function buildBot(m, isLast){
   };
   act.appendChild(wa);
 
-  // Read aloud
   var speakBtn = document.createElement("button");
   speakBtn.className = "cpbtn";
   speakBtn.textContent = "🔊 Read";
@@ -1827,7 +1822,6 @@ function buildBot(m, isLast){
   };
   act.appendChild(speakBtn);
 
-  // Thumbs
   var up = document.createElement("button");
   up.className = "cpbtn";
   up.textContent = "👍";
