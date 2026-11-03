@@ -1,4 +1,4 @@
-var CACHE = "nesty-v13";
+var CACHE = "nesty-v15";
 
 self.addEventListener("install", function (e) {
   e.waitUntil(

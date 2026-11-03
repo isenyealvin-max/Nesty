@@ -292,7 +292,7 @@ header .hbtn{margin:0;padding:7px 10px;font-size:13px;white-space:nowrap}
     <div id="chip"><span id="chipName"></span><button onclick="removeFile()">&times;</button></div>
     <div id="bar">
       <button class="ibtn" onclick="document.getElementById('file').click()">+</button>
-      <textarea id="box" rows="1" dir="auto" data-ph="ph"></textarea>
+      <textarea id="box" maxlength="6000" rows="1" dir="auto" data-ph="ph"></textarea>
       <button class="ibtn" id="mic" onclick="toggleMic()"><svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M12 14a3 3 0 0 0 3-3V5a3 3 0 0 0-6 0v6a3 3 0 0 0 3 3zm5-3a5 5 0 0 1-10 0H5a7 7 0 0 0 6 6.92V21h2v-3.08A7 7 0 0 0 19 11h-2z"/></svg></button>
       <button class="ibtn" id="vm" onclick="startVoiceMode()" aria-label="Voice mode"><svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><rect x="3" y="9" width="2.5" height="6" rx="1.2"/><rect x="7.5" y="5" width="2.5" height="14" rx="1.2"/><rect x="12" y="2" width="2.5" height="20" rx="1.2"/><rect x="16.5" y="7" width="2.5" height="10" rx="1.2"/><rect x="20.5" y="10" width="2" height="4" rx="1"/></svg></button>
       <button class="ibtn" id="send" onclick="send()">&#8593;</button>
@@ -459,7 +459,7 @@ header .hbtn{margin:0;padding:7px 10px;font-size:13px;white-space:nowrap}
 <div id="updateBar"></div>
 
 <script>
-var VERSION = "V13";
+var VERSION = "V15";
 
 /* ---------- Interface languages ---------- */
 var STR = {
@@ -1377,57 +1377,44 @@ function renderList(){
     list.appendChild(em);
     return;
   }
-shown.forEach(function(c){
+  shown.forEach(function(c){
     var it = document.createElement("div");
     it.className = "item" + (c.$id === chatId ? " cur" : "");
-    it.style.display = "flex";
-    it.style.alignItems = "center";
-
     var b = document.createElement("button");
     b.className = "t";
     b.dir = "auto";
-    b.textContent = (c.pinned ? "📌 " : "") + (c.Title || "Chat");
+    b.textContent = c.Title || "Chat";
     b.onclick = function(){ openChat(c.$id); };
-    it.appendChild(b);
-
-    // Rename
-    var ren = document.createElement("button");
-    ren.className = "x";
-    ren.textContent = "✎";
-    ren.title = "Rename";
-    ren.onclick = async function(e){
-      e.stopPropagation();
-      var name = prompt("New title:", c.Title || "");
-      if(!name) return;
-      try{
-        await db.updateDocument(DB, TABLE, c.$id, { Title: name.slice(0, 80) });
-        loadList();
-      }catch(err){ toast("Rename failed"); }
-    };
-    it.appendChild(ren);
-
-    // Export
-    var exp = document.createElement("button");
-    exp.className = "x";
-    exp.textContent = "↓";
-    exp.title = "Export";
-    exp.onclick = function(e){
-      e.stopPropagation();
-      var data = c.messages || "[]";
-      var blob = new Blob([data], {type: "application/json"});
-      var a = document.createElement("a");
-      a.href = URL.createObjectURL(blob);
-      a.download = (c.Title || "chat") + ".json";
-      a.click();
-    };
-    it.appendChild(exp);
-
     var x = document.createElement("button");
     x.className = "x";
     x.innerHTML = "&times;";
     x.onclick = function(){ removeChat(c.$id); };
+    it.appendChild(b);
+    var ren = document.createElement("button");
+    ren.className = "x";
+    ren.textContent = "\u270e";
+    ren.title = "Rename";
+    ren.onclick = async function(e){
+      e.stopPropagation();
+      var name = prompt("New title:", c.Title || "");
+      if(!name || !name.trim()) return;
+      try{ await db.updateDocument(DB, TABLE, c.$id, {Title: name.trim().slice(0, 80)}); loadList(); }
+      catch(err){ toast("Could not rename."); }
+    };
+    it.appendChild(ren);
+    var exp = document.createElement("button");
+    exp.className = "x";
+    exp.textContent = "\u2193";
+    exp.title = "Export";
+    exp.onclick = function(e){
+      e.stopPropagation();
+      var msgs = [];
+      try{ msgs = JSON.parse(c.messages || "[]"); }catch(err){}
+      var txt = msgs.map(function(m){ return (m.role === "user" ? "You: " + (m.text || "") : "Nesty: " + (m.content || "")); }).join("\n\n");
+      saveBlob(new Blob([txt], {type: "text/plain;charset=utf-8"}), ((c.Title || "chat").replace(/[^\w\- ]+/g, "").trim() || "chat") + ".txt");
+    };
+    it.appendChild(exp);
     it.appendChild(x);
-
     list.appendChild(it);
   });
 }
@@ -1788,53 +1775,51 @@ function buildBot(m, isLast){
   cp.textContent = L("copy");
   cp.onclick = function(){ copyText(m.content, cp); };
   act.appendChild(cp);
-  var act = document.createElement("div");
-  act.className = "actions";
-  act.style.display = "flex";
-  act.style.gap = "6px";
-  act.style.flexWrap = "wrap";
-  act.style.marginTop = "6px";
-
-  var cp = document.createElement("button");
-  cp.className = "cpbtn";
-  cp.textContent = L("copy") || "Copy";
-  cp.onclick = function(){ copyText(m.content, cp); };
-  act.appendChild(cp);
-
+  var srcs = (m.sources || []).filter(function(so){ return so && /^https?:\/\//.test(so.uri || ""); });
+  if(srcs.length){
+    var sb = document.createElement("button");
+    sb.className = "cpbtn";
+    sb.textContent = "\ud83d\udd17 " + L("sources_btn") + " (" + srcs.length + ")";
+    sb.onclick = function(){ openSources(srcs); };
+    act.appendChild(sb);
+  }
   var wa = document.createElement("button");
   wa.className = "cpbtn";
   wa.textContent = "WhatsApp";
-  wa.onclick = function(){
-    var text = (m.content || "").slice(0, 1500);
-    window.open("https://wa.me/?text=" + encodeURIComponent(text), "_blank");
-  };
+  wa.onclick = function(){ window.open("https://wa.me/?text=" + encodeURIComponent(String(m.content || "").slice(0, 1500)), "_blank"); };
   act.appendChild(wa);
-
-  var speakBtn = document.createElement("button");
-  speakBtn.className = "cpbtn";
-  speakBtn.textContent = "🔊 Read";
-  speakBtn.onclick = function(){
+  var rd = document.createElement("button");
+  rd.className = "cpbtn";
+  rd.textContent = "\ud83d\udd0a";
+  rd.title = "Read aloud";
+  rd.onclick = function(){
     if(!window.speechSynthesis){ toast("Voice not supported"); return; }
-    speechSynthesis.cancel();
-    var u = new SpeechSynthesisUtterance(m.content || "");
-    u.lang = document.documentElement.lang || "en";
-    speechSynthesis.speak(u);
+    if(speakingNow){ speakingNow = false; speechSynthesis.cancel(); return; }
+    speak(m.content);
   };
-  act.appendChild(speakBtn);
-
-  var up = document.createElement("button");
-  up.className = "cpbtn";
-  up.textContent = "👍";
-  up.onclick = function(){ toast("Thanks!"); up.style.opacity = "0.5"; };
-  act.appendChild(up);
-
-  var down = document.createElement("button");
-  down.className = "cpbtn";
-  down.textContent = "👎";
-  down.onclick = function(){ toast("Thanks, we’ll improve"); down.style.opacity = "0.5"; };
-  act.appendChild(down);
-
+  act.appendChild(rd);
+  ["up", "down"].forEach(function(kind){
+    var fb = document.createElement("button");
+    fb.className = "cpbtn";
+    fb.textContent = kind === "up" ? "\ud83d\udc4d" : "\ud83d\udc4e";
+    if(m.fb === kind){ fb.style.background = "var(--btn)"; fb.style.color = "var(--btnText)"; }
+    fb.onclick = function(){
+      m.fb = (m.fb === kind) ? "" : kind;
+      saveChat();
+      renderAll();
+      if(m.fb) toast(kind === "up" ? "Thanks!" : "Thanks, we will improve.");
+    };
+    act.appendChild(fb);
+  });
+  if(isLast){
+    var rg = document.createElement("button");
+    rg.className = "cpbtn";
+    rg.textContent = L("regen");
+    rg.onclick = function(){ regenerate(); };
+    act.appendChild(rg);
+  }
   d.appendChild(act);
+  return d;
 }
 
 function regenerate(){
