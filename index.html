@@ -1804,14 +1804,13 @@ function buildBot(m, isLast){
   cp.onclick = function(){ copyText(m.content, cp); };
   act.appendChild(cp);
 
-  // WhatsApp share
+  // WhatsApp
   var wa = document.createElement("button");
   wa.className = "cpbtn";
   wa.textContent = "WhatsApp";
   wa.onclick = function(){
     var text = (m.content || "").slice(0, 1500);
-    var url = "https://wa.me/?text=" + encodeURIComponent(text);
-    window.open(url, "_blank");
+    window.open("https://wa.me/?text=" + encodeURIComponent(text), "_blank");
   };
   act.appendChild(wa);
 
@@ -1820,7 +1819,7 @@ function buildBot(m, isLast){
   speakBtn.className = "cpbtn";
   speakBtn.textContent = "🔊 Read";
   speakBtn.onclick = function(){
-    if(!window.speechSynthesis){ toast("Voice not supported on this device"); return; }
+    if(!window.speechSynthesis){ toast("Voice not supported"); return; }
     speechSynthesis.cancel();
     var u = new SpeechSynthesisUtterance(m.content || "");
     u.lang = document.documentElement.lang || "en";
@@ -1832,7 +1831,7 @@ function buildBot(m, isLast){
   var up = document.createElement("button");
   up.className = "cpbtn";
   up.textContent = "👍";
-  up.onclick = function(){ toast("Thanks for the feedback!"); up.style.opacity = "0.5"; };
+  up.onclick = function(){ toast("Thanks!"); up.style.opacity = "0.5"; };
   act.appendChild(up);
 
   var down = document.createElement("button");
