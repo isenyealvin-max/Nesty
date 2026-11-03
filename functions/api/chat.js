@@ -299,45 +299,7 @@ async function footballFacts(env, text) {
   }
   return { intent: true, facts: out.join("\n\n"), sources: sources, diag: dbg.join(", ") };
 }
-async function liveFacts(env, text){
-  const t = (text || "").toLowerCase();
-  const out = [];
-  const sources = [];
 
-  // Current time
-  if(/\b(time|date|today|now|what time|saa|tarehe|sasa)\b/i.test(t)){
-    const now = new Date();
-    out.push("Current time (UTC): " + now.toISOString().replace("T"," ").slice(0,19));
-    sources.push({title:"System clock", uri:"https://time.is"});
-  }
-
-  // KES exchange rate
-  if(/\b(kes|shilling|exchange|rate|dollar|usd|euro|bei)\b/i.test(t)){
-    try{
-      const r = await fetch("https://open.er-api.com/v6/latest/USD");
-      const d = await r.json();
-      if(d && d.rates && d.rates.KES){
-        out.push("1 USD = " + Number(d.rates.KES).toFixed(2) + " KES (live rate)");
-        sources.push({title:"ExchangeRate-API", uri:"https://www.exchangerate-api.com"});
-      }
-    }catch(e){}
-  }
-
-  // Weather (Nairobi default)
-  if(/\b(weather|rain|temperature|forecast|hali ya hewa|mvua)\b/i.test(t)){
-    try{
-      const r = await fetch("https://api.open-meteo.com/v1/forecast?latitude=-1.29&longitude=36.82&current_weather=true");
-      const d = await r.json();
-      if(d && d.current_weather){
-        const cw = d.current_weather;
-        out.push("Nairobi weather: " + cw.temperature + "°C, wind " + cw.windspeed + " km/h");
-        sources.push({title:"Open-Meteo", uri:"https://open-meteo.com"});
-      }
-    }catch(e){}
-  }
-
-return {facts: out.join("\n"), sources: sources};
-}  
 // Nesty decides by itself whether a question needs live web information.
 function lastText(msgs) {
   const us = (msgs || []).filter(function (m) { return m && m.role === "user"; });
@@ -392,6 +354,28 @@ const NESTY_FACTS =
   " Each code is single-use and is for one plan and one period (monthly or yearly). A monthly plan lasts one calendar month and a yearly plan one year from activation. Activating the same plan again adds time after the current expiry. Activating a higher plan replaces the current plan. A lower-plan code cannot be used while a higher plan is active. When a plan expires the account goes back to Free." +
   " You cannot see payments, issue or check codes, activate or extend plans, or change limits. Never say that a payment was received or a plan was activated. For the user's own plan or usage, use only the details given below in this prompt, or tell the user to open Plans in the app. If you do not know something about Nesty, say so.";
 
+// Only real user/assistant turns are accepted (no injected "system" messages), and each text is capped.
+const MAX_TEXT = 24000;
+function clipMessages(list) {
+  return (Array.isArray(list) ? list : [])
+    .filter(function (m) { return m && (m.role === "user" || m.role === "assistant"); })
+    .slice(-20)
+    .map(function (m) {
+      if (Array.isArray(m.content)) {
+        return {
+          role: m.role,
+          content: m.content.map(function (p) {
+            if (p && p.type === "image_url" && p.image_url && typeof p.image_url.url === "string") {
+              return p.image_url.url.length > 8000000 ? { type: "text", text: "[picture too large]" } : p;
+            }
+            return { type: "text", text: String((p && p.text) || "").slice(0, MAX_TEXT) };
+          }),
+        };
+      }
+      return { role: m.role, content: String(m.content || "").slice(0, MAX_TEXT) };
+    });
+}
+
 function fmtUtc(ms) {
   try { return new Date(ms).toISOString().replace("T", " ").slice(0, 16) + " UTC"; } catch (e) { return ""; }
 }
@@ -406,7 +390,7 @@ export async function onRequestPost(context) {
     return reply("Bad request. Please try again.");
   }
 
-  const userMessages = (body.messages || []).slice(-20);
+  const userMessages = clipMessages(body.messages);
   const name = String(body.userName || "").slice(0, 40);
   const today = String(body.today || "").slice(0, 80);
   let wantSearch = !!body.search;
@@ -437,14 +421,7 @@ export async function onRequestPost(context) {
   // The whole personality is ONE template string (between the backticks).
   // Do not put a backtick or a dollar-brace inside it.
   let system = `You are NREV11 (Nesty Red Element Version 11), the normal model of Nesty AI, made by Red Element. You are warm, friendly, clever and a little playful, like a smart friend, never like a textbook or a robot.
-try {
-  const live = await liveFacts(env, lastText(userMessages));
-  if (live && live.facts) {
-    system += "\n\nLIVE DATA:\n" + live.facts;
-  }
-} catch (e) {
-  // ignore live data errors so normal answers still work
-}
+
 HOW YOU TALK
 - Chat naturally and keep replies short by default: usually 2 to 6 short lines. Go longer only when the task really needs it (an essay, code, a detailed plan).
 - Start friendly and use light emojis (😀 🫠 🚀) when they fit, not on every line.
