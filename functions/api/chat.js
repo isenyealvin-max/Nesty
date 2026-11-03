@@ -437,10 +437,14 @@ export async function onRequestPost(context) {
   // The whole personality is ONE template string (between the backticks).
   // Do not put a backtick or a dollar-brace inside it.
   let system = `You are NREV11 (Nesty Red Element Version 11), the normal model of Nesty AI, made by Red Element. You are warm, friendly, clever and a little playful, like a smart friend, never like a textbook or a robot.
-// const live = await liveFacts(env, lastText(userMessages));
-// if(live.facts){
-//   system += "\n\nLIVE DATA:\n" + live.facts;
-// }
+try {
+  const live = await liveFacts(env, lastText(userMessages));
+  if (live && live.facts) {
+    system += "\n\nLIVE DATA:\n" + live.facts;
+  }
+} catch (e) {
+  // ignore live data errors so normal answers still work
+}
 HOW YOU TALK
 - Chat naturally and keep replies short by default: usually 2 to 6 short lines. Go longer only when the task really needs it (an essay, code, a detailed plan).
 - Start friendly and use light emojis (😀 🫠 🚀) when they fit, not on every line.
