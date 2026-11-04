@@ -6,23 +6,71 @@ const cooldownMsg = {};
 // and sent back as "remember" so the app can save it to the user's memory.
 function reply(text, via, sources) {
   var facts = [];
+  var forgets = [];
   var clean = String(text || "")
+    .replace(/\[\[\s*forget\s*:\s*([^\]]{3,200}?)\s*\]\]/gi, function (m, f) {
+      forgets.push(f.trim());
+      return "";
+    })
     .replace(/\[\[\s*remember\s*:\s*([^\]]{3,200}?)\s*\]\]/gi, function (m, f) {
       facts.push(f.trim());
       return "";
     })
     .replace(/\n{3,}/g, "\n\n")
     .trim();
-  if (!clean && facts.length) clean = "Got it.";
+  if (!clean && (facts.length || forgets.length)) clean = "Got it.";
   return new Response(
     JSON.stringify({
       reply: clean || String(text || ""),
       via: via || "",
       sources: sources || [],
       remember: facts.slice(0, 3),
+      forget: forgets.slice(0, 3),
     }),
     { headers: { "Content-Type": "application/json" } }
   );
+}
+
+// Streams the model's answer to the app as it is written (server-sent events).
+function streamReply(provRes, model, sources, usage, prefix, suffix) {
+  const enc = new TextEncoder();
+  const dec = new TextDecoder();
+  const ts = new TransformStream();
+  const w = ts.writable.getWriter();
+  const send = function (o) { return w.write(enc.encode("data: " + JSON.stringify(o) + "\n\n")); };
+  (async function () {
+    let full = "";
+    try {
+      if (prefix) { full += prefix; await send({ t: prefix }); }
+      const reader = provRes.body.getReader();
+      let buf = "";
+      for (;;) {
+        const part = await reader.read();
+        if (part.done) break;
+        buf += dec.decode(part.value, { stream: true });
+        let i;
+        while ((i = buf.indexOf("\n")) > -1) {
+          const line = buf.slice(0, i).trim();
+          buf = buf.slice(i + 1);
+          if (line.indexOf("data:") !== 0) continue;
+          const data = line.slice(5).trim();
+          if (!data || data === "[DONE]") continue;
+          try {
+            const j = JSON.parse(data);
+            const t = j.choices && j.choices[0] && j.choices[0].delta && j.choices[0].delta.content;
+            if (t) { full += t; await send({ t: t }); }
+          } catch (e) {}
+        }
+      }
+      if (suffix && full) { full += suffix; await send({ t: suffix }); }
+    } catch (e) {}
+    try {
+      const r = await reply(full || "Nesty is very busy right now. Please try again in a few minutes.", full ? model : "", sources).json();
+      await send(Object.assign({ done: true }, r, usage || {}));
+    } catch (e) {}
+    try { await w.close(); } catch (e) {}
+  })();
+  return new Response(ts.readable, { headers: { "Content-Type": "text/event-stream", "Cache-Control": "no-cache" } });
 }
 
 function toGeminiContents(messages) {
@@ -340,10 +388,116 @@ async function decideSearch(env, text) {
 
 const SEARCH_RULES = " STRICT RULES FOR ANSWERS BASED ON SEARCH: use only facts that appear in the search results; never fill gaps from memory; copy numbers, names, scores and table rows exactly as found; if the results do not contain the exact data asked for (for example a full league table), say so and give only what you found instead of inventing rows; say \"as of <date>\" when facts change over time; never invent match statistics, minute-by-minute events, possession, shots, line-ups or injuries; do not write a Sources section or paste links, the app shows them.";
 
+const STUDY_MODE = " STUDY MODE IS ON. Act as a patient tutor. Teach ONE small step at a time (at most about 120 words) with a simple example, then ask ONE short question to check understanding and wait for the answer. Praise effort, correct mistakes kindly and explain why. After the user answers, give feedback, then move to the next step. After a topic, offer a 3-question quiz; make flashcards (Q and A list) when asked. If you do not know the user's level, ask their grade or level first. Never dump a whole lesson at once. When a topic is finished, save progress with a [[remember: ...]] line.";
+const ULTRA_POWERS = " ULTRA POWERS (NREV15): give deeper, more thorough, well-structured answers when the question deserves it. For attached CSV or Excel data, the app puts exact computed statistics at the top of the file text: trust those numbers, look for patterns, outliers and trends, show key results in a Markdown table, and never invent numbers that are not in the data. When a chart would help, add a code block tagged chart containing JSON such as {\"type\":\"bar\",\"title\":\"Sales by month\",\"labels\":[\"Jan\",\"Feb\"],\"values\":[120,90]} (type may be bar or line; for several series use \"series\":[{\"name\":\"A\",\"values\":[1,2]}]).";
+
+async function callText(env, system, userText, maxTokens) {
+  if (env.GROQ_API_KEY) {
+    try {
+      const ctrl = new AbortController();
+      const timer = setTimeout(function () { ctrl.abort(); }, 30000);
+      const res = await fetch("https://api.groq.com/openai/v1/chat/completions", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Authorization: "Bearer " + env.GROQ_API_KEY },
+        body: JSON.stringify({
+          model: "openai/gpt-oss-120b",
+          messages: [{ role: "system", content: system }, { role: "user", content: userText }],
+          reasoning_effort: "medium",
+          max_completion_tokens: maxTokens,
+          temperature: 0.2,
+        }),
+        signal: ctrl.signal,
+      });
+      clearTimeout(timer);
+      if (res.ok) {
+        const d = await res.json();
+        const t = d && d.choices && d.choices[0] && d.choices[0].message && d.choices[0].message.content;
+        if (t && String(t).trim()) return String(t).trim();
+      }
+    } catch (e) {}
+  }
+  if (env.GEMINI_API_KEY) {
+    try {
+      const ctrl = new AbortController();
+      const timer = setTimeout(function () { ctrl.abort(); }, 30000);
+      const res = await fetch("https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", "x-goog-api-key": env.GEMINI_API_KEY },
+        body: JSON.stringify({
+          systemInstruction: { parts: [{ text: system }] },
+          contents: [{ role: "user", parts: [{ text: userText }] }],
+          generationConfig: { maxOutputTokens: maxTokens, temperature: 0.2 },
+        }),
+        signal: ctrl.signal,
+      });
+      clearTimeout(timer);
+      if (res.ok) {
+        const d = await res.json();
+        const parts = d && d.candidates && d.candidates[0] && d.candidates[0].content && d.candidates[0].content.parts;
+        const t = parts ? parts.map(function (p) { return p.text || ""; }).join("") : "";
+        if (t.trim()) return t.trim();
+      }
+    } catch (e) {}
+  }
+  return "";
+}
+
+async function planQueries(env, question) {
+  const t = await callText(env, "Return ONLY a JSON array of 4 short, different web search queries (strings, English or the user's language) that together would research the question thoroughly. No other text.", question, 400);
+  try {
+    const m = /\[[\s\S]*\]/.exec(t);
+    const arr = JSON.parse(m ? m[0] : "[]");
+    const out = arr.filter(function (x) { return typeof x === "string" && x.trim(); }).map(function (x) { return x.trim().slice(0, 120); }).slice(0, 4);
+    if (out.length) return out;
+  } catch (e) {}
+  return [String(question).slice(0, 120)];
+}
+
+// NREV15 Deep search: many searches, many sources, one short cited report.
+async function deepResearch(env, body, question, today) {
+  if (env.LIMITER && body.uid) {
+    try {
+      const st = env.LIMITER.get(env.LIMITER.idFromName("deep|" + body.uid));
+      const r = await st.hit(10, 60 * 60 * 1000);
+      if (!r.ok) return { text: "You have reached the deep search limit for this hour. Please try again later.", via: "", sources: [] };
+    } catch (e) {}
+  }
+  const queries = await planQueries(env, question);
+  let items = [];
+  if (env.TAVILY_API_KEY) {
+    const all = await Promise.all(queries.map(function (q) { return tavilySearch(env, q); }));
+    all.forEach(function (list) {
+      (list || []).forEach(function (it) {
+        if (!items.some(function (x) { return x.uri === it.uri; })) items.push(it);
+      });
+    });
+  }
+  let notes = "";
+  if (items.length < 4 && env.GEMINI_API_KEY) {
+    const gs = await Promise.all(queries.slice(0, 3).map(function (q) {
+      return searchWithGemini(env, "You are a careful research assistant. Be factual and concise.", [{ role: "user", content: q }], []);
+    }));
+    gs.forEach(function (g) {
+      if (!g) return;
+      notes += "NOTE: " + g.text.slice(0, 1200) + "\n\n";
+      g.sources.forEach(function (s) {
+        if (!items.some(function (x) { return x.uri === s.uri; })) items.push({ title: s.title, uri: s.uri, text: "" });
+      });
+    });
+  }
+  items = items.slice(0, 12);
+  if (!items.length && !notes) return { text: "I could not find enough sources for a reliable report. Please try again in a moment.", via: "", sources: [] };
+  const ctx = items.map(function (it, i) { return "[" + (i + 1) + "] " + it.title + " (" + it.uri + ")\n" + (it.text || ""); }).join("\n\n") + (notes ? "\n\nBACKGROUND NOTES (no numbers; cite the numbered sources only):\n" + notes : "");
+  const sys = "You are Nesty's deep research writer (NREV15). Write a short, clear report in the language of the question, under 450 words, with: a 2-line **Summary**; **Key findings** as 4 to 6 bullets, each ending with citations like [1][3]; **Disagreements or uncertainty**; **What to check next** (1 or 2 bullets). Use ONLY the sources provided. Every factual claim needs a citation number from the list. If the sources do not support something, say so. Never invent facts, numbers or quotes. Do not write a Sources section or paste links; the app shows them.";
+  const out = await callText(env, sys, "Question: " + question + "\nToday: " + today + "\n\nSOURCES:\n" + ctx, 3000);
+  if (!out) return { text: "I found sources but could not write the report just now. Please try again.", via: "", sources: [] };
+  return { text: out, via: "nrev15-deep", sources: items.map(function (i) { return { title: i.title, uri: i.uri }; }) };
+}
+
 // Everything Nesty may say about itself. The numbers here must match worker.js.
 const NESTY_FACTS =
   " FACTS ABOUT NESTY AI (use only these facts about Nesty; never invent plans, prices, limits, policies, payment statuses or features)." +
-  " Nesty AI was made by Red element. Nesty's normal model is called NREV11 (Nesty Red Element Version 11)." +
+  " Nesty AI was made by Red element. Nesty's normal model is called NREV11 (Nesty Red Element Version 11), used on the Free and Premium plans. The Ultra plan uses NREV15 (Nesty Red Element Version 15), which adds Deep search reports with citations, data analysis with charts for CSV and Excel files, and longer, deeper answers. Every plan has Study mode and natural voices (limited per hour)." +
   " Nesty's logo is a blue and gold interlocking knot shaped like an X on a cream background. When a user asks you to show or generate your logo, the app displays the real logo itself, so never describe or invent a different design." +
   " Features: chat in many languages, Markdown answers, file attachments (pictures, PDF, Word .docx and text files), picture creation and photo editing (just ask in plain words, for example \"draw a lion\", or attach a photo and say \"make it night time\"), code and file downloads (code blocks have a Download button), automatic live web search when a question needs current information, voice input and spoken answers, custom instructions and memory (Settings), 7 app languages (English, Kiswahili, French, Spanish, Portuguese, Arabic, Hindi), background colours, saved chat history. Accounts: to create one the user enters first name, second name, age (13 or older) and email, verifies the email with a code sent to it, then sets a password (at least 8 characters with an uppercase letter, a lowercase letter, a number and a special character). Users who continue with Google must also set a password. Sign-in is with email and password (or Continue with Google). Codes are not used to sign in. A forgotten password is reset with the Forgot password link, which sends a reset email." +
   " PLANS. Every limit is per user. Each limit has its own 1-hour window. A window starts at the user's first use of that limit and the limit resets exactly 1 hour after the window began; the app shows the exact reset time when a limit is reached." +
@@ -393,6 +547,9 @@ export async function onRequestPost(context) {
   const userMessages = clipMessages(body.messages);
   const name = String(body.userName || "").slice(0, 40);
   const today = String(body.today || "").slice(0, 80);
+  const isUltra = !!(body.planInfo && body.planInfo.plan === "ultra");
+  const usageInfo = body.usageInfo || null;
+  const wantStream = !!body.stream;
   let wantSearch = !!body.search;
 
   const hasImage = userMessages.some(function (m) {
@@ -401,6 +558,14 @@ export async function onRequestPost(context) {
       m.content.some(function (p) { return p.type === "image_url"; })
     );
   });
+
+  if (body.deep) {
+    if (!isUltra) {
+      return reply("Deep search is part of NREV15 on the Ultra plan. Open Plans to upgrade. ✨");
+    }
+    const dr = await deepResearch(env, body, lastText(userMessages), today);
+    return reply(dr.text, dr.via, dr.sources);
+  }
 
   let liveFacts = "";
   let fbSources = [];
@@ -445,7 +610,15 @@ SEARCH AND IDENTITY
 - The app searches the web by itself when a question needs current facts, and shows the sources behind a small Sources button. Never paste long lists of links in your answer.
 - You were created by Red Element. When asked your name or version, say you are NREV11, Nesty Red Element Version 11.`;
 
+  if (isUltra) {
+    system = system
+      .replace(/NREV11/g, "NREV15")
+      .replace(/Version 11/g, "Version 15")
+      .replace("the normal model of Nesty AI", "the advanced model of Nesty AI, available on the Ultra plan");
+  }
   system += NESTY_FACTS;
+  if (isUltra) system += ULTRA_POWERS;
+  if (body.study) system += STUDY_MODE;
 
   if (today) {
     system += " Today's date is " + today + ".";
@@ -488,9 +661,19 @@ SEARCH AND IDENTITY
       "\n\n=== terms.html ===\n" + String(pol.terms || "").slice(0, 9000) + "\n=== end of legal pages ===";
   }
 
+  const recall = Array.isArray(body.recall)
+    ? body.recall.slice(0, 3).map(function (r) {
+        return { title: String((r && r.title) || "").slice(0, 80), text: String((r && r.text) || "").slice(0, 700) };
+      }).filter(function (r) { return r.text; })
+    : [];
+  if (recall.length) {
+    system += " The user is referring to earlier conversations. Below are excerpts from THEIR OWN saved chats (they may be incomplete). Use them naturally when relevant and say 'from our earlier chat' when you do. If the excerpts do not contain what the user means, say you cannot find it and ask them to remind you; never guess." +
+      "\n" + recall.map(function (r, i) { return "[Earlier chat " + (i + 1) + ": " + r.title + "]\n" + r.text; }).join("\n\n");
+  }
+
   const instr = String(body.instructions || "").slice(0, 600).trim();
   const mem = Array.isArray(body.memory)
-    ? body.memory.slice(0, 30).map(function (x) { return String(x).slice(0, 200); })
+    ? body.memory.slice(0, 60).map(function (x) { return String(x).slice(0, 200); })
     : [];
   if (instr) {
     system += " The user set these custom instructions for how you answer. Follow them in every reply unless they conflict with safety: " + instr;
@@ -498,7 +681,7 @@ SEARCH AND IDENTITY
   if (mem.length) {
     system += " Facts the user asked you to remember about them (use them when relevant, do not repeat them unprompted): " + mem.join("; ") + ".";
   }
-  system += " When the user tells you a lasting fact about themselves that will help in future chats (their name, age, school grade, job, country, language, favourite things, goals), or says 'remember that ...', add one last line at the very end of your reply in exactly this form: [[remember: short fact, for example The user's name is Amina]]. Never do this for temporary things, passwords, ID numbers or bank details. Never repeat a fact that is already in the remembered list. Never mention this line or explain it.";
+  system += " MEMORY: you remember things between chats. When the user tells you something lasting that will help in future chats (their name, age, school grade, job, country, language, favourite things, goals, preferred tone, an ongoing project, or learning progress such as 'learning Spanish: finished greetings, next is days of the week'), or says 'remember that ...', add ONE line at the very end of your reply in exactly this form: [[remember: short fact under 160 characters]]. At most 3 per reply. If a remembered fact is now wrong or the user says to forget something, add [[forget: the old fact]] (and a new [[remember: ...]] if it changed). Never save temporary things, passwords, ID numbers or bank details. Never repeat a fact that is already in the remembered list. Never mention these lines or explain them.";
 
   let searchFailed = false;
   let searchNote = "";
@@ -567,8 +750,8 @@ SEARCH AND IDENTITY
 
   if (!hasImage) {
     add(env.GROQ_API_KEY, GROQ_URL, ["openai/gpt-oss-120b", "openai/gpt-oss-20b"], {
-      reasoning_effort: "low",
-      max_completion_tokens: 4096,
+      reasoning_effort: isUltra ? "medium" : "low",
+      max_completion_tokens: isUltra ? 6000 : 4096,
     });
   }
   add(env.GEMINI_API_KEY, GEMINI_URL, [
@@ -608,7 +791,7 @@ SEARCH AND IDENTITY
           "Content-Type": "application/json",
           Authorization: "Bearer " + p.key,
         },
-        body: JSON.stringify(Object.assign({ model: p.model, messages: messages }, p.extra, webSources.length ? { temperature: 0.2 } : {})),
+        body: JSON.stringify(Object.assign({ model: p.model, messages: messages }, p.extra, webSources.length ? { temperature: 0.2 } : {}, wantStream ? { stream: true } : {})),
         signal: ctrl.signal,
       });
       clearTimeout(timer);
@@ -618,6 +801,13 @@ SEARCH AND IDENTITY
         if (res.status === 400 || res.status === 404) wait = 600000;
         cooldown[key] = Date.now() + wait;
         continue;
+      }
+      if (wantStream && res.body) {
+        return streamReply(
+          res, p.model, webSources, usageInfo,
+          searchFailed ? "*I could not search the web just now, so this answer may be out of date.*\n\n" : "",
+          footballFailed && fbDiag ? "\n\n_(feed note: " + fbDiag + ")_" : ""
+        );
       }
       const data = await res.json();
       const text =
