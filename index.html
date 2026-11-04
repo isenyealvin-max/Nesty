@@ -220,11 +220,41 @@ header .hbtn{margin:0;padding:7px 10px;font-size:13px;white-space:nowrap}
 #modeRow{display:flex;gap:6px;margin-bottom:6px;flex-wrap:wrap}
 #modeRow .cpbtn{margin:0}
 .cpbtn.on{background:var(--btn);color:var(--btnText);border-color:var(--btn)}
+#landing{display:none;position:fixed;inset:0;z-index:60;flex-direction:column;align-items:center;padding:14px 18px 22px;overflow-y:auto;color:#3a2a00;background:radial-gradient(circle at 15% 8%,#fffbe0 0,rgba(255,251,224,0) 42%),linear-gradient(160deg,#fff4b8 0%,#ffd84d 46%,#f2a900 100%)}
+#landing *{box-sizing:border-box}
+.lpTop{width:100%;max-width:440px;display:flex;align-items:center;gap:8px}
+.lpLogo{height:34px;width:auto}
+.lpBrand{font-weight:800;font-size:19px;flex:1;color:#3a2a00}
+.lpSkip{background:none;border:0;color:#6b4a00;font-size:15px;font-weight:700;text-decoration:underline;padding:8px 4px}
+.lpStage{flex:1;display:flex;align-items:center;width:100%;max-width:440px;margin:10px 0}
+.lpCard{width:100%;background:rgba(255,255,255,.74);border:2px solid rgba(255,255,255,.9);border-radius:28px;padding:26px 20px 22px;text-align:center;box-shadow:0 14px 34px rgba(150,100,0,.28)}
+.lpAnim{animation:lpIn .38s ease}
+@keyframes lpIn{from{opacity:0;transform:translateX(26px)}to{opacity:1;transform:none}}
+.lpIcon{width:108px;height:108px;border-radius:50%;margin:0 auto 14px;display:flex;align-items:center;justify-content:center;font-size:56px;background:radial-gradient(circle at 35% 28%,#fffbd0,#ffc928 58%,#e59a00);box-shadow:0 8px 20px rgba(190,120,0,.4)}
+.lpIcon img{width:66px;height:66px;object-fit:contain}
+.lpCard h2{font-size:27px;line-height:1.15;margin:0 0 8px;font-weight:800;color:#3a2a00}
+.lpCard p{font-size:16.5px;line-height:1.55;margin:0 0 10px;color:#4d3700}
+.lpList{margin:12px 0 0;padding:0}
+.lpList li{list-style:none;position:relative;text-align:left;font-size:15.5px;line-height:1.45;padding:10px 12px 10px 38px;margin:8px 0;border-radius:14px;background:rgba(255,255,255,.7);color:#3a2a00;font-weight:600}
+.lpList li:before{content:"\2726";position:absolute;left:13px;top:9px;color:#d98f00;font-size:17px}
+.lpDots{display:flex;gap:7px;margin:4px 0 14px}
+.lpDots i{width:9px;height:9px;border-radius:9px;background:rgba(58,42,0,.28);transition:all .25s}
+.lpDots i.on{width:26px;background:#3a2a00}
+.lpNav{display:flex;gap:10px;width:100%;max-width:440px}
+.lpBack{flex:0 0 auto;background:rgba(255,255,255,.6);color:#3a2a00;border:2px solid #3a2a00;border-radius:16px;padding:14px 20px;font-size:16px;font-weight:800}
+.lpNext{flex:1;background:linear-gradient(180deg,#4a3500,#241800);color:#ffd84d;border:0;border-radius:16px;padding:15px 20px;font-size:18px;font-weight:800;box-shadow:0 8px 18px rgba(60,40,0,.35)}
 </style>
 </head>
 <body>
 
 <div id="boot">Loading...</div>
+
+<div id="landing">
+  <div class="lpTop"><img class="lpLogo" src="/nesty-mark.png" alt=""><span class="lpBrand">Nesty AI</span><button class="lpSkip" onclick="landingDone()" data-i="lp_skip"></button></div>
+  <div class="lpStage"><div id="lpSlide" class="lpCard"></div></div>
+  <div class="lpDots" id="lpDots"></div>
+  <div class="lpNav"><button class="lpBack" id="lpBack" onclick="lpGo(-1)" data-i="lp_back"></button><button class="lpNext" id="lpNext" onclick="lpGo(1)"></button></div>
+</div>
 
 <div id="auth">
   <div id="authCard">
@@ -277,6 +307,7 @@ header .hbtn{margin:0;padding:7px 10px;font-size:13px;white-space:nowrap}
     <div id="authOk"></div>
     <div id="authErr"></div>
     <select id="aLang" class="sel" onchange="setUiLang(this.value)"></select>
+    <div class="legal"><a href="#" onclick="showLanding();return false" data-i="lp_what"></a></div>
     <div class="legal" id="legal"></div>
     <div class="legal" id="verAuth"></div>
   </div>
@@ -467,7 +498,7 @@ header .hbtn{margin:0;padding:7px 10px;font-size:13px;white-space:nowrap}
 <div id="updateBar"></div>
 
 <script>
-var VERSION = "V18";
+var VERSION = "V19";
 
 /* ---------- Interface languages ---------- */
 var STR = {
@@ -907,6 +938,7 @@ function applyLang(){
   drawImg();
   drawSpk();
   drawModes();
+  if($("landing") && $("landing").style.display === "flex") lpRender();
   fillLangs();
   $("aLang").value = uiLang;
   $("sUi").value = uiLang;
@@ -1008,12 +1040,16 @@ function backToForm(){
 function showAuth(){
   clearInterval(resendTimer);
   $("boot").style.display = "none";
+  $("landing").style.display = "none";
+  setThemeColor(curBg);
   $("app").style.display = "none";
   $("auth").style.display = "flex";
   drawAuth();
 }
 function showApp(){
   $("boot").style.display = "none";
+  $("landing").style.display = "none";
+  setThemeColor(curBg);
   $("auth").style.display = "none";
   $("app").style.display = "flex";
   $("who").textContent = user.email || "";
@@ -1106,6 +1142,8 @@ async function forgotPassword(){
 function showOnlyAuth(step){
   clearInterval(resendTimer);
   $("boot").style.display = "none";
+  $("landing").style.display = "none";
+  setThemeColor(curBg);
   $("app").style.display = "none";
   $("auth").style.display = "flex";
   $("stepForm").style.display = step === "form" ? "block" : "none";
@@ -1326,7 +1364,7 @@ async function init(){
     afterLogin();
   }catch(e){
     if(e && (e.code === 401 || e.code === 403)){
-      showAuth();
+      showLandingOrAuth();
     }else{
       showConnectError();
     }
@@ -3016,6 +3054,98 @@ function chartSvg(src){
   var legend = series.length > 1 ? '<text x="' + L0 + '" y="' + (H - 6) + '" font-size="9" fill="currentColor">' + series.map(function(s, si){ return '<tspan fill="' + cols[si % cols.length] + '">\u25a0 </tspan>' + esc(s.name || ("S" + (si + 1))) + "  "; }).join("") + '</text>' : "";
   return '<svg viewBox="0 0 ' + W + " " + H + '" width="100%" style="max-width:520px">' + title + g + legend + '</svg>';
 }
+
+/* ---------- Landing page (first visit): 6 slides, then sign up / sign in ---------- */
+Object.assign(STR.en, {
+lp_skip:"Skip",lp_back:"Back",lp_next:"Next",lp_try:"Try Nesty",lp_what:"What is Nesty?",
+lp1_t:"Meet Nesty AI",lp1_d:"Your friendly AI assistant, made by Red Element. Ask anything, in your own language, and get clear answers in seconds.",
+lp2_t:"What Nesty can do",lp2_d:"One helper for school, work and everyday life.",lp2_1:"Answer questions and explain things simply",lp2_2:"Write emails, letters, CVs and essays",lp2_3:"Teach you step by step, like a patient tutor",lp2_4:"Translate, plan, brainstorm and solve maths",
+lp3_t:"Smart AI capabilities",lp3_d:"Built to feel like chatting with a clever friend.",lp3_1:"Understands English, Kiswahili and many more languages",lp3_2:"Searches the web for the latest news, scores and prices",lp3_3:"Remembers your goals and progress between chats",lp3_4:"Talks back with natural voices, or just chat by voice",
+lp4_t:"Create and edit images",lp4_d:"Describe it, and Nesty draws it.",lp4_1:"Logos, posters and illustrations from a single sentence",lp4_2:"Upload a photo and say \u201cmake it night time\u201d",lp4_3:"Download your pictures and share them",
+lp5_t:"Upload your files",lp5_d:"Show Nesty your documents and it gets to work.",lp5_1:"Reads PDFs, Word files, text and pictures",lp5_2:"Summarises, explains and answers questions about them",lp5_3:"Gives you real Word, PDF and Excel files to download",
+lp6_t:"Why use Nesty?",lp6_d:"Because it is made to be simple, fast and yours.",lp6_1:"Free to start, with upgrades when you need more",lp6_2:"Fast, friendly and easy on your phone",lp6_3:"Your chats are yours: delete them any time",lp6_4:"Install it like an app and use it anywhere"
+});
+Object.assign(STR.sw, {
+lp_skip:"Ruka",lp_back:"Rudi",lp_next:"Endelea",lp_try:"Jaribu Nesty",lp_what:"Nesty ni nini?",
+lp1_t:"Karibu Nesty AI",lp1_d:"Msaidizi wako rafiki wa AI, ametengenezwa na Red Element. Uliza chochote kwa lugha yako na upate majibu wazi kwa sekunde.",
+lp2_t:"Nesty anaweza kufanya nini",lp2_d:"Msaidizi mmoja wa shule, kazi na maisha ya kila siku.",lp2_1:"Kujibu maswali na kueleza mambo kwa urahisi",lp2_2:"Kuandika barua pepe, barua, CV na insha",lp2_3:"Kukufundisha hatua kwa hatua kama mwalimu mvumilivu",lp2_4:"Kutafsiri, kupanga, kuleta mawazo na kutatua hesabu",
+lp3_t:"Uwezo wa AI wenye akili",lp3_d:"Imetengenezwa ikuhisi kama kuzungumza na rafiki mwerevu.",lp3_1:"Inaelewa Kiingereza, Kiswahili na lugha nyingine nyingi",lp3_2:"Inatafuta mtandaoni habari, matokeo na bei za hivi karibuni",lp3_3:"Inakumbuka malengo na maendeleo yako kati ya mazungumzo",lp3_4:"Inajibu kwa sauti za asili, au ongea kwa sauti tu",
+lp4_t:"Tengeneza na hariri picha",lp4_d:"Ieleze, Nesty ataichora.",lp4_1:"Nembo, mabango na michoro kutoka sentensi moja",lp4_2:"Pakia picha kisha sema \u201cifanye iwe usiku\u201d",lp4_3:"Pakua picha zako na uzishiriki",
+lp5_t:"Pakia faili zako",lp5_d:"Mwonyeshe Nesty nyaraka zako naye ataanza kazi.",lp5_1:"Anasoma PDF, faili za Word, maandishi na picha",lp5_2:"Anafupisha, anaeleza na kujibu maswali kuzihusu",lp5_3:"Unapata faili halisi za Word, PDF na Excel za kupakua",
+lp6_t:"Kwa nini utumie Nesty?",lp6_d:"Kwa sababu imetengenezwa kuwa rahisi, ya haraka na yako.",lp6_1:"Bure kuanza, na maboresho unapohitaji zaidi",lp6_2:"Haraka, rafiki na rahisi kwenye simu yako",lp6_3:"Mazungumzo yako ni yako: yafute wakati wowote",lp6_4:"Isakinishe kama programu na itumie popote"
+});
+var LP = [
+  {icon: "img", n: 1, items: 0},
+  {icon: "\ud83d\udca1", n: 2, items: 4},
+  {icon: "\ud83e\udde0", n: 3, items: 4},
+  {icon: "\ud83c\udfa8", n: 4, items: 3},
+  {icon: "\ud83d\udcce", n: 5, items: 3},
+  {icon: "\ud83c\udfc6", n: 6, items: 4}
+];
+var lpIdx = 0;
+function setThemeColor(c){
+  var mt = document.querySelector('meta[name="theme-color"]');
+  if(mt) mt.setAttribute("content", c);
+}
+function lpRender(){
+  var sl = LP[lpIdx], k = "lp" + sl.n;
+  var h = '<div class="lpIcon">' + (sl.icon === "img" ? '<img src="/nesty-mark.png" alt="">' : sl.icon) + '</div><h2>' + esc(L(k + "_t")) + '</h2><p>' + esc(L(k + "_d")) + '</p>';
+  if(sl.items){
+    h += '<ul class="lpList">';
+    for(var i = 1; i <= sl.items; i++) h += '<li>' + esc(L(k + "_" + i)) + '</li>';
+    h += '</ul>';
+  }
+  var card = $("lpSlide");
+  card.classList.remove("lpAnim");
+  card.innerHTML = h;
+  void card.offsetWidth;
+  card.classList.add("lpAnim");
+  var d = "";
+  for(var j = 0; j < LP.length; j++) d += '<i class="' + (j === lpIdx ? "on" : "") + '"></i>';
+  $("lpDots").innerHTML = d;
+  var last = lpIdx === LP.length - 1;
+  $("lpNext").textContent = L(last ? "lp_try" : "lp_next") + " \u2192";
+  $("lpBack").style.visibility = lpIdx ? "visible" : "hidden";
+  $("lpBack").textContent = "\u2190 " + L("lp_back");
+  $("landing").scrollTop = 0;
+}
+function lpGo(dir){
+  var n = lpIdx + dir;
+  if(n >= LP.length){ landingDone(); return; }
+  if(n < 0) return;
+  lpIdx = n;
+  lpRender();
+}
+function showLanding(){
+  clearInterval(resendTimer);
+  $("boot").style.display = "none";
+  $("app").style.display = "none";
+  $("auth").style.display = "none";
+  $("landing").style.display = "flex";
+  setThemeColor("#ffd84d");
+  lpIdx = 0;
+  lpRender();
+}
+function landingDone(){
+  try{ localStorage.setItem("nestySeenLanding", "1"); }catch(e){}
+  authMode = "signup";
+  showAuth();
+}
+function showLandingOrAuth(){
+  var seen = false;
+  try{ seen = localStorage.getItem("nestySeenLanding") === "1"; }catch(e){}
+  if(seen) showAuth(); else showLanding();
+}
+var lpX = null;
+document.addEventListener("touchstart", function(e){
+  if($("landing").style.display === "flex") lpX = e.touches[0].clientX; else lpX = null;
+}, {passive: true});
+document.addEventListener("touchend", function(e){
+  if(lpX === null) return;
+  var dx = e.changedTouches[0].clientX - lpX;
+  lpX = null;
+  if(Math.abs(dx) > 70) lpGo(dx < 0 ? 1 : -1);
+}, {passive: true});
 
 /* ---------- Remembering between chats ---------- */
 async function removeFacts(list){
