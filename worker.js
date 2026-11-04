@@ -17,6 +17,7 @@ const PLANS = {
   premium: { name: "Premium", msg: 60, file: 50, img: 6 },
   ultra: { name: "Ultra", msg: 80, file: 70, img: 20 },
 };
+const TTS_LIMITS = { free: 12, premium: 40, ultra: 120 }; // natural voice clips per hour
 const RANK = { free: 0, premium: 1, ultra: 2 };
 const PRICES = {
   premium: { monthly: 50, yearly: 600 },
@@ -306,6 +307,8 @@ async function handleChat(request, env, ctx) {
   const origin = new URL(request.url).origin;
   delete body.planInfo;
   delete body.policyText;
+  delete body.usageInfo;
+  body.uid = user.$id;
 
   let plan = { plan: "free", expiresAt: 0 };
   let lim = PLANS.free;
@@ -338,6 +341,7 @@ async function handleChat(request, env, ctx) {
       msgLimit: lim.msg,
       msgResetAt: r.resetAt,
     };
+    body.usageInfo = { left: Math.max(0, lim.msg - r.used), used: r.used, resetAt: r.resetAt, plan: plan.plan };
   }
 
   if (POLICY_RE.test(lastUserText(body.messages))) {
@@ -352,6 +356,7 @@ async function handleChat(request, env, ctx) {
   });
   const res = await onRequestPost({ request: req2, env: env, ctx: ctx });
   if (!mstub) return res;
+  if ((res.headers.get("Content-Type") || "").indexOf("text/event-stream") === 0) return res;
   try {
     const d = await res.clone().json();
     if (!d.via) {
@@ -502,6 +507,66 @@ async function handleAdmin(request, env, action) {
   return json({ codes: made, plan: plan, period: period, price: PRICES[plan][period] });
 }
 
+/* ---------- Natural voices (Google Gemini text-to-speech) ---------- */
+const TTS_VOICES = ["Kore", "Puck", "Zephyr", "Charon", "Aoede", "Fenrir"];
+function pcmToWav(pcm, rate) {
+  const h = new DataView(new ArrayBuffer(44));
+  const put = function (o, s) { for (let i = 0; i < s.length; i++) h.setUint8(o + i, s.charCodeAt(i)); };
+  put(0, "RIFF"); h.setUint32(4, 36 + pcm.length, true); put(8, "WAVE"); put(12, "fmt ");
+  h.setUint32(16, 16, true); h.setUint16(20, 1, true); h.setUint16(22, 1, true);
+  h.setUint32(24, rate, true); h.setUint32(28, rate * 2, true); h.setUint16(32, 2, true); h.setUint16(34, 16, true);
+  put(36, "data"); h.setUint32(40, pcm.length, true);
+  const out = new Uint8Array(44 + pcm.length);
+  out.set(new Uint8Array(h.buffer), 0);
+  out.set(pcm, 44);
+  return out;
+}
+async function handleTts(request, env) {
+  const auth = await needUser(request);
+  if (auth.res) return auth.res;
+  if (!env.GEMINI_API_KEY) return json({ error: "Natural voices are not set up." }, 503);
+  let b;
+  try { b = await request.json(); } catch (e) { return json({ error: "Bad request." }, 400); }
+  const text = String(b.text || "").trim().slice(0, 500);
+  const voice = TTS_VOICES.indexOf(b.voice) > -1 ? b.voice : "Kore";
+  if (!text) return json({ error: "No text." }, 400);
+  let stb = null;
+  if (env.LIMITER) {
+    const plan = await stub(env, "plan|" + auth.user.$id).getPlan();
+    stb = stub(env, "tts|" + auth.user.$id);
+    const r = await stb.hit(TTS_LIMITS[plan.plan] || TTS_LIMITS.free, WINDOW_MS);
+    if (!r.ok) return json({ error: "Voice limit reached for now." }, 429);
+  }
+  try {
+    const ctrl = new AbortController();
+    const timer = setTimeout(function () { ctrl.abort(); }, 25000);
+    const res = await fetch("https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-tts:generateContent", {
+      method: "POST",
+      headers: { "Content-Type": "application/json", "x-goog-api-key": env.GEMINI_API_KEY },
+      body: JSON.stringify({
+        contents: [{ parts: [{ text: text }] }],
+        generationConfig: {
+          responseModalities: ["AUDIO"],
+          speechConfig: { voiceConfig: { prebuiltVoiceConfig: { voiceName: voice } } },
+        },
+      }),
+      signal: ctrl.signal,
+    });
+    clearTimeout(timer);
+    if (!res.ok) throw new Error("tts " + res.status);
+    const d = await res.json();
+    const parts = d && d.candidates && d.candidates[0] && d.candidates[0].content && d.candidates[0].content.parts;
+    const inl = parts && parts[0] && (parts[0].inlineData || parts[0].inline_data);
+    if (!inl || !inl.data) throw new Error("no audio");
+    const rm = /rate=(\d+)/.exec(inl.mimeType || inl.mime_type || "");
+    const pcm = Uint8Array.from(atob(inl.data), function (ch) { return ch.charCodeAt(0); });
+    return new Response(pcmToWav(pcm, rm ? parseInt(rm[1], 10) : 24000), { headers: { "Content-Type": "audio/wav", "Cache-Control": "no-store" } });
+  } catch (e) {
+    if (stb) await stb.refund();
+    return json({ error: "Voice failed." }, 502);
+  }
+}
+
 /* ---------- Feedback on answers (stored inside Nesty, shown on /admin.html) ---------- */
 async function handleFeedback(request, env) {
   const auth = await needUser(request);
@@ -537,6 +602,7 @@ export default {
         return handleImage(request, env, { needUser: needUser, stub: stub, json: json, PLANS: PLANS, WINDOW_MS: WINDOW_MS });
       },
       "/api/me": function () { return handleMe(request, env); },
+      "/api/tts": function () { return handleTts(request, env); },
       "/api/redeem": function () { return handleRedeem(request, env); },
       "/api/admin/generate": function () { return handleAdmin(request, env, "generate"); },
       "/api/admin/list": function () { return handleAdmin(request, env, "list"); },

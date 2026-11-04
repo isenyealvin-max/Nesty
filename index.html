@@ -217,6 +217,9 @@ header .hbtn{margin:0;padding:7px 10px;font-size:13px;white-space:nowrap}
 #fbSheet{display:none;position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:86;align-items:flex-end;justify-content:center}
 .chips{display:flex;flex-wrap:wrap;gap:6px}
 .chips .sbtn{padding:6px 11px;font-size:13px}
+#modeRow{display:flex;gap:6px;margin-bottom:6px;flex-wrap:wrap}
+#modeRow .cpbtn{margin:0}
+.cpbtn.on{background:var(--btn);color:var(--btnText);border-color:var(--btn)}
 </style>
 </head>
 <body>
@@ -292,6 +295,7 @@ header .hbtn{margin:0;padding:7px 10px;font-size:13px;white-space:nowrap}
   <div id="inputWrap">
     <div id="promoBar"><button class="x" onclick="hidePromo()">&times;</button><div id="promoTxt"></div><div class="upRow"><button onclick="openPlans('premium')" data-i="btn_premium"></button><button onclick="openPlans('ultra')" data-i="btn_ultra"></button></div></div>
     <div id="limitBar"><div id="limitTxt"></div><div class="upRow"><button onclick="openPlans('ultra')" data-i="btn_ultra"></button><button onclick="openPlans('premium')" data-i="btn_premium"></button></div></div>
+    <div id="modeRow"><button class="cpbtn" id="studyBtn" onclick="toggleStudy()"></button><button class="cpbtn" id="deepBtn" onclick="toggleDeep()"></button></div>
     <div id="chip"><span id="chipName"></span><button onclick="removeFile()">&times;</button></div>
     <div id="bar">
       <button class="ibtn" onclick="document.getElementById('file').click()">+</button>
@@ -463,7 +467,7 @@ header .hbtn{margin:0;padding:7px 10px;font-size:13px;white-space:nowrap}
 <div id="updateBar"></div>
 
 <script>
-var VERSION = "V16";
+var VERSION = "V18";
 
 /* ---------- Interface languages ---------- */
 var STR = {
@@ -489,7 +493,7 @@ file_big:"That file is too big (max 15 MB).",reading:"Reading {n}...",pdf_empty:
 p_pic:"Please look at this picture and tell me what you see.",p_file:"Please read this and tell me what it says.",
 s_title:"Settings",close:"Close",s_profile:"Profile",s_photo:"Change photo",s_rmphoto:"Remove photo",s_savename:"Save name",s_signed:"Signed in as {e}",
 s_instr:"Custom instructions",s_instr_d:"Tell Nesty how to answer you in every chat. Example: I'm a Grade 9 student, explain simply.",s_instr_ph:"Type your instructions here",s_instr_save:"Save instructions",
-s_mem:"Memory",s_mem_d:"Nesty saves important facts about you automatically, such as your name. You can also say “Remember that ...”. Delete anything here at any time.",s_mem_none:"Nothing saved yet.",s_mem_clear:"Clear memory",
+s_mem:"Memory",s_mem_d:"Nesty saves important facts about you automatically, such as your name, goals and progress (for example in a course). You can also say “Remember that ...” or “Forget that ...”. When you say things like “as we discussed earlier”, Nesty also looks through your recent saved chats. Delete anything here at any time.",s_mem_none:"Nothing saved yet.",s_mem_clear:"Clear memory",
 s_lang:"Language",s_lang_d:"Language of the app menus and buttons.",s_bg:"Background colour",s_bg_custom:"Pick your own colour",
 s_vlang:"Voice language",s_vlang_d:"Used for the microphone and for reading answers aloud.",
 s_fb:"Feedback",s_fb_d:"Found a problem or have an idea? Send us an email.",s_fb_btn:"Send feedback",fb_body:"Describe the problem or idea here:",
@@ -850,6 +854,8 @@ var messages = [];
 var chats = [];
 var chatId = null;
 var loading = false;
+var liveText = "", liveEl = null, liveRaf = 0, deepRunning = false, deepFlag = false, studyOn = false, deepOn = false;
+try{ studyOn = localStorage.getItem("nestyStudy") === "1"; }catch(e){}
 var pendingFile = null;
 var pendingImage = null;
 var aborter = null;
@@ -900,6 +906,7 @@ function applyLang(){
   drawWeb();
   drawImg();
   drawSpk();
+  drawModes();
   fillLangs();
   $("aLang").value = uiLang;
   $("sUi").value = uiLang;
@@ -1428,7 +1435,7 @@ function openChat(id){
   if(!c) return;
   try{ messages = JSON.parse(c.messages || "[]"); }catch(e){ messages = []; }
   chatId = id;
-  if(window.speechSynthesis) speechSynthesis.cancel();
+  stopSpeak();
   renderAll();
   renderList();
   closeSide();
@@ -1760,6 +1767,10 @@ function buildBot(m, isLast){
         if(isDoc){ pre.className = "txt docprev"; pre.innerHTML = mdToHtml(code); }
         else { pre.className = "tbl"; pre.innerHTML = csvTable(code); }
       }
+      if(lang === "chart"){
+        var svgc = chartSvg(code);
+        if(svgc){ pre = document.createElement("div"); pre.className = "docprev"; pre.innerHTML = svgc; }
+      }
       wrap.appendChild(bar);
       wrap.appendChild(pre);
       d.appendChild(wrap);
@@ -1879,11 +1890,15 @@ function renderAll(){
     var m = messages[i];
     chat.appendChild(m.role === "user" ? buildUser(m, i) : buildBot(m, i === messages.length - 1));
   }
+  liveEl = null;
   if(loading){
     var w = document.createElement("div");
     w.className = "msg bot";
-    w.textContent = creatingImg ? L("creating") : (searchingNow ? L("searching") : L("thinking"));
+    w.dir = "auto";
+    if(liveText){ w.innerHTML = liveHtml(liveText); }
+    else{ w.textContent = creatingImg ? L("creating") : (deepRunning ? L("deep_wait") : (searchingNow ? L("searching") : L("thinking"))); }
     chat.appendChild(w);
+    liveEl = w;
   }
   chat.scrollTop = chat.scrollHeight;
 }
@@ -1975,6 +1990,11 @@ function showLimit(kind){
 }
 
 async function ask(){
+  var useDeep = !!deepFlag;
+  deepFlag = false;
+  deepRunning = useDeep;
+  var wasStream = false;
+  liveText = "";
   loading = true;
   aborter = new AbortController();
   renderAll();
@@ -1995,11 +2015,21 @@ async function ask(){
         today: todayText(),
         instructions: (user.prefs && user.prefs.instructions) || "",
         memory: getMem(),
+        recall: recallFor(lu && lu.text),
+        study: studyOn,
+        deep: useDeep,
+        stream: true,
         search: wantSearch,
         messages: apiMessages()
       })
     });
-    var data = await res.json();
+    var data;
+    if((res.headers.get("content-type") || "").indexOf("text/event-stream") === 0){
+      wasStream = true;
+      data = await readStream(res);
+    }else{
+      data = await res.json();
+    }
     if(data.limited){
       loading = false;
       searchingNow = false;
@@ -2050,6 +2080,8 @@ async function ask(){
     }
     reply = data.reply || "Sorry, something went wrong.";
     sources = data.sources || [];
+    if(!wasStream && reply.length < 6000) await typeOut(reply);
+    if(data.forget && data.forget.length) await removeFacts(data.forget);
     if(data.remember && data.remember.length) addFacts(data.remember);
     noteUsage(data);
     if(typeof data.left === "number" && data.left <= 5 && data.left >= 0){
@@ -2060,6 +2092,12 @@ async function ask(){
       loading = false;
       searchingNow = false;
       aborter = null;
+      if(liveText){
+        var part = liveHtmlText(liveText);
+        liveText = "";
+        if(part) messages.push({role:"assistant", content: part});
+      }
+      deepRunning = false;
       renderAll();
       toast(L("stopped"));
       saveChat();
@@ -2070,6 +2108,8 @@ async function ask(){
   loading = false;
   aborter = null;
   searchingNow = false;
+  liveText = "";
+  deepRunning = false;
   messages.push({role:"assistant", content:reply, sources:sources});
   renderAll();
   if(vmOn){ speak(reply, vmListen); } else if(speakOn || voiceTurn){ speak(reply); }
@@ -2221,13 +2261,16 @@ function send(){
     makeImage(text.replace(/^\s*\/image\s+/i, ""), editImg);
     return;
   }
+  deepFlag = deepOn;
+  deepOn = false;
+  drawModes();
   ask();
 }
 
 function newChat(){
   messages = [];
   chatId = null;
-  if(window.speechSynthesis) speechSynthesis.cancel();
+  stopSpeak();
   renderAll();
   renderList();
   closeSide();
@@ -2365,6 +2408,20 @@ fileInput.addEventListener("change", async function(){
       pendingImage = {name: name, data: data};
       showChip(name);
       return;
+    }
+    var isSheetFile = (lower.slice(-5) === ".xlsx" || lower.slice(-4) === ".csv");
+    if(isSheetFile){
+      var ultra = !!(me && me.plan === "ultra");
+      if(!ultra && lower.slice(-5) === ".xlsx"){ toast(L("xlsx_up")); openPlans("ultra"); return; }
+      if(ultra){
+        if(f.size > 8 * 1000000){ toast(L("file_big")); return; }
+        showChip(L("reading", {n: name}));
+        var tx = await readSheetFile(f, lower);
+        pendingImage = null;
+        pendingFile = {name: name, text: tx};
+        showChip(name);
+        return;
+      }
     }
     if(lower.slice(-4) === ".doc" || lower.slice(-4) === ".ppt" || lower.slice(-4) === ".xls" || lower.slice(-5) === ".pptx" || lower.slice(-5) === ".xlsx"){
       toast(L("unsupported"));
@@ -2630,7 +2687,7 @@ function drawSpk(){
 function toggleSpeak(){
   speakOn = !speakOn;
   drawSpk();
-  if(!speakOn && window.speechSynthesis) speechSynthesis.cancel();
+  if(!speakOn) stopSpeak();
 }
 var speakingNow = false;
 function pickedVoice(){
@@ -2646,9 +2703,8 @@ function voiceRate(){
   try{ r = parseFloat(localStorage.getItem("nestyVoiceRate")) || 1; }catch(e){}
   return r;
 }
-function speak(text, cb){
-  if(!window.speechSynthesis){ if(cb) cb(); return; }
-  var clean = String(text || "").replace(/```[\s\S]*?```/g, " code block ").replace(/https?:\/\/\S+/g, "").replace(/[*`#_>\[\]]/g, "").replace(/[\u{1F300}-\u{1FAFF}\u{2600}-\u{27BF}]/gu, "");
+function deviceSpeak(clean, cb){
+  if(!window.speechSynthesis){ speakingNow = false; if(cb) cb(); return; }
   speechSynthesis.cancel();
   var u = new SpeechSynthesisUtterance(clean);
   u.lang = voiceLang;
@@ -2661,6 +2717,14 @@ function speak(text, cb){
   u.onend = done;
   u.onerror = done;
   speechSynthesis.speak(u);
+}
+function speak(text, cb){
+  var clean = String(text || "").replace(/```[\s\S]*?```/g, " code block ").replace(/https?:\/\/\S+/g, "").replace(/[*`#_>\[\]]/g, "").replace(/[\u{1F300}-\u{1FAFF}\u{2600}-\u{27BF}]/gu, "");
+  var vn = "";
+  try{ vn = localStorage.getItem("nestyVoiceName") || ""; }catch(e){}
+  if(vn.indexOf("nesty:") === 0){ speakNatural(clean, vn.slice(6), cb); return; }
+  stopSpeak();
+  deviceSpeak(clean, cb);
 }
 
 /* ---------- Custom instructions and memory ---------- */
@@ -2719,8 +2783,283 @@ async function addFacts(list){
     if(f && m.indexOf(f) < 0){ m.push(f); changed = true; }
   });
   if(!changed) return;
-  while(m.length > 30) m.shift();
+  while(m.length > 60) m.shift();
   try{ await savePrefs({memory: m}); toast(L("mem_saved")); }catch(e){}
+}
+
+/* ---------- V18: streaming, modes, natural voices, data analysis, charts ---------- */
+STR.en.study = "Study";
+STR.en.deep = "Deep search";
+STR.en.study_on = "Study mode on: Nesty will teach step by step.";
+STR.en.study_off = "Study mode off.";
+STR.en.deep_up = "Deep search is part of NREV15 on the Ultra plan.";
+STR.en.deep_on = "Deep search is on for your next question.";
+STR.en.deep_off = "Deep search off.";
+STR.en.deep_wait = "Researching many sources...";
+STR.en.xlsx_up = "Excel analysis is part of NREV15 on the Ultra plan.";
+function drawModes(){
+  var a = $("studyBtn"), b = $("deepBtn");
+  if(!a || !b) return;
+  a.textContent = "\ud83c\udf93 " + L("study");
+  a.classList.toggle("on", studyOn);
+  b.textContent = "\ud83d\udd0e " + L("deep");
+  b.classList.toggle("on", deepOn);
+}
+function toggleStudy(){
+  studyOn = !studyOn;
+  try{ localStorage.setItem("nestyStudy", studyOn ? "1" : "0"); }catch(e){}
+  drawModes();
+  toast(L(studyOn ? "study_on" : "study_off"));
+}
+function toggleDeep(){
+  if(!me || me.plan !== "ultra"){ toast(L("deep_up")); openPlans("ultra"); return; }
+  deepOn = !deepOn;
+  drawModes();
+  toast(L(deepOn ? "deep_on" : "deep_off"));
+}
+
+function liveHtmlText(t){
+  return String(t || "").replace(/\[\[[\s\S]*?\]\]/g, "").replace(/\[\[[\s\S]*$/, "").trim();
+}
+function liveHtml(t){
+  t = liveHtmlText(t);
+  var parts = t.split("```"), h = "";
+  parts.forEach(function(p, i){
+    if(i % 2 === 1){
+      var nl = p.indexOf("\n");
+      h += '<div class="code"><pre>' + esc(nl > -1 && nl <= 15 ? p.slice(nl + 1) : p) + '</pre></div>';
+    }else if(p.trim()){
+      h += '<div class="txt">' + mdToHtml(p.replace(/^\n+/, "")) + '</div>';
+    }
+  });
+  return h;
+}
+function liveUpdate(){
+  if(liveRaf) return;
+  liveRaf = requestAnimationFrame(function(){
+    liveRaf = 0;
+    if(!liveEl) renderAll();
+    if(liveEl){
+      liveEl.innerHTML = liveHtml(liveText);
+      if(chat.scrollHeight - chat.scrollTop - chat.clientHeight < 160) chat.scrollTop = chat.scrollHeight;
+    }
+  });
+}
+async function readStream(res){
+  var reader = res.body.getReader(), dec = new TextDecoder(), buf = "", fin = null;
+  liveText = "";
+  for(;;){
+    var r = await reader.read();
+    if(r.done) break;
+    buf += dec.decode(r.value, {stream: true});
+    var i;
+    while((i = buf.indexOf("\n\n")) > -1){
+      var block = buf.slice(0, i);
+      buf = buf.slice(i + 2);
+      var line = block.split("\n").filter(function(l){ return l.indexOf("data:") === 0; })[0];
+      if(!line) continue;
+      var obj;
+      try{ obj = JSON.parse(line.slice(5).trim()); }catch(e){ continue; }
+      if(obj.done) fin = obj;
+      else if(obj.t){ liveText += obj.t; liveUpdate(); }
+    }
+  }
+  return fin || {reply: "Network error. Please try again.", via: ""};
+}
+async function typeOut(full){
+  var n = full.length, step = Math.max(4, Math.ceil(n / 60));
+  for(var i = 0; i < n; i += step){
+    if(!loading) break;
+    liveText = full.slice(0, i + step);
+    liveUpdate();
+    await new Promise(function(r){ setTimeout(r, 22); });
+  }
+}
+
+/* natural voices (Gemini speech, made by the Nesty server) with fallback to the phone voice */
+var curAudio = null, natToken = 0;
+function stopSpeak(){
+  natToken++;
+  speakingNow = false;
+  try{ if(curAudio){ curAudio.pause(); curAudio = null; } }catch(e){}
+  if(window.speechSynthesis){ speechSynthesis.cancel(); }
+}
+function chunkText(t, n){
+  var out = [], cur = "";
+  (t.match(/[^.!?\n]+[.!?\n]*/g) || [t]).forEach(function(s){
+    if((cur + s).length > n && cur){ out.push(cur); cur = s; } else cur += s;
+  });
+  if(cur.trim()) out.push(cur);
+  return out;
+}
+async function apiBlob(path, payload){
+  var jwt = await getJwt();
+  var res = await fetch(path, {method: "POST", headers: {"Content-Type": "application/json", "X-Nesty-Token": jwt}, body: JSON.stringify(payload)});
+  if(!res.ok) throw new Error("tts");
+  return res.blob();
+}
+function speakNatural(clean, voice, cb){
+  stopSpeak();
+  var my = natToken, parts = chunkText(clean, 380).slice(0, 4), cache = {};
+  if(!parts.length){ if(cb) cb(); return; }
+  speakingNow = true;
+  if(vmOn){ vmSet(L("vm_speak")); $("vmOrb").className = "orb speak"; }
+  function get(i){
+    if(!cache[i]) cache[i] = apiBlob("/api/tts", {text: parts[i], voice: voice}).then(function(b){ return URL.createObjectURL(b); });
+    return cache[i];
+  }
+  function play(i){
+    if(my !== natToken) return;
+    if(i >= parts.length){ speakingNow = false; if(cb) cb(); return; }
+    get(i).then(function(url){
+      if(my !== natToken) return;
+      if(i + 1 < parts.length) get(i + 1).catch(function(){});
+      var a = new Audio(url);
+      curAudio = a;
+      a.onended = function(){ URL.revokeObjectURL(url); play(i + 1); };
+      a.onerror = a.onended;
+      a.play().catch(function(){ play(i + 1); });
+    }).catch(function(){
+      if(my !== natToken) return;
+      if(i === 0){ speakingNow = false; deviceSpeak(clean, cb); }
+      else{ speakingNow = false; if(cb) cb(); }
+    });
+  }
+  play(0);
+}
+
+/* Ultra: Excel and CSV analysis (exact numbers are computed here, not guessed by the AI) */
+async function readSheetFile(f, lower){
+  var csv = "";
+  if(lower.slice(-5) === ".xlsx"){
+    await loadScript("https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js");
+    var wb = XLSX.read(await f.arrayBuffer(), {type: "array"});
+    csv = wb.SheetNames.slice(0, 3).map(function(n){ return "## " + n + "\n" + XLSX.utils.sheet_to_csv(wb.Sheets[n]); }).join("\n\n");
+  }else{
+    csv = await readText(f);
+  }
+  return analyzeCsv(csv).slice(0, 20000);
+}
+function analyzeCsv(text){
+  var out = [];
+  parseSheets(text).slice(0, 3).forEach(function(sh){
+    var rows = sh.rows.filter(function(r){ return r.some(function(c){ return String(c).trim() !== ""; }); });
+    if(rows.length < 2) return;
+    var head = rows[0], body = rows.slice(1);
+    var lines = ['SHEET "' + sh.name + '": ' + body.length + " data rows, " + head.length + " columns (computed by the app, exact)."];
+    head.slice(0, 25).forEach(function(h, ci){
+      var name = h || ("col" + (ci + 1));
+      var vals = body.map(function(r){ return String(r[ci] == null ? "" : r[ci]).trim(); });
+      var filled = vals.filter(function(v){ return v !== ""; });
+      var nums = filled.map(function(v){ return Number(v.replace(/[,\s]/g, "")); }).filter(function(n){ return isFinite(n); });
+      var miss = vals.length - filled.length;
+      if(filled.length && nums.length / filled.length > 0.8){
+        nums.sort(function(a, b){ return a - b; });
+        var sum = nums.reduce(function(a, b){ return a + b; }, 0);
+        var med = nums.length % 2 ? nums[(nums.length - 1) / 2] : (nums[nums.length / 2 - 1] + nums[nums.length / 2]) / 2;
+        lines.push("- " + name + " (number): min " + nums[0] + ", max " + nums[nums.length - 1] + ", mean " + (+(sum / nums.length).toFixed(2)) + ", median " + med + ", sum " + (+sum.toFixed(2)) + ", missing " + miss);
+      }else{
+        var cnt = {};
+        filled.forEach(function(v){ cnt[v] = (cnt[v] || 0) + 1; });
+        var top = Object.keys(cnt).sort(function(a, b){ return cnt[b] - cnt[a]; }).slice(0, 5).map(function(k){ return k + " (" + cnt[k] + ")"; });
+        lines.push("- " + name + " (text): " + Object.keys(cnt).length + " distinct, top: " + top.join(", ") + ", missing " + miss);
+      }
+    });
+    lines.push("FIRST ROWS (CSV):");
+    lines.push(rows.slice(0, 31).map(function(r){ return r.join(","); }).join("\n"));
+    out.push(lines.join("\n"));
+  });
+  return out.join("\n\n") || String(text);
+}
+
+/* charts from ```chart JSON blocks (bar or line) */
+function chartSvg(src){
+  var sp;
+  try{ sp = JSON.parse(src); }catch(e){ return ""; }
+  var labels = (sp.labels || []).map(String).slice(0, 14);
+  var series = sp.series || (sp.values ? [{name: sp.title || "", values: sp.values}] : []);
+  if(!labels.length || !series.length) return "";
+  var W = 340, H = 220, L0 = 38, B0 = 40, T0 = 26, R0 = 10, pw = W - L0 - R0, ph = H - T0 - B0;
+  var all = [];
+  series.forEach(function(s){ (s.values || []).forEach(function(v){ all.push(Number(v) || 0); }); });
+  var max = Math.max.apply(null, all.concat([0])), min = Math.min.apply(null, all.concat([0]));
+  if(max === min) max = min + 1;
+  var cols = ["#1a56db", "#e8a317", "#7c3aed", "#2e7d32", "#d32f2f", "#00897b"];
+  function y(v){ return T0 + ph - (v - min) / (max - min) * ph; }
+  var g = "";
+  for(var t = 0; t <= 4; t++){
+    var val = min + (max - min) * t / 4, yy = y(val);
+    g += '<line x1="' + L0 + '" x2="' + (W - R0) + '" y1="' + yy + '" y2="' + yy + '" stroke="currentColor" opacity=".15"/><text x="' + (L0 - 4) + '" y="' + (yy + 3) + '" font-size="9" text-anchor="end" fill="currentColor">' + (Math.abs(val) >= 1000 ? Math.round(val) : +val.toFixed(1)) + '</text>';
+  }
+  var n = labels.length, step = pw / n;
+  if(sp.type === "line"){
+    series.forEach(function(s, si){
+      var col = cols[si % cols.length];
+      var pts = labels.map(function(_, i){ return (L0 + step * i + step / 2).toFixed(1) + "," + y(Number((s.values || [])[i]) || 0).toFixed(1); });
+      g += '<polyline fill="none" stroke="' + col + '" stroke-width="2.5" points="' + pts.join(" ") + '"/>';
+      pts.forEach(function(p){ var c = p.split(","); g += '<circle cx="' + c[0] + '" cy="' + c[1] + '" r="3" fill="' + col + '"/>'; });
+    });
+  }else{
+    var bw = step * 0.7 / series.length;
+    series.forEach(function(s, si){
+      labels.forEach(function(_, i){
+        var v = Number((s.values || [])[i]) || 0;
+        var x = L0 + step * i + step * 0.15 + bw * si;
+        g += '<rect x="' + x.toFixed(1) + '" y="' + Math.min(y(v), y(0)).toFixed(1) + '" width="' + bw.toFixed(1) + '" height="' + Math.abs(y(v) - y(0)).toFixed(1) + '" rx="2" fill="' + cols[si % cols.length] + '"/>';
+      });
+    });
+  }
+  labels.forEach(function(lb, i){
+    g += '<text x="' + (L0 + step * i + step / 2).toFixed(1) + '" y="' + (H - B0 + 14) + '" font-size="9" text-anchor="middle" fill="currentColor">' + esc(lb.length > 9 ? lb.slice(0, 8) + "\u2026" : lb) + '</text>';
+  });
+  var title = sp.title ? '<text x="' + (W / 2) + '" y="14" font-size="12" font-weight="700" text-anchor="middle" fill="currentColor">' + esc(sp.title) + '</text>' : "";
+  var legend = series.length > 1 ? '<text x="' + L0 + '" y="' + (H - 6) + '" font-size="9" fill="currentColor">' + series.map(function(s, si){ return '<tspan fill="' + cols[si % cols.length] + '">\u25a0 </tspan>' + esc(s.name || ("S" + (si + 1))) + "  "; }).join("") + '</text>' : "";
+  return '<svg viewBox="0 0 ' + W + " " + H + '" width="100%" style="max-width:520px">' + title + g + legend + '</svg>';
+}
+
+/* ---------- Remembering between chats ---------- */
+async function removeFacts(list){
+  var m = getMem().slice(), changed = false;
+  list.forEach(function(f){
+    f = String(f).toLowerCase().trim();
+    if(!f) return;
+    for(var i = m.length - 1; i >= 0; i--){
+      var x = String(m[i]).toLowerCase();
+      if(x.indexOf(f) > -1 || f.indexOf(x) > -1){ m.splice(i, 1); changed = true; }
+    }
+  });
+  if(changed){ try{ await savePrefs({memory: m}); }catch(e){} }
+}
+var RECALL_WORDS = /\b(last time|earlier|before|yesterday|previous|previously|we talked|we discussed|we spoke|remember when|continue|where we (stopped|left)|you told me|you said|our (chat|conversation)|that (chat|conversation)|again)\b/i;
+var STOPW = {that:1,this:1,with:1,from:1,have:1,about:1,what:1,when:1,where:1,which:1,there:1,their:1,would:1,could:1,should:1,tell:1,said:1,talked:1,discussed:1,spoke:1,remember:1,earlier:1,before:1,yesterday:1,previous:1,previously:1,time:1,again:1,continue:1,please:1,chat:1,conversation:1,last:1,stopped:1,left:1,told:1,were:1,they:1,them:1,then:1,than:1,just:1,know:1,into:1,your:1,mine:1,been:1};
+function recallFor(text){
+  text = String(text || "");
+  if(!RECALL_WORDS.test(text)) return [];
+  var words = (text.toLowerCase().match(/[a-z\u00c0-\u024f]{4,}/g) || []).filter(function(w){ return !STOPW[w]; });
+  var cands = [];
+  chats.forEach(function(c){
+    if(c.$id === chatId) return;
+    var ms = [];
+    try{ ms = JSON.parse(c.messages || "[]"); }catch(e){}
+    var joined = ms.map(function(m){ return (m.role === "user" ? "You: " + (m.text || "") : "Nesty: " + (m.content || "")); }).join("\n");
+    var low = ((c.Title || "") + "\n" + joined).toLowerCase();
+    var score = 0, first = -1;
+    words.forEach(function(w){ var k = low.indexOf(w); if(k > -1){ score++; if(first < 0 || k < first) first = k; } });
+    cands.push({title: c.Title || "Chat", joined: joined, low: low, score: score, first: first});
+  });
+  if(!cands.length) return [];
+  var pick = cands.filter(function(x){ return x.score > 0; }).sort(function(a, b){ return b.score - a.score; }).slice(0, 3);
+  if(!pick.length) pick = [cands[0]];
+  return pick.map(function(x){
+    var start = 0;
+    if(x.score > 0){
+      var k = x.joined.toLowerCase().indexOf(words.filter(function(w){ return x.joined.toLowerCase().indexOf(w) > -1; })[0]);
+      start = Math.max(0, k - 200);
+    }else{
+      start = Math.max(0, x.joined.length - 700);
+    }
+    return {title: x.title, text: x.joined.slice(start, start + 700)};
+  });
 }
 
 /* ---------- Voice language and feedback ---------- */
@@ -2765,9 +3104,9 @@ function sendFeedback(){
 /* ---------- Plans, usage, activation codes ---------- */
 var PAY_NUMBER = "0701244268";
 var PLAN_DATA = {
-  free: {n: "Free", msg: 40, file: 30, img: 6},
-  premium: {n: "Premium", msg: 60, file: 50, img: 6, m: 50, y: 600},
-  ultra: {n: "Ultra", msg: 80, file: 70, img: 20, m: 100, y: 36000}
+  free: {n: "Free", msg: 40, file: 30, img: 6, model: "NREV11", tts: 12},
+  premium: {n: "Premium", msg: 60, file: 50, img: 6, m: 50, y: 600, model: "NREV11", tts: 40},
+  ultra: {n: "Ultra", msg: 80, file: 70, img: 20, m: 100, y: 36000, model: "NREV15", tts: 120, extras: ["Deep search: many sources, one cited report", "Data analysis for CSV and Excel files, with charts", "Longer, deeper answers"]}
 };
 var me = null, plansOpen = false, plansFocus = "", promoTimer = null;
 function money(n){ return "KSh " + String(n).replace(/\B(?=(\d{3})+(?!\d))/g, ","); }
@@ -2785,6 +3124,8 @@ function drawPlanBtn(){
   var b = $("planBtn");
   if(!b) return;
   var cp = curPlan();
+  var mt = document.querySelector(".mtag");
+  if(mt){ mt.textContent = PLAN_DATA[cp].model; mt.style.background = cp === "ultra" ? "#7c3aed" : "#1a56db"; }
   b.textContent = cp === "free" ? L("upgrade") : PLAN_DATA[cp].n;
   b.className = "hbtn " + (cp === "free" ? "up" : "plan");
 }
@@ -2838,7 +3179,7 @@ function renderPlans(){
     var p = PLAN_DATA[id];
     h += '<div class="pcard' + (id === cp ? ' cur' : '') + (id === plansFocus ? ' focus' : '') + '" id="pc_' + id + '"><h3>' + p.n + (id === cp ? ' · ' + L("current") : '') + '</h3>';
     h += '<div class="price">' + (id === "free" ? L("free_price") : money(p.m) + ' / ' + L("monthly") + ' · ' + money(p.y) + ' / ' + L("yearly")) + '</div>';
-    h += '<ul><li>' + L("pl_msg", {n: p.msg}) + '</li><li>' + L("pl_file", {n: p.file}) + '</li><li>' + L("pl_img", {n: p.img}) + '</li></ul></div>';
+    h += '<ul><li>Model: <b>' + p.model + '</b></li><li>' + L("pl_msg", {n: p.msg}) + '</li><li>' + L("pl_file", {n: p.file}) + '</li><li>' + L("pl_img", {n: p.img}) + '</li><li>Study mode</li><li>Natural voices: ' + p.tts + ' clips per hour</li>' + (p.extras || []).map(function(x){ return '<li>' + x + '</li>'; }).join("") + '</ul></div>';
   });
   h += '<div class="muted2">' + L("pl_win") + '</div>';
   body.innerHTML = h;
@@ -3078,6 +3419,9 @@ function fillVoices(){
   try{ cur = localStorage.getItem("nestyVoiceName") || ""; rate = parseFloat(localStorage.getItem("nestyVoiceRate")) || 1; }catch(e){}
   s.innerHTML = "";
   var o0 = document.createElement("option"); o0.value = ""; o0.textContent = L("v_auto"); s.appendChild(o0);
+  [["Kore","warm"],["Puck","upbeat"],["Zephyr","bright"],["Charon","calm"],["Aoede","breezy"],["Fenrir","energetic"]].forEach(function(nv){
+    var o = document.createElement("option"); o.value = "nesty:" + nv[0]; o.textContent = "Nesty natural - " + nv[0] + " (" + nv[1] + ")"; s.appendChild(o);
+  });
   vs.filter(function(v){ return (v.lang || "").toLowerCase().indexOf(pre) === 0; }).forEach(function(v){
     var o = document.createElement("option"); o.value = v.name; o.textContent = v.name + " (" + v.lang + ")"; s.appendChild(o);
   });
@@ -3104,7 +3448,7 @@ function vmStop(){
   speakingNow = false;
   $("vmode").style.display = "none";
   try{ if(vmRec) vmRec.abort(); }catch(e){}
-  if(window.speechSynthesis) speechSynthesis.cancel();
+  stopSpeak();
 }
 function vmListen(){
   if(!vmOn) return;
