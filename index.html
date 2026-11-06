@@ -265,7 +265,11 @@ header .hbtn{margin:0;padding:7px 10px;font-size:13px;white-space:nowrap}
 #authLogo{overflow:hidden;background:#fff;width:96px;height:96px;border-radius:24px}
 #welcome img{animation:nFloat 4.5s ease-in-out infinite}
 @keyframes nFloat{0%,100%{transform:translateY(0)}50%{transform:translateY(-5px)}}
-#mtag{cursor:pointer}
+#mtag{cursor:pointer;white-space:nowrap}
+.mtag.multi{background:linear-gradient(135deg,#1a56db,#6d28d9)!important;box-shadow:0 0 0 2px #fff,0 2px 8px rgba(26,86,219,.5);padding:3px 10px;font-size:11.5px}
+.mtag.multi.hint{animation:mtagPulse 1.8s ease-in-out infinite}
+@keyframes mtagPulse{0%,100%{box-shadow:0 0 0 2px #fff,0 0 0 2px rgba(109,40,217,.6)}50%{box-shadow:0 0 0 2px #fff,0 0 0 9px rgba(109,40,217,0)}}
+.aiNote{font-size:11px;color:var(--muted);margin:3px 2px 0;opacity:.85}
 #modelSheet{display:none;position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:86;align-items:flex-end;justify-content:center}
 #modelSheet .box{background:var(--card);color:var(--text);width:100%;max-width:520px;border-radius:18px 18px 0 0;padding:16px 14px 22px}
 #modelSheet h3{margin:0 0 4px;font-size:17px}
@@ -499,12 +503,21 @@ document.getElementById("bootLogo").innerHTML = window.NESTY_LOGO("b", true);</s
     </div>
 
     <div class="sec">
+      <h3>AI model</h3>
+      <div class="muted2">Switch between the models your plan includes.</div>
+      <button class="sbtn dark" onclick="closeSettings();openModelMenu()">Choose model</button>
+    </div>
+
+    <div class="sec">
       <h3 data-i="s_pw"></h3>
-      <div class="muted2" data-i="s_pw_d"></div>
-      <input type="password" id="pwOld" data-ph="pw_old" autocomplete="current-password">
-      <input type="password" id="pwNew" data-ph="pw_new" autocomplete="new-password">
-      <input type="password" id="pwNew2" data-ph="pw_new2" autocomplete="new-password">
-      <button class="sbtn dark" onclick="changePassword()" data-i="pw_btn"></button>
+      <div class="muted2">To set a new password, we email you a reset link. Your password must not contain your name, email or phone number.</div>
+      <button class="sbtn dark" onclick="emailReset()">Email me a reset link</button>
+    </div>
+
+    <div class="sec">
+      <h3>Help</h3>
+      <div class="muted2">Quick answers, and a Help assistant for your own questions.</div>
+      <button class="sbtn dark" onclick="closeSettings();openHelp()">Open Help Center</button>
     </div>
 
     <div class="sec">
@@ -994,7 +1007,7 @@ var chats = [];
 var chatId = null;
 var loading = false;
 var liveText = "", liveEl = null, liveRaf = 0, deepRunning = false, deepFlag = false, studyOn = false, deepOn = false;
-try{ studyOn = localStorage.getItem("nestyStudy") === "1"; }catch(e){}
+studyOn = false; // Study mode now lives in the Omni smart Study Center
 var pendingFile = null;
 var pendingImage = null;
 var aborter = null;
@@ -1110,8 +1123,32 @@ if("serviceWorker" in navigator){
 /* ---------- Account (email code, no password) ---------- */
 var pendAge = 0, resetUid = "", resetSec = "";
 function pwProblem(p){
-  return (p.length < 8 || !/[A-Z]/.test(p) || !/[a-z]/.test(p) || !/[0-9]/.test(p) || !/[^A-Za-z0-9]/.test(p)) ? "e_rules" : "";
+  p = String(p || "");
+  if(p.length < 8 || !/[A-Z]/.test(p) || !/[a-z]/.test(p) || !/[0-9]/.test(p) || !/[^A-Za-z0-9]/.test(p)) return "e_rules";
+  return pwPersonal(p) ? "e_personal" : "";
 }
+/* A password must not contain the person's name, email, phone-like numbers or easy words. */
+function pwPersonal(p){
+  var flat = p.toLowerCase().replace(/[^a-z0-9]/g, ""), toks = [];
+  function add(x){
+    String(x || "").toLowerCase().split(/[^a-z0-9]+/).forEach(function(t){
+      if(t.length >= 3) toks.push(t);
+      var letters = t.replace(/[0-9]/g, "");
+      if(letters.length >= 3 && letters !== t) toks.push(letters);
+    });
+  }
+  var pf = (typeof user !== "undefined" && user && user.prefs) || {};
+  var em = (typeof user !== "undefined" && user && user.email) || (typeof authEmail !== "undefined" && authEmail) || lsGet("nestyResetEmail", "");
+  add(String(em).split("@")[0]);
+  if(typeof user !== "undefined" && user) add(user.name);
+  add(pf.firstName); add(pf.lastName);
+  if(typeof pendFirst !== "undefined") add(pendFirst);
+  if(typeof pendLast !== "undefined") add(pendLast);
+  for(var i = 0; i < toks.length; i++){ if(flat.indexOf(toks[i]) > -1) return true; }
+  if(/[0-9]{7,}/.test(flat) || /(password|passw0rd|qwerty|nesty|12345|abcde)/.test(flat)) return true;
+  return false;
+}
+STR.en.e_personal = "For your safety, your password must not contain your name, email, phone number or other personal details, or easy words like password. Please try a different one.";
 function drawAuthText(){
   var su = authMode === "signup";
   $("authSub").textContent = L(su ? "a_create" : "a_welcome");
@@ -1269,7 +1306,7 @@ function showReset(){
 }
 async function doReset(){
   var a = $("rsA").value, b = $("rsB").value;
-  if(pwProblem(a)){ $("authErr").textContent = L("e_rules"); return; }
+  if(pwProblem(a)){ $("authErr").textContent = L(pwProblem(a)); return; }
   if(a !== b){ $("authErr").textContent = L("e_match"); return; }
   $("rsBtn").disabled = true;
   $("authErr").textContent = "";
@@ -1322,7 +1359,7 @@ async function savePassword(){
     age = parseInt($("pwAge").value, 10);
     if(!(age >= 13 && age <= 120)){ $("authErr").textContent = L("e_age"); return; }
   }
-  if(pwProblem(a)){ $("authErr").textContent = L("e_rules"); return; }
+  if(pwProblem(a)){ $("authErr").textContent = L(pwProblem(a)); return; }
   if(a !== b){ $("authErr").textContent = L("e_match"); return; }
   $("pwBtn").disabled = true;
   $("authErr").textContent = "";
@@ -1987,6 +2024,10 @@ function buildBot(m, isLast){
     act.appendChild(rg);
   }
   d.appendChild(act);
+  var an = document.createElement("div");
+  an.className = "aiNote";
+  an.textContent = "Nesty is an AI and can make mistakes";
+  d.appendChild(an);
   return d;
 }
 
@@ -2962,6 +3003,27 @@ function drawModes(){
   a.classList.toggle("on", studyOn);
   b.textContent = "\ud83d\udd0e " + L("deep");
   b.classList.toggle("on", deepOn);
+  syncModes();
+}
+/* Deep search only with Tyra, Study Center only with Omni smart. */
+function syncModes(){
+  var row = $("modeRow");
+  if(!row || typeof activeModel !== "function") return;
+  var m = activeModel(), showD = !!(me && me.deep && m === "tyra"), showS = (m === "smart");
+  var s = $("studyBtn"), d = $("deepBtn");
+  if(s) s.style.display = "none";
+  if(d){ d.style.display = showD ? "" : "none"; }
+  if(!showD && deepOn){ deepOn = false; if(d) d.classList.remove("on"); }
+  var sc = $("scBtn");
+  if(!sc){
+    sc = document.createElement("button");
+    sc.className = "cpbtn"; sc.id = "scBtn";
+    sc.onclick = function(){ if(window.openStudyCenter) openStudyCenter(); };
+    row.appendChild(sc);
+  }
+  sc.textContent = "\ud83c\udf93 Study Center";
+  sc.style.display = showS ? "" : "none";
+  row.style.display = (showD || showS) ? "" : "none";
 }
 function toggleStudy(){
   studyOn = !studyOn;
@@ -3203,7 +3265,12 @@ var LP = [
   {icon: "\ud83d\udcce", n: 5, items: 3},
   {icon: "\ud83c\udfc6", n: 6, items: 4}
 ];
+STR.en.lp7_t = "Meet Study Center"; STR.en.lp7_d = "Switch to Omni smart and a Study Center opens, made for learners.";
+STR.en.lp7_1 = "Exams that Nesty marks, with friendly feedback"; STR.en.lp7_2 = "Notes and flashcards on any topic"; STR.en.lp7_3 = "A study timetable, built by you or by Nesty from your results"; STR.en.lp7_4 = "Stories, novellas and novels for every age";
+STR.en.lp8_t = "Six models, six plans"; STR.en.lp8_d = "Pick the model that fits the job, and the plan that fits you.";
+STR.en.lp8_1 = "NEPTUNE 5.5 and Nova 5.5 are free"; STR.en.lp8_2 = "Nuvida 5.5 for everyday work, Hiaru 5.1 for office work"; STR.en.lp8_3 = "Omni smart for learning, Tyra for research"; STR.en.lp8_4 = "Ultra gives you every model";
 var lpIdx = 0;
+LP.splice(5, 0, {icon: "\ud83c\udf93", n: 7, items: 4}, {icon: "\ud83e\udde0", n: 8, items: 4});
 function setThemeColor(c){
   var mt = document.querySelector('meta[name="theme-color"]');
   if(mt) mt.setAttribute("content", c);
@@ -3401,18 +3468,23 @@ function prefill(t, auto){
 var UP = ["free", "go", "premium", "pro", "learnover"];
 var TIPS = [
   {id: "img", used: "img", cta: "Make an image", txt: "🎨 Have you tried image creation? Ask Nesty to make an image and see wonders that never end!", go: function(){ prefill("Draw a "); }},
-  {id: "study", used: "study", cta: "Open Study mode", txt: "🎓 Studying? Students are sorted! Make flashcards, create exams and learn step by step. Become a genius!", go: function(){ if(!studyOn) toggleStudy(); }},
+  {id: "sc", only: ["learnover", "ultra"], cta: "Open Study Center", txt: "🎓 Studying, {name}? Open Study Center: exams that mark themselves, notes, flashcards and a timetable. Become a genius!", go: function(){ goStudy(); }},
+  {id: "exam", only: ["learnover", "ultra"], cta: "Make an exam", txt: "📝 Ready for a test? Make a practice exam, get marked at once and see exactly where to improve.", go: function(){ goStudy(); }},
+  {id: "stories", only: ["learnover", "ultra"], cta: "Read a story", txt: "📖 Story time! Ask Study Center for a story, novella or novel that fits your age, with new words to learn.", go: function(){ goStudy(); }},
+  {id: "timetable", only: ["learnover", "ultra"], cta: "Build a timetable", txt: "🗓️ Let Nesty build your study timetable from how you perform in exams. No more guessing what to revise!", go: function(){ goStudy(); }},
   {id: "student", only: ["free", "go", "premium", "pro"], cta: "See Learnover", txt: "🎓 Are you a student using the {plan} plan? Mh, that's not good. Upgrade to Learnover or Ultra and get sorted!", go: function(){ openPlans("learnover"); }},
+  {id: "sc_teaser", only: ["free", "go", "premium", "pro"], cta: "Meet Omni smart", txt: "📚 Exams, notes, flashcards, a timetable and stories, all in one Study Center. Meet Omni smart on Learnover!", go: function(){ openPlans("learnover"); }},
   {id: "weather", cta: "Ask now", txt: "⛅ What is tomorrow's weather, {name}? Don't be left behind. Ask Nesty today!", go: function(){ prefill("What is the weather like tomorrow?", true); }},
   {id: "research", only: ["free", "go", "pro", "learnover"], cta: "See Premium", txt: "🔎 Need deep research with sources? Premium gives you Tyra, built for research. Ultra gives you every model!", go: function(){ openPlans("premium"); }},
-  {id: "office", only: ["free", "go", "premium", "learnover"], cta: "See Pro", txt: "📊 Working with documents, Excel or data? Pro gives you Hiaru 5.1 for office work and data analysis.", go: function(){ openPlans("pro"); }},
+  {id: "office", only: ["free", "go", "premium", "learnover"], cta: "See Pro", txt: "📊 Need Excel tables with borders, or a Word file in Times New Roman? Pro gives you Hiaru 5.1 for office work.", go: function(){ openPlans("pro"); }},
   {id: "everyday", only: ["free"], cta: "See Go", txt: "⚡ Want smarter answers for everyday work? Go gives you Nuvida 5.5 for just KSh 70 a month.", go: function(){ openPlans("go"); }},
-  {id: "models", only: ["free", "ultra"], cta: "Choose a model", txt: "🧠 You can switch models, {name}! Tap the model name at the top to change how Nesty answers.", go: function(){ openModelMenu(); }},
+  {id: "models", only: ["free", "ultra"], cta: "Choose a model", txt: "🧠 You can switch models, {name}! Tap the glowing model name at the top to change how Nesty answers.", go: function(){ openModelMenu(); }},
   {id: "doc", cta: "Try it", txt: "📄 Need a CV, a letter or an Excel sheet? Nesty makes real Word, PDF and Excel files for you.", go: function(){ prefill("Make me a CV as a Word file"); }},
   {id: "file", used: "file", cta: "Attach a file", txt: "📎 Got a PDF or Word file? Attach it and Nesty will summarise it in seconds.", go: function(){ $("file").click(); }},
   {id: "voice", used: "voice", cta: "Try voice mode", txt: "🎙️ Try voice mode, {name}: just talk and Nesty answers out loud.", go: function(){ startVoiceMode(); }},
   {id: "loc", hideIf: function(){ return !!getPlace(); }, cta: "Turn on", txt: "📍 Allow your location and Nesty can give answers that fit your area.", go: function(){ enableLocation(); }},
   {id: "foot", cta: "Premier League table", txt: "⚽ Want live scores and tables? Nesty has them, ask about the Premier League.", go: function(){ prefill("Premier League table", true); }},
+  {id: "help", cta: "Open Help Center", txt: "💬 Stuck, {name}? The Help Center has quick answers and a Help assistant for your own questions.", go: function(){ openHelp(); }},
   {id: "images50", only: UP, cta: "See Ultra", txt: "🖼️ Love making pictures? Ultra gives you up to 50 image creations every hour.", go: function(){ openPlans("ultra"); }},
   {id: "ultra", only: UP, cta: "See Ultra", txt: "✨ Ultra unlocks every model, 100 messages an hour, 100 file attachments and 50 images. Get sorted!", go: function(){ openPlans("ultra"); }}
 ];
@@ -3573,7 +3645,7 @@ var MODEL_INFO = {
   nova: {n: "Nova 5.5", d: "Most efficient, for the simplest tasks"},
   nuvida: {n: "Nuvida 5.5", d: "For complex tasks and everyday work"},
   hiaru: {n: "Hiaru 5.1", d: "For your toughest challenges and office work: documents, files and data analysis"},
-  smart: {n: "Smart 5.5", d: "For education and learning"},
+  smart: {n: "Omni smart", d: "For education: Study Center with exams, notes, flashcards, timetable and stories"},
   tyra: {n: "Tyra", d: "For research and Deep search"}
 };
 var PLAN_DATA = {
@@ -3581,7 +3653,7 @@ var PLAN_DATA = {
   go: {n: "Go", msg: 60, file: 50, img: 10, tts: 40, m: 70, y: 840, models: ["nuvida"]},
   premium: {n: "Premium", msg: 55, file: 45, img: 7, tts: 35, m: 50, y: 600, models: ["tyra"], extras: ["Deep search: many sources, one cited report"]},
   pro: {n: "Pro", msg: 75, file: 65, img: 15, tts: 40, m: 120, y: 1440, models: ["hiaru"], extras: ["Data analysis for CSV and Excel files, with charts", "Office work: documents, files and data"]},
-  learnover: {n: "Learnover", msg: 85, file: 75, img: 20, tts: 80, m: 150, y: 1800, models: ["smart"], extras: ["Made for students: Smart 5.5 teaches step by step"]},
+  learnover: {n: "Learnover", msg: 85, file: 75, img: 20, tts: 80, m: 150, y: 1800, models: ["smart"], extras: ["Study Center: exams that Nesty marks, notes, flashcards, timetable, stories, novellas and novels", "Progress charts with friendly tips"]},
   ultra: {n: "Ultra", msg: 100, file: 100, img: 50, tts: 120, m: 599, y: 7188, models: ["neptune", "nova", "nuvida", "hiaru", "smart", "tyra"], extras: ["All six models, you choose", "Deep search and data analysis with charts", "The biggest limits"]}
 };
 function modelName(id){ return MODEL_INFO[id] ? MODEL_INFO[id].n : id; }
@@ -3595,12 +3667,19 @@ function allowedModels(){ return (me && me.models && me.models.length) ? me.mode
 function activeModel(){ var a = allowedModels(), s = lsGet("nestyModel", ""); return a.indexOf(s) > -1 ? s : a[0]; }
 function drawModelTag(){
   var mt = $("mtag");
-  if(!mt) return;
-  var a = allowedModels();
-  mt.textContent = modelName(activeModel()) + (a.length > 1 ? " ▾" : "");
-  mt.style.background = curPlan() === "ultra" ? "#7c3aed" : "#1a56db";
+  if(!mt){ syncModes(); return; }
+  var a = allowedModels(), multi = a.length > 1;
+  mt.textContent = (multi ? "\u21c4 " : "") + modelName(activeModel()) + (multi ? " \u25be" : "");
+  mt.className = "mtag" + (multi ? " multi" : "") + (multi && lsGet("nestyModelSeen", "") !== "1" ? " hint" : "");
+  mt.style.background = multi ? "" : (curPlan() === "ultra" ? "#7c3aed" : "#1a56db");
+  syncModes();
+  if(multi && me && lsGet("nestyModelToast", "") !== "1" && $("app") && $("app").style.display !== "none"){
+    lsSet("nestyModelToast", "1");
+    setTimeout(function(){ toast("Tip: tap the model name at the top to switch models"); }, 2500);
+  }
 }
 function openModelMenu(){
+  lsSet("nestyModelSeen", "1"); var mtg = $("mtag"); if(mtg) mtg.classList.remove("hint");
   var a = allowedModels(), cur = activeModel();
   if(a.length < 2){ toast(modelName(cur) + ": " + MODEL_INFO[cur].d + "."); return; }
   var h = "";
@@ -3612,7 +3691,7 @@ function openModelMenu(){
   $("modelSheet").style.display = "flex";
 }
 function closeModelMenu(){ $("modelSheet").style.display = "none"; }
-function pickModel(id){ lsSet("nestyModel", id); drawModelTag(); closeModelMenu(); toast("Now using " + modelName(id)); }
+function pickModel(id){ lsSet("nestyModel", id); drawModelTag(); closeModelMenu(); toast(id === "smart" ? "Omni smart is on. Tap Study Center above the message box \ud83c\udf93" : "Now using " + modelName(id)); }
 var me = null, plansOpen = false, plansFocus = "", promoTimer = null;
 function money(n){ return "KSh " + String(n).replace(/\B(?=(\d{3})+(?!\d))/g, ","); }
 function curPlan(){ return (me && PLAN_DATA[me.plan]) ? me.plan : "free"; }
@@ -3739,15 +3818,13 @@ async function redeemCode(){
   }
   $("actBtn").disabled = false;
 }
-async function changePassword(){
-  var op = $("pwOld").value, np = $("pwNew").value, nc = $("pwNew2").value;
-  if(!op){ sMsg(L("e_oldpw")); return; }
-  if(pwProblem(np)){ sMsg(L("e_rules")); return; }
-  if(np !== nc){ sMsg(L("e_match")); return; }
+async function emailReset(){
+  var em = user && user.email;
+  if(!em){ sMsg(L("e_need_email")); return; }
   try{
-    await account.updatePassword(np, op);
-    $("pwOld").value = ""; $("pwNew").value = ""; $("pwNew2").value = "";
-    sMsg(L("pw_ok"));
+    lsSet("nestyResetEmail", em);
+    await account.createRecovery(em, location.origin + "/?reset=1");
+    sMsg("We sent a reset link to " + em + ". Open it to choose a new password.");
   }catch(e){
     sMsg((e && e.message) || "error");
   }
@@ -3764,13 +3841,32 @@ function saveBlob(blob, name){
   document.body.appendChild(a); a.click(); a.remove();
   setTimeout(function(){ URL.revokeObjectURL(url); }, 3000);
 }
+var MS_FONTS = ["Calibri","Times New Roman","Arial","Cambria","Georgia","Verdana","Tahoma","Courier New","Segoe UI","Garamond","Century Gothic","Trebuchet MS","Book Antiqua","Comic Sans MS","Consolas","Aptos","Arial Narrow","Palatino Linotype","Lucida Console","Impact"];
+function safeFont(f, def){
+  f = String(f || "").toLowerCase().replace(/[^a-z ]/g, "").trim();
+  for(var i = 0; i < MS_FONTS.length; i++){ if(MS_FONTS[i].toLowerCase() === f) return MS_FONTS[i]; }
+  return def;
+}
+/* Optional first lines such as "@font: Times New Roman" in a file block. */
+function fileOpts(t){
+  var lines = String(t || "").split("\n"), o = {}, i = 0;
+  while(i < lines.length){
+    var m = /^@(\w+)\s*:\s*(.+?)\s*$/.exec(lines[i]);
+    if(m){ o[m[1].toLowerCase()] = m[2]; i++; }
+    else if(i === 0 && lines[i].trim() === ""){ i++; }
+    else break;
+  }
+  return {opts: o, text: lines.slice(i).join("\n")};
+}
 function docTitle(md){
   var m = /^#\s+(.+)$/m.exec(md);
   var t = (m ? m[1] : "nesty-document").replace(/[^\w\- ]+/g, "").trim().replace(/\s+/g, "-").slice(0, 50);
   return t || "nesty-document";
 }
 function docHtml(md){
-  var css = "body{font-family:Calibri,Arial,sans-serif;font-size:11pt;line-height:1.4;color:#000}h2{font-size:20pt;margin:14pt 0 6pt}h3{font-size:15pt;margin:12pt 0 4pt}h4{font-size:12pt;margin:10pt 0 4pt}table{border-collapse:collapse;width:100%}td,th{border:1px solid #444;padding:6px;vertical-align:top}th{background:#e8e8e8}p{margin:0 0 8pt}";
+  var fo = fileOpts(md); md = fo.text;
+  var ff = safeFont(fo.opts.font, "Calibri"), fz = Math.max(8, Math.min(28, parseInt(fo.opts.size, 10) || 11));
+  var css = "body{font-family:'" + ff + "',Calibri,Arial,sans-serif;font-size:" + fz + "pt;line-height:1.4;color:#000}h2,h3,h4{font-family:inherit}h2{font-size:20pt;margin:14pt 0 6pt}h3{font-size:15pt;margin:12pt 0 4pt}h4{font-size:12pt;margin:10pt 0 4pt}table{border-collapse:collapse;width:100%}td,th{border:1px solid #444;padding:6px;vertical-align:top}th{background:#e8e8e8}p{margin:0 0 8pt}";
   return '<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:w="urn:schemas-microsoft-com:office:word" xmlns="http://www.w3.org/TR/REC-html40"><head><meta charset="utf-8"><title>' + esc(docTitle(md)) + '</title><style>' + css + '</style></head><body>' + mdToHtml(md) + '</body></html>';
 }
 function downloadWord(md){
@@ -3802,6 +3898,7 @@ function parseCsv(t){
   return rows;
 }
 function parseSheets(t){
+  var fo = fileOpts(t); t = fo.text;
   var sheets = [], cur = {name: "Sheet1", lines: []};
   t.split("\n").forEach(function(l){
     var m = /^##\s+(.+)$/.exec(l);
@@ -3809,29 +3906,49 @@ function parseSheets(t){
     else cur.lines.push(l);
   });
   if(cur.lines.length) sheets.push(cur);
-  return sheets.map(function(s){ return {name: s.name, rows: parseCsv(s.lines.join("\n").trim())}; });
+  var out = sheets.map(function(s){ return {name: s.name, rows: parseCsv(s.lines.join("\n").trim())}; });
+  out.opts = fo.opts;
+  return out;
 }
 function csvTable(t){
-  return parseSheets(t).map(function(s){
+  var all = parseSheets(t), o = all.opts || {}, f = safeFont(o.font, ""), bd = /^(all|yes|true|on|thin|grid|borders?)$/i.test(o.borders || "");
+  var st = (f ? "font-family:'" + f + "';" : "") + (bd ? "border:1px solid #444;" : "");
+  return all.map(function(s){
     var h = "<table>";
     s.rows.forEach(function(r, i){
-      h += "<tr>" + r.map(function(c){ return (i === 0 ? "<th>" : "<td>") + esc(c) + (i === 0 ? "</th>" : "</td>"); }).join("") + "</tr>";
+      h += "<tr>" + r.map(function(c){ return (i === 0 ? "<th" : "<td") + (st ? ' style="' + st + '"' : "") + ">" + esc(c) + (i === 0 ? "</th>" : "</td>"); }).join("") + "</tr>";
     });
     return h + "</table>";
   }).join("");
 }
 async function downloadSheet(csv){
-  var sheets = parseSheets(csv);
+  var sheets = parseSheets(csv), o = sheets.opts || {};
+  var font = safeFont(o.font, "Calibri"), sz = Math.max(8, Math.min(24, parseInt(o.size, 10) || 11));
+  var borders = /^(all|yes|true|on|thin|grid|borders?)$/i.test(o.borders || ""), hdr = !/^(none|no|off|false)$/i.test(o.header || "bold");
   try{
-    await loadScript("https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js");
+    try{ await loadScript("https://cdn.jsdelivr.net/npm/xlsx-js-style@1.2.0/dist/xlsx.bundle.js"); }
+    catch(e1){ await loadScript("https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"); }
     var wb = XLSX.utils.book_new();
     sheets.forEach(function(sh){
       var data = sh.rows.map(function(r){ return r.map(function(c){ return (/^-?\d+(\.\d+)?$/.test(c) ? Number(c) : c); }); });
-      var ws = XLSX.utils.aoa_to_sheet(data);
+      var ws = XLSX.utils.aoa_to_sheet(data), widths = [];
       Object.keys(ws).forEach(function(k){
+        if(k.charAt(0) === "!") return;
         var cell = ws[k];
-        if(k.charAt(0) !== "!" && cell && typeof cell.v === "string" && cell.v.charAt(0) === "="){ cell.f = cell.v.slice(1); delete cell.v; cell.t = "n"; }
+        if(!cell) return;
+        if(typeof cell.v === "string" && cell.v.charAt(0) === "="){ cell.f = cell.v.slice(1); delete cell.v; cell.t = "n"; }
+        var ref = XLSX.utils.decode_cell(k);
+        var len = String(cell.v == null ? "0000000000" : cell.v).length;
+        widths[ref.c] = Math.max(widths[ref.c] || 8, Math.min(60, len + 3));
+        var st = {font: {name: font, sz: sz, bold: ref.r === 0 && hdr}, alignment: {vertical: "center", wrapText: true}};
+        if(borders){
+          var b = {style: "thin", color: {rgb: "000000"}};
+          st.border = {top: b, bottom: b, left: b, right: b};
+          if(ref.r === 0 && hdr) st.fill = {patternType: "solid", fgColor: {rgb: "D9E1F2"}};
+        }
+        cell.s = st;
       });
+      ws["!cols"] = widths.map(function(w){ return {wch: w || 8}; });
       XLSX.utils.book_append_sheet(wb, ws, sh.name);
     });
     XLSX.writeFile(wb, "nesty-sheet.xlsx");
@@ -3985,5 +4102,7 @@ applyLang();
 init();
 </script>
 <script src="/notify.js"></script>
+<script src="/study.js"></script>
+<script src="/help.js"></script>
 </body>
 </html>

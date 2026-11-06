@@ -12,7 +12,7 @@ const ICONS = {
 
 /* ---------- Plans (the server is the only place these limits are enforced) ---------- */
 const WINDOW_MS = 1 * 60 * 60 * 1000; // every usage window is 1 hour
-const MODELS = { neptune: "NEPTUNE 5.5", nova: "Nova 5.5", nuvida: "Nuvida 5.5", hiaru: "Hiaru 5.1", smart: "Smart 5.5", tyra: "Tyra" };
+const MODELS = { neptune: "NEPTUNE 5.5", nova: "Nova 5.5", nuvida: "Nuvida 5.5", hiaru: "Hiaru 5.1", smart: "Omni smart", tyra: "Tyra" };
 const PLANS = {
   free: { name: "Free", msg: 40, file: 30, img: 6, tts: 12, models: ["neptune", "nova"], deep: false, data: false },
   go: { name: "Go", msg: 60, file: 50, img: 10, tts: 40, models: ["nuvida"], deep: false, data: false },
@@ -318,6 +318,9 @@ async function handleChat(request, env, ctx) {
   delete body.planInfo;
   delete body.policyText;
   delete body.usageInfo;
+  delete body.help;
+  const wantSc = body.sc === true;
+  delete body.sc;
   body.uid = user.$id;
 
   let plan = { plan: "free", expiresAt: 0 };
@@ -344,6 +347,7 @@ async function handleChat(request, env, ctx) {
     }
     const wantM = String(body.model || "");
     const chosen = lim.models.indexOf(wantM) > -1 ? wantM : lim.models[0];
+    if (wantSc && chosen === "smart") body.sc = true; // Study Center tasks only run on Omni smart
     body.planInfo = {
       plan: plan.plan,
       model: chosen,
@@ -609,6 +613,43 @@ async function handleFeedback(request, env) {
   return json({ ok: true });
 }
 
+/* ---------- Help center assistant (limited questions per day, separate from chat messages) ---------- */
+const HELP_LIMIT = 10;
+async function handleHelp(request, env, ctx) {
+  const auth = await needUser(request);
+  if (auth.res) return auth.res;
+  const user = auth.user;
+  let b = {};
+  try { b = await request.json(); } catch (e) {}
+  const msgs = (Array.isArray(b.messages) ? b.messages : []).slice(-6).map(function (m) {
+    return { role: m && m.role === "assistant" ? "assistant" : "user", content: String((m && m.content) || "").slice(0, 500) };
+  }).filter(function (m) { return m.content; });
+  if (!msgs.length || msgs[msgs.length - 1].role !== "user") return json({ error: "Please type a question." }, 400);
+  let hs = null;
+  let used = 0;
+  if (env.LIMITER) {
+    hs = stub(env, "help|" + user.$id);
+    const r = await hs.hit(HELP_LIMIT, 24 * 60 * 60 * 1000);
+    if (!r.ok) return json({ limited: true, resetAt: r.resetAt, left: 0 });
+    used = r.used;
+  }
+  const body = { help: true, stream: false, uid: user.$id, messages: msgs, planInfo: { model: "nova" } };
+  const pt = await getPolicyText(env, new URL(request.url).origin);
+  if (pt.privacy || pt.terms) body.policyText = { privacy: pt.privacy, terms: pt.terms };
+  try {
+    const res = await onRequestPost({ request: new Request(request.url, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) }), env: env, ctx: ctx });
+    const d = await res.clone().json();
+    if (!d.via || !d.reply) {
+      if (hs) await hs.refund();
+      return json({ error: "The Help assistant is busy. Please try again, or email us." });
+    }
+    return json({ reply: d.reply, left: Math.max(0, HELP_LIMIT - used) });
+  } catch (e) {
+    if (hs) await hs.refund();
+    return json({ error: "The Help assistant is busy. Please try again, or email us." });
+  }
+}
+
 /* ---------- Where the user is (only after they press the button and allow it) ---------- */
 function joinPlace(list) {
   const seen = {};
@@ -688,6 +729,7 @@ export default {
       },
       "/api/me": function () { return handleMe(request, env); },
       "/api/place": function () { return handlePlace(request, env); },
+      "/api/help": function () { return handleHelp(request, env, ctx); },
       "/api/tts": function () { return handleTts(request, env); },
       "/api/redeem": function () { return handleRedeem(request, env); },
       "/api/admin/generate": function () { return handleAdmin(request, env, "generate"); },
