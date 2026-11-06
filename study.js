@@ -1,61 +1,61 @@
-/* Nesty Study Center (shown for the Omni smart model). Golden yellow + sky blue, only inside this screen. */
+/* Nesty Study Center (shown for the Omni smart model). Golden yellow + white, only inside this screen. */
 (function () {
   "use strict";
   if (window.openStudyCenter) return;
 
   var CSS = "" +
-    "#sc{display:none;position:fixed;inset:0;z-index:90;flex-direction:column;background:linear-gradient(180deg,#fff6d6 0,#eaf7ff 220px,#f4fbff 100%);color:#16324f;font-family:inherit}" +
+    "#sc{display:none;position:fixed;inset:0;z-index:90;flex-direction:column;background:#ffe9a8;color:#3a2a00;font-family:inherit}" +
     "#sc *{box-sizing:border-box}" +
-    "#sc .top{display:flex;align-items:center;gap:10px;padding:10px 14px;background:linear-gradient(135deg,#ffc933,#ffe08a 55%,#8fd3f7);box-shadow:0 2px 10px rgba(22,50,79,.18)}" +
-    "#sc .top b{font-size:18px;color:#16324f}#sc .top small{display:block;font-size:11.5px;color:#34506b}" +
+    "#sc .top{display:flex;align-items:center;gap:10px;padding:10px 14px;background:#ffc933;box-shadow:0 2px 10px rgba(120,80,0,.18)}" +
+    "#sc .top b{font-size:18px;color:#3a2a00}#sc .top small{display:block;font-size:11.5px;color:#6b4a00}" +
     "#sc .top .sp{flex:1}" +
-    "#sc .ib{background:#fff;border:0;border-radius:50%;width:36px;height:36px;font-size:17px;color:#16324f;box-shadow:0 1px 4px rgba(0,0,0,.2)}" +
+    "#sc .ib{background:#fff;border:0;border-radius:50%;width:36px;height:36px;font-size:17px;color:#3a2a00;box-shadow:0 1px 4px rgba(0,0,0,.2)}" +
     "#scMain{flex:1;overflow-y:auto;padding:14px 14px 90px;max-width:760px;width:100%;margin:0 auto}" +
-    "#scNav{display:flex;background:#fff;border-top:2px solid #ffc933;box-shadow:0 -2px 10px rgba(22,50,79,.1);overflow-x:auto}" +
-    "#scNav button{flex:1;min-width:62px;background:none;border:0;padding:7px 2px 6px;font-size:10.5px;color:#4b6781;font-weight:600;font-family:inherit}" +
+    "#scNav{display:flex;background:#fff;border-top:2px solid #ffc933;box-shadow:0 -2px 10px rgba(120,80,0,.1);overflow-x:auto}" +
+    "#scNav button{flex:1;min-width:62px;background:none;border:0;padding:7px 2px 6px;font-size:10.5px;color:#7a5c14;font-weight:600;font-family:inherit}" +
     "#scNav button i{display:block;font-style:normal;font-size:19px;line-height:1.2}" +
-    "#scNav button.on{color:#0d6fb8;background:linear-gradient(180deg,#fff3c4,#fff)}" +
-    "#sc h2{margin:2px 0 4px;font-size:21px;color:#16324f}#sc h3{margin:14px 0 6px;font-size:16px;color:#16324f}" +
-    "#sc p{line-height:1.5}.scm{color:#4b6781;font-size:13.5px}" +
-    "#sc .card{background:#fff;border:1.5px solid #bfe3f8;border-radius:16px;padding:13px;margin:10px 0;box-shadow:0 2px 8px rgba(30,110,170,.08)}" +
-    "#sc .card.gold{border-color:#ffd566;background:linear-gradient(135deg,#fffbe8,#fff)}" +
-    "#sc label{display:block;font-size:12.5px;font-weight:700;color:#34506b;margin:10px 0 3px}" +
-    "#sc input,#sc select,#sc textarea{width:100%;font:inherit;font-size:15px;padding:10px 11px;border:1.5px solid #9fd4f1;border-radius:11px;background:#fff;color:#16324f}" +
+    "#scNav button.on{color:#b36b00;background:#ffe9a8}" +
+    "#sc h2{margin:2px 0 4px;font-size:21px;color:#3a2a00}#sc h3{margin:14px 0 6px;font-size:16px;color:#3a2a00}" +
+    "#sc p{line-height:1.5}.scm{color:#7a5c14;font-size:13.5px}" +
+    "#sc .card{background:#fff4c8;border:1.5px solid #ffe08a;border-radius:16px;padding:13px;margin:10px 0;box-shadow:0 2px 8px rgba(200,140,0,.12)}" +
+    "#sc .card.gold{border-color:#ffd566;background:#ffe08a}" +
+    "#sc label{display:block;font-size:12.5px;font-weight:700;color:#6b4a00;margin:10px 0 3px}" +
+    "#sc input,#sc select,#sc textarea{width:100%;font:inherit;font-size:15px;padding:10px 11px;border:1.5px solid #f2c94c;border-radius:11px;background:#fff;color:#3a2a00}" +
     "#sc textarea{min-height:84px;resize:vertical}#sc input:focus,#sc select:focus,#sc textarea:focus{outline:0;border-color:#ffb800;box-shadow:0 0 0 3px #ffe9a3}" +
     "#sc .g2{display:grid;grid-template-columns:1fr 1fr;gap:10px}" +
-    ".scb{display:inline-block;background:linear-gradient(135deg,#ffc933,#ffb300);color:#3a2a00;border:0;border-radius:12px;padding:11px 16px;font-weight:800;font-size:14.5px;margin:10px 8px 0 0;font-family:inherit;box-shadow:0 2px 6px rgba(200,140,0,.35)}" +
-    ".scb.blue{background:linear-gradient(135deg,#6ec6f5,#3aa7e6);color:#06304f;box-shadow:0 2px 6px rgba(30,110,170,.3)}" +
-    ".scb.ghost{background:#fff;border:1.5px solid #9fd4f1;color:#0d6fb8;box-shadow:none}" +
+    ".scb{display:inline-block;background:#ffc933;color:#3a2a00;border:0;border-radius:12px;padding:11px 16px;font-weight:800;font-size:14.5px;margin:10px 8px 0 0;font-family:inherit;box-shadow:0 2px 6px rgba(200,140,0,.35)}" +
+    ".scb.blue{background:#ffe27a;color:#3a2a00;box-shadow:0 2px 6px rgba(200,140,0,.3)}" +
+    ".scb.ghost{background:#fff;border:1.5px solid #f2c94c;color:#b36b00;box-shadow:none}" +
     ".scb.sm{padding:7px 11px;font-size:13px;margin:6px 6px 0 0}.scb:disabled{opacity:.55}" +
     "#sc .tiles{display:grid;grid-template-columns:1fr 1fr;gap:10px}" +
-    "#sc .tile{background:#fff;border:1.5px solid #bfe3f8;border-radius:16px;padding:14px 10px;text-align:center;font-weight:700;color:#16324f;font-family:inherit}" +
-    "#sc .tile i{display:block;font-style:normal;font-size:28px;margin-bottom:4px}#sc .tile small{display:block;font-weight:500;color:#5a738b;font-size:12px}" +
-    "#sc .tile:nth-child(odd){background:linear-gradient(135deg,#fff8dc,#fff)}" +
-    "#sc .bar{height:12px;background:#e2f3fc;border-radius:8px;overflow:hidden}#sc .bar i{display:block;height:100%;background:linear-gradient(90deg,#ffc933,#ffb300);border-radius:8px}" +
-    "#sc .opt{display:block;width:100%;text-align:left;background:#f3faff;border:1.5px solid #bfe3f8;border-radius:11px;padding:10px 12px;margin-top:7px;color:#16324f;font-family:inherit;font-size:14.5px}" +
+    "#sc .tile{background:#fff4c8;border:1.5px solid #ffe08a;border-radius:16px;padding:14px 10px;text-align:center;font-weight:700;color:#3a2a00;font-family:inherit}" +
+    "#sc .tile i{display:block;font-style:normal;font-size:28px;margin-bottom:4px}#sc .tile small{display:block;font-weight:500;color:#8a6d1f;font-size:12px}" +
+    "#sc .tile:nth-child(odd){background:#ffe08a}" +
+    "#sc .bar{height:12px;background:#fff3c4;border-radius:8px;overflow:hidden}#sc .bar i{display:block;height:100%;background:#ffc933;border-radius:8px}" +
+    "#sc .opt{display:block;width:100%;text-align:left;background:#fffbec;border:1.5px solid #ffe08a;border-radius:11px;padding:10px 12px;margin-top:7px;color:#3a2a00;font-family:inherit;font-size:14.5px}" +
     "#sc .opt.on{background:#fff0b8;border-color:#ffb800;font-weight:700}#sc .opt.ok{background:#dff6e4;border-color:#4caf6a}#sc .opt.bad{background:#fde3e3;border-color:#e57373}" +
-    "#sc .pill{display:inline-block;padding:2px 9px;border-radius:20px;font-size:12px;font-weight:700;background:#e2f3fc;color:#0d6fb8;margin-right:5px}" +
+    "#sc .pill{display:inline-block;padding:2px 9px;border-radius:20px;font-size:12px;font-weight:700;background:#fff3c4;color:#b36b00;margin-right:5px}" +
     "#sc .pill.y{background:#fff0b8;color:#7a5200}#sc .pill.g{background:#dff6e4;color:#256b3b}#sc .pill.r{background:#fde3e3;color:#a63a3a}" +
     "#sc table.tt{border-collapse:collapse;width:100%;font-size:13.5px;background:#fff}" +
-    "#sc table.tt td,#sc table.tt th{border:1.5px solid #8fcdee;padding:7px 6px;min-width:76px;vertical-align:top;outline:0}" +
-    "#sc table.tt th{background:#ffe08a;color:#16324f}#sc table.tt td:first-child{background:#eaf7ff;font-weight:700}" +
+    "#sc table.tt td,#sc table.tt th{border:1.5px solid #f2c94c;padding:7px 6px;min-width:76px;vertical-align:top;outline:0}" +
+    "#sc table.tt th{background:#ffe08a;color:#3a2a00}#sc table.tt td:first-child{background:#fff8e1;font-weight:700}" +
     "#sc table.tt .sel{background:#fff6c9!important;box-shadow:inset 0 0 0 2px #ffb300}" +
     "#sc .ttw{overflow-x:auto;border-radius:12px}" +
-    "#sc .note{background:#fff;border:1.5px solid #ffd566;border-radius:14px;padding:12px 14px;line-height:1.55}" +
-    "#sc .note h1,#sc .note h2,#sc .note h3{color:#0d6fb8;margin:12px 0 4px}#sc .note code{background:#fff3c4;padding:0 4px;border-radius:4px}" +
+    "#sc .note{background:#fff4c8;border:1.5px solid #ffd566;border-radius:14px;padding:12px 14px;line-height:1.55}" +
+    "#sc .note h1,#sc .note h2,#sc .note h3{color:#b36b00;margin:12px 0 4px}#sc .note code{background:#fff3c4;padding:0 4px;border-radius:4px}" +
     "#sc .story p{font-size:16px;line-height:1.7;margin:0 0 12px}" +
-    "#sc .flash{min-height:190px;display:flex;align-items:center;justify-content:center;text-align:center;font-size:19px;font-weight:700;padding:20px;border-radius:20px;background:linear-gradient(135deg,#fff3c4,#d9f1ff);border:2px solid #ffc933;color:#16324f;width:100%;font-family:inherit}" +
-    "#sc .flash.back{background:linear-gradient(135deg,#d9f1ff,#fff3c4);border-color:#6ec6f5}" +
+    "#sc .flash{min-height:190px;display:flex;align-items:center;justify-content:center;text-align:center;font-size:19px;font-weight:700;padding:20px;border-radius:20px;background:#ffe27a;border:2px solid #f5b700;color:#3a2a00;width:100%;font-family:inherit}" +
+    "#sc .flash.back{background:#ffd24d;border-color:#f5b700}" +
     "#sc .row{display:flex;align-items:center;gap:8px}#sc .row .sp{flex:1}" +
-    "#sc .li{display:flex;align-items:center;gap:8px;padding:9px 0;border-bottom:1px solid #e3f2fb}#sc .li:last-child{border:0}" +
+    "#sc .li{display:flex;align-items:center;gap:8px;padding:9px 0;border-bottom:1px solid #fdecb5}#sc .li:last-child{border:0}" +
     "#sc .li .t{flex:1;min-width:0}#sc .li .t b{display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}" +
-    "#sc img.qi{max-width:100%;border-radius:12px;margin:8px 0;border:1.5px solid #bfe3f8}" +
-    "#scBusy{display:none;position:absolute;inset:0;background:rgba(244,251,255,.88);z-index:5;align-items:center;justify-content:center;flex-direction:column;text-align:center;padding:30px;font-weight:700}" +
-    "#scBusy .sp{width:46px;height:46px;border-radius:50%;border:5px solid #ffe08a;border-top-color:#3aa7e6;animation:scSpin 1s linear infinite;margin-bottom:12px}" +
+    "#sc img.qi{max-width:100%;border-radius:12px;margin:8px 0;border:1.5px solid #ffe08a}" +
+    "#scBusy{display:none;position:absolute;inset:0;background:rgba(255,253,245,.9);z-index:5;align-items:center;justify-content:center;flex-direction:column;text-align:center;padding:30px;font-weight:700}" +
+    "#scBusy .sp{width:46px;height:46px;border-radius:50%;border:5px solid #ffe08a;border-top-color:#f5b700;animation:scSpin 1s linear infinite;margin-bottom:12px}" +
     "@keyframes scSpin{to{transform:rotate(360deg)}}" +
-    "#scSheet{display:none;position:absolute;inset:0;background:rgba(10,40,70,.45);z-index:6;align-items:flex-end;justify-content:center}" +
+    "#scSheet{display:none;position:absolute;inset:0;background:rgba(60,40,0,.45);z-index:6;align-items:flex-end;justify-content:center}" +
     "#scSheet .box{background:#fff;width:100%;max-width:560px;border-radius:20px 20px 0 0;padding:18px;border-top:4px solid #ffc933}" +
-    "#scBtn{background:linear-gradient(135deg,#ffc933,#8fd3f7)!important;color:#16324f!important;border:0!important;font-weight:800;animation:scPulse 2.2s ease-in-out infinite}" +
+    "#scBtn{background:#ffc933!important;color:#3a2a00!important;border:0!important;font-weight:800;animation:scPulse 2.2s ease-in-out infinite}" +
     "@keyframes scPulse{0%,100%{box-shadow:0 0 0 0 rgba(255,190,0,.55)}50%{box-shadow:0 0 0 7px rgba(255,190,0,0)}}";
 
   var S = null, TAB = "home", root = null;
@@ -164,16 +164,16 @@
   function lvl(p) { return p >= 75 ? ["Strong", "g"] : p >= 50 ? ["Getting there", "y"] : ["Needs love", "r"]; }
   function md(t) { try { return mdToHtml(String(t || "")); } catch (e) { return "<p>" + E(t) + "</p>"; } }
   function donut(parts) {
-    var tot = parts.reduce(function (a, p) { return a + p.v; }, 0) || 1, C = 2 * Math.PI * 38, off = 0, s = '<svg viewBox="0 0 100 100" width="150" height="150"><circle cx="50" cy="50" r="38" fill="none" stroke="#e2f3fc" stroke-width="16"/>';
+    var tot = parts.reduce(function (a, p) { return a + p.v; }, 0) || 1, C = 2 * Math.PI * 38, off = 0, s = '<svg viewBox="0 0 100 100" width="150" height="150"><circle cx="50" cy="50" r="38" fill="none" stroke="#fff3c4" stroke-width="16"/>';
     parts.forEach(function (p) { var len = C * p.v / tot; if (p.v > 0) s += '<circle cx="50" cy="50" r="38" fill="none" stroke="' + p.c + '" stroke-width="16" stroke-dasharray="' + len.toFixed(2) + " " + (C - len).toFixed(2) + '" stroke-dashoffset="' + (-off).toFixed(2) + '" transform="rotate(-90 50 50)"/>'; off += len; });
-    return s + '<text x="50" y="55" text-anchor="middle" font-size="16" font-weight="800" fill="#16324f">' + Math.round(100 * (parts[0] ? parts[0].v : 0) / tot) + '%</text></svg>';
+    return s + '<text x="50" y="55" text-anchor="middle" font-size="16" font-weight="800" fill="#3a2a00">' + Math.round(100 * (parts[0] ? parts[0].v : 0) / tot) + '%</text></svg>';
   }
   function lineChart(vals) {
     var W = 300, H = 140, p = 18, n = vals.length, pts = vals.map(function (v, i) { return [p + (n < 2 ? (W - 2 * p) / 2 : i * (W - 2 * p) / (n - 1)), H - p - (H - 2 * p) * v / 100]; });
-    var s = '<svg viewBox="0 0 ' + W + " " + H + '" width="100%"><rect width="' + W + '" height="' + H + '" rx="12" fill="#f3faff"/>';
-    [0, 50, 100].forEach(function (g) { var y = H - p - (H - 2 * p) * g / 100; s += '<line x1="' + p + '" x2="' + (W - p) + '" y1="' + y + '" y2="' + y + '" stroke="#cfe9f8" stroke-dasharray="3 3"/><text x="2" y="' + (y + 3) + '" font-size="8" fill="#5a738b">' + g + '</text>'; });
+    var s = '<svg viewBox="0 0 ' + W + " " + H + '" width="100%"><rect width="' + W + '" height="' + H + '" rx="12" fill="#fffbec"/>';
+    [0, 50, 100].forEach(function (g) { var y = H - p - (H - 2 * p) * g / 100; s += '<line x1="' + p + '" x2="' + (W - p) + '" y1="' + y + '" y2="' + y + '" stroke="#f3e2a8" stroke-dasharray="3 3"/><text x="2" y="' + (y + 3) + '" font-size="8" fill="#8a6d1f">' + g + '</text>'; });
     s += '<polyline fill="none" stroke="#ffb300" stroke-width="3" stroke-linejoin="round" points="' + pts.map(function (q) { return q[0].toFixed(1) + "," + q[1].toFixed(1); }).join(" ") + '"/>';
-    pts.forEach(function (q, i) { s += '<circle cx="' + q[0].toFixed(1) + '" cy="' + q[1].toFixed(1) + '" r="4.5" fill="#3aa7e6" stroke="#fff" stroke-width="2"/><text x="' + q[0].toFixed(1) + '" y="' + (q[1] - 8).toFixed(1) + '" font-size="8" text-anchor="middle" fill="#16324f">' + Math.round(vals[i]) + '</text>'; });
+    pts.forEach(function (q, i) { s += '<circle cx="' + q[0].toFixed(1) + '" cy="' + q[1].toFixed(1) + '" r="4.5" fill="#b36b00" stroke="#fff" stroke-width="2"/><text x="' + q[0].toFixed(1) + '" y="' + (q[1] - 8).toFixed(1) + '" font-size="8" text-anchor="middle" fill="#3a2a00">' + Math.round(vals[i]) + '</text>'; });
     return s + "</svg>";
   }
   function stats() {
@@ -241,7 +241,7 @@
     return h + '<button class="scb" data-a="submitExam">Submit and mark</button>';
   };
   V.result = function () {
-    var ex = cur.res, h = '<div class="card gold" style="text-align:center"><div class="scm">' + E(ex.topic) + ' · ' + E(ex.grade) + '</div><div style="font-size:46px;font-weight:900;color:#0d6fb8">' + ex.pct + '%</div><span class="pill y" style="font-size:15px">Grade ' + letter(ex.pct) + '</span><div class="scm" style="margin-top:6px">' + ex.got + ' / ' + ex.max + ' marks</div></div>' +
+    var ex = cur.res, h = '<div class="card gold" style="text-align:center"><div class="scm">' + E(ex.topic) + ' · ' + E(ex.grade) + '</div><div style="font-size:46px;font-weight:900;color:#b36b00">' + ex.pct + '%</div><span class="pill y" style="font-size:15px">Grade ' + letter(ex.pct) + '</span><div class="scm" style="margin-top:6px">' + ex.got + ' / ' + ex.max + ' marks</div></div>' +
       '<div class="card"><b>💬 Nesty says</b><p>' + E(ex.comment) + '</p></div>';
     ex.items.forEach(function (q, i) {
       var m = ex.marks[i], ok = m.got >= m.max * 0.99, part = !ok && m.got > 0;
@@ -320,9 +320,9 @@
     var s = load(), st = stats();
     if (!s.exams.length) return '<h2>📊 My progress</h2><div class="card gold"><p>No exams yet. Take your first exam and your analysis will appear here: your score, a pie chart, a graph and tips on where to improve.</p><button class="scb" data-a="tab" data-v="exams">Take an exam</button></div>';
     var h = '<h2>📊 My progress</h2><div class="tiles"><div class="card gold" style="text-align:center;margin:0"><div style="font-size:28px;font-weight:900">' + s.exams.length + '</div><div class="scm">exams taken</div></div><div class="card gold" style="text-align:center;margin:0"><div style="font-size:28px;font-weight:900">' + st.avg + '%</div><div class="scm">average (best ' + st.best + '%)</div></div></div>' +
-      '<div class="card"><b>Answers overview</b><div class="row" style="margin-top:6px"><div>' + donut([{ v: st.right, c: "#ffb300" }, { v: st.part, c: "#6ec6f5" }, { v: st.wrong, c: "#e57373" }]) + '</div><div class="scm" style="line-height:1.9"><span class="pill y">●</span>Correct ' + st.right + '<br><span class="pill">●</span>Partly ' + st.part + '<br><span class="pill r">●</span>Missed ' + st.wrong + '</div></div></div>' +
+      '<div class="card"><b>Answers overview</b><div class="row" style="margin-top:6px"><div>' + donut([{ v: st.right, c: "#f5b700" }, { v: st.part, c: "#b36b00" }, { v: st.wrong, c: "#e57373" }]) + '</div><div class="scm" style="line-height:1.9"><span class="pill y">●</span>Correct ' + st.right + '<br><span class="pill">●</span>Partly ' + st.part + '<br><span class="pill r">●</span>Missed ' + st.wrong + '</div></div></div>' +
       '<div class="card"><b>Your scores over time</b>' + lineChart(st.scores) + '</div>' +
-      '<div class="card"><b>By topic</b><table style="width:100%;border-collapse:collapse;margin-top:6px;font-size:13.5px"><tr style="text-align:left;color:#5a738b"><th>Topic</th><th>Score</th><th></th></tr>' +
+      '<div class="card"><b>By topic</b><table style="width:100%;border-collapse:collapse;margin-top:6px;font-size:13.5px"><tr style="text-align:left;color:#8a6d1f"><th>Topic</th><th>Score</th><th></th></tr>' +
       st.list.map(function (x) { var l = lvl(x.pct); return '<tr><td style="padding:6px 0">' + E(x.sub) + '<div class="bar" style="height:7px;margin-top:3px"><i style="width:' + x.pct + '%"></i></div></td><td>' + x.pct + '%</td><td><span class="pill ' + l[1] + '">' + l[0] + '</span></td></tr>'; }).join("") + '</table></div>';
     var strong = st.list.filter(function (x) { return x.pct >= 75; }).slice(-2), weak = st.list.filter(function (x) { return x.pct < 70; }).slice(0, 3);
     h += '<div class="card gold"><b>💬 Friendly feedback</b>';
@@ -337,7 +337,7 @@
   var QT = { explain: ["Explain it simply", "Paste a topic or a hard paragraph", "Explain this in very simple words for a student, with one everyday example and a 2-line summary at the end:\n"], summ: ["Summarise my text", "Paste your notes or a chapter", "Summarise this for revision: 5 to 8 bullet points of key ideas, then 3 quick self-test questions:\n"], check: ["Check my answer", "Write the question and your answer", "Mark this student answer kindly: say what is right, what is missing, give a score out of 10 and show a better answer:\n"], mnem: ["Memory tricks", "What do you need to remember?", "Make 3 fun memory tricks (mnemonic, rhyme or story) to remember this:\n"] };
   V.tools = function () {
     var mm = String(Math.floor(cur.tsec / 60)).padStart(2, "0") + ":" + String(cur.tsec % 60).padStart(2, "0");
-    return '<h2>🧰 Study tools</h2><div class="card gold" style="text-align:center"><b>⏱️ Focus timer</b><div class="scm">' + (cur.tmode === "focus" ? "Focus time" : "Break time") + '</div><div id="tmr" style="font-size:52px;font-weight:900;color:#0d6fb8">' + mm + '</div>' +
+    return '<h2>🧰 Study tools</h2><div class="card gold" style="text-align:center"><b>⏱️ Focus timer</b><div class="scm">' + (cur.tmode === "focus" ? "Focus time" : "Break time") + '</div><div id="tmr" style="font-size:52px;font-weight:900;color:#b36b00">' + mm + '</div>' +
       '<button class="scb sm" data-a="tStart">' + (cur.trun ? "Pause" : "Start") + '</button><button class="scb sm ghost" data-a="tReset">Reset</button><button class="scb sm blue" data-a="tMode">' + (cur.tmode === "focus" ? "Switch to 5 min break" : "Back to focus") + '</button><div class="scm" style="margin-top:6px">Finished focus sessions count towards your daily goal.</div></div>' +
       '<div class="card"><b>Daily goal</b><div class="row"><input id="gTarget" type="number" min="5" max="600" value="' + load().goal.target + '" style="max-width:110px"><span class="scm">minutes a day</span><button class="scb sm" data-a="setGoal">Save</button></div></div>' +
       '<div class="card"><b>Quick helpers</b> <span class="scm">(1 message each)</span><label>Choose a helper</label><select id="qtSel">' + Object.keys(QT).map(function (k) { return '<option value="' + k + '">' + QT[k][0] + '</option>'; }).join("") + '</select><label>Your text</label><textarea id="qtText" placeholder="Paste or type here" maxlength="3000"></textarea><button class="scb" data-a="qtGo">Go</button><div id="qtOut"></div></div>' +

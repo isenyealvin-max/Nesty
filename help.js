@@ -1,27 +1,27 @@
-/* Nesty Help Center: quick answers + a limited Help assistant. Golden yellow, sky blue and white. */
+/* Nesty Help Center: quick answers + a limited Help assistant. Golden yellow and white. */
 (function () {
   "use strict";
   if (window.openHelp) return;
   var MAIL = "isenyealvin@gmail.com";
   var CSS = "" +
-    "#hc{display:none;position:fixed;inset:0;z-index:91;flex-direction:column;background:linear-gradient(180deg,#fff6d6 0,#fff 200px,#eaf7ff 100%);color:#16324f}" +
+    "#hc{display:none;position:fixed;inset:0;z-index:91;flex-direction:column;background:#ffe9a8;color:#3a2a00}" +
     "#hc *{box-sizing:border-box}" +
-    "#hc .top{display:flex;align-items:center;gap:10px;padding:11px 14px;background:linear-gradient(135deg,#ffc933,#ffe08a 55%,#8fd3f7);box-shadow:0 2px 10px rgba(22,50,79,.18)}" +
-    "#hc .top b{font-size:18px;flex:1}#hc .ib{background:#fff;border:0;border-radius:50%;width:36px;height:36px;font-size:17px;color:#16324f;box-shadow:0 1px 4px rgba(0,0,0,.2)}" +
+    "#hc .top{display:flex;align-items:center;gap:10px;padding:11px 14px;background:#ffc933;box-shadow:0 2px 10px rgba(120,80,0,.18)}" +
+    "#hc .top b{font-size:18px;flex:1}#hc .ib{background:#fff;border:0;border-radius:50%;width:36px;height:36px;font-size:17px;color:#3a2a00;box-shadow:0 1px 4px rgba(0,0,0,.2)}" +
     "#hcMain{flex:1;overflow-y:auto;padding:14px 14px 60px;max-width:700px;width:100%;margin:0 auto}" +
-    "#hc input,#hc textarea{width:100%;font:inherit;font-size:15px;padding:11px 12px;border:1.5px solid #9fd4f1;border-radius:12px;background:#fff;color:#16324f}" +
+    "#hc input,#hc textarea{width:100%;font:inherit;font-size:15px;padding:11px 12px;border:1.5px solid #f2c94c;border-radius:12px;background:#fff;color:#3a2a00}" +
     "#hc input:focus,#hc textarea:focus{outline:0;border-color:#ffb800;box-shadow:0 0 0 3px #ffe9a3}" +
-    "#hc .card{background:#fff;border:1.5px solid #bfe3f8;border-radius:16px;padding:13px;margin:10px 0;box-shadow:0 2px 8px rgba(30,110,170,.08)}" +
-    "#hc .card.gold{border-color:#ffd566;background:linear-gradient(135deg,#fffbe8,#fff)}" +
-    "#hc h3{margin:16px 0 6px;font-size:16px}.hm{color:#4b6781;font-size:13.5px}" +
-    "#hc .q{width:100%;text-align:left;background:#fff;border:1.5px solid #bfe3f8;border-radius:13px;padding:12px;margin-top:8px;font:inherit;font-weight:700;color:#16324f;display:flex;gap:8px}" +
+    "#hc .card{background:#fff4c8;border:1.5px solid #ffe08a;border-radius:16px;padding:13px;margin:10px 0;box-shadow:0 2px 8px rgba(200,140,0,.12)}" +
+    "#hc .card.gold{border-color:#ffd566;background:#ffe08a}" +
+    "#hc h3{margin:16px 0 6px;font-size:16px}.hm{color:#7a5c14;font-size:13.5px}" +
+    "#hc .q{width:100%;text-align:left;background:#fff4c8;border:1.5px solid #ffe08a;border-radius:13px;padding:12px;margin-top:8px;font:inherit;font-weight:700;color:#3a2a00;display:flex;gap:8px}" +
     "#hc .q span{flex:1}#hc .q.open{background:#fff8dc;border-color:#ffd566}" +
-    "#hc .a{display:none;background:#f3faff;border-radius:0 0 13px 13px;padding:10px 13px;margin-top:-4px;line-height:1.55;font-size:14.5px}" +
-    "#hc .hb{display:inline-block;background:linear-gradient(135deg,#ffc933,#ffb300);color:#3a2a00;border:0;border-radius:12px;padding:10px 15px;font-weight:800;font-size:14px;margin:8px 8px 0 0;font-family:inherit;text-decoration:none}" +
-    "#hc .hb.blue{background:linear-gradient(135deg,#6ec6f5,#3aa7e6);color:#06304f}#hc .hb:disabled{opacity:.55}" +
+    "#hc .a{display:none;background:#fffbec;border-radius:0 0 13px 13px;padding:10px 13px;margin-top:-4px;line-height:1.55;font-size:14.5px}" +
+    "#hc .hb{display:inline-block;background:#ffc933;color:#3a2a00;border:0;border-radius:12px;padding:10px 15px;font-weight:800;font-size:14px;margin:8px 8px 0 0;font-family:inherit;text-decoration:none}" +
+    "#hc .hb.blue{background:#ffe27a;color:#3a2a00}#hc .hb:disabled{opacity:.55}" +
     "#hc .msg{padding:10px 12px;border-radius:14px;margin:8px 0;line-height:1.5;font-size:14.5px;white-space:pre-wrap}" +
-    "#hc .me{background:#fff0b8;margin-left:28px}#hc .ai{background:#e6f6ff;margin-right:28px}" +
-    "#hc .chip{display:inline-block;background:#e6f6ff;border:1.5px solid #9fd4f1;border-radius:20px;padding:6px 11px;margin:5px 6px 0 0;font-size:13px;color:#0d6fb8;font-family:inherit;font-weight:600}";
+    "#hc .me{background:#fff0b8;margin-left:28px}#hc .ai{background:#fff3c4;margin-right:28px}" +
+    "#hc .chip{display:inline-block;background:#fff3c4;border:1.5px solid #f2c94c;border-radius:20px;padding:6px 11px;margin:5px 6px 0 0;font-size:13px;color:#b36b00;font-family:inherit;font-weight:600}";
 
   var FAQ = [
     ["How do I change the AI model?", "Tap the model name at the top of the chat (it has a small arrow). Free users can choose NEPTUNE 5.5 or Nova 5.5, and Ultra users can use all six models. Other plans have one model that comes with the plan. You can also find it in Settings under AI model."],
