@@ -388,7 +388,7 @@ async function decideSearch(env, text) {
 
 const SEARCH_RULES = " STRICT RULES FOR ANSWERS BASED ON SEARCH: use only facts that appear in the search results; never fill gaps from memory; copy numbers, names, scores and table rows exactly as found; if the results do not contain the exact data asked for (for example a full league table), say so and give only what you found instead of inventing rows; say \"as of <date>\" when facts change over time; never invent match statistics, minute-by-minute events, possession, shots, line-ups or injuries; do not write a Sources section or paste links, the app shows them.";
 
-const STUDY_MODE = " STUDY MODE IS ON. Act as a patient tutor. Teach ONE small step at a time (at most about 120 words) with a simple example, then ask ONE short question to check understanding and wait for the answer. Praise effort, correct mistakes kindly and explain why. After the user answers, give feedback, then move to the next step. After a topic, offer a 3-question quiz; make flashcards (Q and A list) when asked. If you do not know the user's level, ask their grade or level first. Never dump a whole lesson at once. When a topic is finished, save progress with a [[remember: ...]] line.";
+const STUDY_MODE = " STUDY MODE IS ON. Act as a patient tutor. Teach ONE small step at a time (at most about 120 words) with a simple example, then ask ONE short question to check understanding and wait for the answer. Praise effort, correct mistakes kindly and explain why. After the user answers, give feedback, then move to the next step. After a topic, offer a 3-question quiz; make flashcards in a code block tagged flashcards when asked. If you do not know the user's level, ask their grade or level first. Never dump a whole lesson at once. When a topic is finished, save progress with a [[remember: ...]] line.";
 const ULTRA_POWERS = " ULTRA POWERS (NREV15): give deeper, more thorough, well-structured answers when the question deserves it. For attached CSV or Excel data, the app puts exact computed statistics at the top of the file text: trust those numbers, look for patterns, outliers and trends, show key results in a Markdown table, and never invent numbers that are not in the data. When a chart would help, add a code block tagged chart containing JSON such as {\"type\":\"bar\",\"title\":\"Sales by month\",\"labels\":[\"Jan\",\"Feb\"],\"values\":[120,90]} (type may be bar or line; for several series use \"series\":[{\"name\":\"A\",\"values\":[1,2]}]).";
 
 async function callText(env, system, userText, maxTokens) {
@@ -503,7 +503,7 @@ const NESTY_FACTS =
   " PLANS. Every limit is per user. Each limit has its own 1-hour window. A window starts at the user's first use of that limit and the limit resets exactly 1 hour after the window began; the app shows the exact reset time when a limit is reached." +
   " FREE: 40 messages, 30 file attachments and 6 image creations per 1-hour window." +
   " PREMIUM: KSh 50 per month or KSh 600 per year; 60 messages, 50 file attachments and 6 image creations per 1-hour window." +
-  " ULTRA: KSh 100 per month or KSh 36,000 per year; 80 messages, 70 file attachments and 20 image creations per 1-hour window." +
+  " ULTRA: KSh 100 per month or KSh 1,200 per year; 80 messages, 70 file attachments and 20 image creations per 1-hour window." +
   " HOW TO UPGRADE: pay the plan price directly to the phone number 0701244268; send the payment confirmation and your Nesty email to the administrator (the Plans screen has a button that opens an email); the administrator checks the payment by hand and sends a unique activation code; enter the code in Plans under Activation code; the server checks the code and activates the plan automatically. There is no automatic card or M-Pesa checkout in the app." +
   " Each code is single-use and is for one plan and one period (monthly or yearly). A monthly plan lasts one calendar month and a yearly plan one year from activation. Activating the same plan again adds time after the current expiry. Activating a higher plan replaces the current plan. A lower-plan code cannot be used while a higher plan is active. When a plan expires the account goes back to Free." +
   " You cannot see payments, issue or check codes, activate or extend plans, or change limits. Never say that a payment was received or a plan was activated. For the user's own plan or usage, use only the details given below in this prompt, or tell the user to open Plans in the app. If you do not know something about Nesty, say so.";
@@ -550,6 +550,7 @@ export async function onRequestPost(context) {
   const isUltra = !!(body.planInfo && body.planInfo.plan === "ultra");
   const usageInfo = body.usageInfo || null;
   const wantStream = !!body.stream;
+  const place = String(body.place || "").replace(/[^\p{L}\p{N}\s,.\-']/gu, "").trim().slice(0, 120);
   let wantSearch = !!body.search;
 
   const hasImage = userMessages.some(function (m) {
@@ -600,6 +601,7 @@ HOW YOU TALK
 FORMAT
 - Use clear Markdown. Use **bold** for key words, short bullet or numbered lists for steps, and a Markdown table when comparing things. Use headings only for long answers. Leave a blank line between ideas so the text is easy to read.
 - Whenever you write something the user may copy or keep (an email, letter, essay, message, poem, or ANY code or file), put it inside a code block with triple backticks and the language, for example html, python, js, csv, md or txt. The app shows Copy and Download buttons on code blocks (and a Preview button for html), so a file is made by putting its full content in ONE code block. Say what the file is for. For a Word document, write the content as Markdown inside ONE code block tagged docx (use # for the title, ## for headings, - for bullets, 1. for numbered lists, **bold**, and Markdown tables; on forms use lines of ____________ as fill-in blanks). For a PDF use the same Markdown in a block tagged pdf. For an Excel sheet put CSV rows in ONE block tagged xlsx (first row is the header; a value starting with = is a formula; start another sheet with a line like ## Sheet name). The app turns these blocks into real downloadable Word, PDF and Excel files, so NEVER write XML, OpenXML, base64 or instructions about pasting text into a file. Around the block write only one or two friendly lines.
+- For flashcards, put them in ONE code block tagged flashcards: each card is two lines, "Q: question" then "A: short answer", with a blank line between cards (8 to 12 cards unless asked otherwise). The app turns it into flip cards the user can tap, shuffle and swipe through. Keep each answer to one or two short sentences.
 - You cannot run code yourself. Say so politely if asked.
 
 PICTURES
@@ -641,6 +643,9 @@ SEARCH AND IDENTITY
   }
   if (name) {
     system += " The user's first name is " + name + ". Use it naturally and sparingly, not in every message.";
+  }
+  if (place) {
+    system += " The user allowed Nesty to know their approximate location: " + place + ". Use it ONLY when it clearly helps: local weather, news, services, events, culture, currency or time zone, or topics about their own area (for example the environment, schools, community issues). Do not mention it in most replies, never repeat it back unprompted, and do not assume it for unrelated questions. When a topic is directly about their surroundings you may add one short, natural local touch at the end, such as a brief question about their area, but never more than once in a while.";
   }
 
   // Trusted plan details added by the server (the browser cannot set these).
@@ -714,6 +719,7 @@ SEARCH AND IDENTITY
       if (q.length < 60 && users.length > 1) {
         q = (textOf(users[users.length - 2]).slice(0, 150) + " " + q).trim();
       }
+      if (place && /\b(weather|forecast|near me|nearby|around here|local)\b/i.test(q)) q += " " + place;
       tav = await tavilySearch(env, q);
       if (!tav) errs.push("tavily failed");
     }
