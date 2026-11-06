@@ -260,6 +260,19 @@ header .hbtn{margin:0;padding:7px 10px;font-size:13px;white-space:nowrap}
 #tip button{border:0;cursor:pointer;font-family:inherit}
 #tipGo{background:#3a2a00;color:#ffd84d;border-radius:12px;padding:8px 12px;font-weight:800;font-size:13px;white-space:nowrap}
 #tipX{background:none;color:#6b4a00;font-size:24px;line-height:1;padding:0 6px}
+#boot{padding:22vh 0 0}
+#bootLogo{width:132px;height:132px;margin:0 auto 14px}
+#authLogo{overflow:hidden;background:#fff;width:96px;height:96px;border-radius:24px}
+#welcome img{animation:nFloat 4.5s ease-in-out infinite}
+@keyframes nFloat{0%,100%{transform:translateY(0)}50%{transform:translateY(-5px)}}
+#mtag{cursor:pointer}
+#modelSheet{display:none;position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:86;align-items:flex-end;justify-content:center}
+#modelSheet .box{background:var(--card);color:var(--text);width:100%;max-width:520px;border-radius:18px 18px 0 0;padding:16px 14px 22px}
+#modelSheet h3{margin:0 0 4px;font-size:17px}
+.mrow{display:block;width:100%;text-align:left;background:var(--soft);border:2px solid transparent;border-radius:12px;padding:11px 12px;margin-top:8px;color:var(--text);font-family:inherit;cursor:pointer}
+.mrow.on{border-color:#c99a1d;background:#fff8dd;color:#3a2a00}
+.mrow b{display:block;font-size:15px}
+.mrow span{font-size:13px;opacity:.75}
 .lpNav{display:flex;gap:10px;width:100%;max-width:440px}
 .lpBack{flex:0 0 auto;background:rgba(255,255,255,.6);color:#3a2a00;border:2px solid #3a2a00;border-radius:16px;padding:14px 20px;font-size:16px;font-weight:800}
 .lpNext{flex:1;background:linear-gradient(180deg,#4a3500,#241800);color:#ffd84d;border:0;border-radius:16px;padding:15px 20px;font-size:18px;font-weight:800;box-shadow:0 8px 18px rgba(60,40,0,.35)}
@@ -267,7 +280,75 @@ header .hbtn{margin:0;padding:7px 10px;font-size:13px;white-space:nowrap}
 </head>
 <body>
 
-<div id="boot">Loading...</div>
+<div id="boot"><div id="bootLogo"></div><div id="bootTxt">Loading...</div></div>
+<script>window.NESTY_LOGO = function(uid, animate, opts){
+  var u = String(uid || "x"), A = animate !== false, o = opts || {}, c = "nl" + u;
+  var N = "M58 60 L96 60 L96 65 L94.5 65 L124 124 L124 65 L116 65 L116 60 L138 60 L138 65 L130 65 L130 136 L108 136 L76 72 L76 131 L84 131 L84 136 L62 136 L62 131 L70 131 L70 65 L58 65 Z";
+  var css = "";
+  if(A){
+    css = "<style>" +
+      "@keyframes "+c+"d{from{stroke-dasharray:1;stroke-dashoffset:1}to{stroke-dasharray:1;stroke-dashoffset:0}}" +
+      "@keyframes "+c+"f{from{opacity:0}to{opacity:1}}" +
+      "@keyframes "+c+"p{from{opacity:0;transform:scale(.3)}to{opacity:1;transform:scale(1)}}" +
+      "@keyframes "+c+"s{0%{transform:translateX(-80px)}40%,100%{transform:translateX(240px)}}" +
+      "@keyframes "+c+"t{0%,100%{transform:scale(1) rotate(0deg);opacity:1}50%{transform:scale(.72) rotate(25deg);opacity:.75}}" +
+      "."+c+"r{animation:"+c+"d 1.3s ease-in-out .1s both}" +
+      "."+c+"q{animation:"+c+"d 1s ease-in-out .7s both}" +
+      "."+c+"m{animation:"+c+"f .4s ease both}" +
+      "."+c+"n{animation:"+c+"d 1.5s ease-in-out .5s both}" +
+      "."+c+"k{animation:"+c+"f .7s ease 1.9s both}" +
+      "."+c+"a{animation:"+c+"d 1s ease-in-out 2s both}" +
+      "."+c+"e{transform-box:fill-box;transform-origin:center bottom;animation:"+c+"p .45s ease both}" +
+      "."+c+"x{transform-box:fill-box;transform-origin:center;animation:"+c+"p .6s ease 2.7s both,"+c+"t 2.6s ease-in-out 3.4s infinite}" +
+      "."+c+"h{animation:"+c+"s 5s ease-in-out 3.6s infinite}" +
+      "@media (prefers-reduced-motion:reduce){svg *{animation:none!important}}" +
+      "</style>";
+  }
+  function cl(k, extra){ return A ? ' class="'+c+k+'"' + (extra || "") : ""; }
+  var dm = "";
+  for(var i = 0; i < 48; i++){
+    var an = i * Math.PI / 24, k = (i % 4 === 0) ? 2.7 : 1.5;
+    var px = 100 + 84.5 * Math.cos(an), py = 100 + 84.5 * Math.sin(an);
+    dm += '<path d="M'+px.toFixed(2)+' '+(py-k).toFixed(2)+'L'+(px+k).toFixed(2)+' '+py.toFixed(2)+'L'+px.toFixed(2)+' '+(py+k).toFixed(2)+'L'+(px-k).toFixed(2)+' '+py.toFixed(2)+'Z"' + cl("m", ' style="animation-delay:'+(1.1+i*0.02).toFixed(2)+'s"') + '/>';
+  }
+  var G = "url(#g"+u+")", DK = "#7e5608";
+  return '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" width="100%" height="100%" role="img" aria-label="Nesty AI">' + css +
+    '<defs>' +
+      '<linearGradient id="g'+u+'" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#fff3b0"/><stop offset=".22" stop-color="#f4cd56"/><stop offset=".48" stop-color="#c99a1d"/><stop offset=".7" stop-color="#f0cf63"/><stop offset="1" stop-color="#96680a"/></linearGradient>' +
+      '<linearGradient id="gl'+u+'" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fff" stop-opacity=".75"/><stop offset=".5" stop-color="#fff" stop-opacity="0"/></linearGradient>' +
+      '<linearGradient id="sh'+u+'" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#fff" stop-opacity="0"/><stop offset=".5" stop-color="#fff" stop-opacity=".9"/><stop offset="1" stop-color="#fff" stop-opacity="0"/></linearGradient>' +
+      '<filter id="sd'+u+'" x="-20%" y="-20%" width="140%" height="150%"><feDropShadow dx="0" dy="2.6" stdDeviation="1.7" flood-color="#6b4600" flood-opacity=".55"/></filter>' +
+      '<clipPath id="cp'+u+'"><path d="'+N+'"/></clipPath>' +
+    '</defs>' +
+    (o.disc === false ? '' : '<circle cx="100" cy="100" r="91" fill="#fff"/>') +
+    '<circle cx="100" cy="100" r="92" fill="none" stroke="'+DK+'" stroke-width="6.4" pathLength="1"'+cl("r")+'/>' +
+    '<circle cx="100" cy="100" r="92" fill="none" stroke="'+G+'" stroke-width="4.6" pathLength="1"'+cl("r")+'/>' +
+    '<circle cx="100" cy="100" r="77" fill="none" stroke="'+G+'" stroke-width="1.4" pathLength="1"'+cl("q")+'/>' +
+    '<g fill="'+G+'">' + dm + '</g>' +
+    '<path d="M147.5 137.3A50 30 0 0 1 52.5 137.3" fill="none" stroke="'+DK+'" stroke-width="4" stroke-linecap="round" pathLength="1"'+cl("a")+'/>' +
+    '<path d="M147.5 137.3A50 30 0 0 1 52.5 137.3" fill="none" stroke="'+G+'" stroke-width="3" stroke-linecap="round" pathLength="1"'+cl("a")+'/>' +
+    '<path d="M150.2 145A58 38 0 0 1 49.8 145" fill="none" stroke="'+G+'" stroke-width="1.4" stroke-linecap="round" pathLength="1"'+cl("a")+'/>' +
+    '<g fill="'+G+'" stroke="'+DK+'" stroke-width=".7">' +
+      '<ellipse cx="91" cy="150.5" rx="4" ry="5"'+cl("e",' style="animation-delay:2.4s"')+'/>' +
+      '<ellipse cx="109" cy="150.5" rx="4" ry="5"'+cl("e",' style="animation-delay:2.55s"')+'/>' +
+      '<ellipse cx="100" cy="152.5" rx="4.2" ry="5.2"'+cl("e",' style="animation-delay:2.7s"')+'/>' +
+    '</g>' +
+    '<path d="M100 26L102 33L109 35L102 37L100 44L98 37L91 35L98 33Z" fill="'+G+'" stroke="'+DK+'" stroke-width=".6"'+cl("x")+'/>' +
+    '<g transform="translate(2 -2)"><g filter="url(#sd'+u+')">' +
+      '<path d="'+N+'" fill="none" stroke="'+DK+'" stroke-width="1.6" stroke-linejoin="round" pathLength="1"'+cl("n")+'/>' +
+      '<path d="'+N+'" fill="'+G+'" stroke="'+DK+'" stroke-width="1.2" stroke-linejoin="round"'+cl("k")+'/>' +
+      '<path d="'+N+'" fill="url(#gl'+u+')"'+cl("k")+'/>' +
+    '</g>' +
+    '<g clip-path="url(#cp'+u+')">' +
+      '<path d="'+N+'" fill="none" stroke="#fff7cf" stroke-width="1" transform="translate(-.8 -.8)" opacity=".8"'+cl("k")+'/>' +
+      '<g'+cl("h")+'><rect x="30" y="40" width="26" height="130" fill="url(#sh'+u+')" transform="skewX(-18)"/></g>' +
+    '</g></g>' +
+    '</svg>';
+};
+
+document.getElementById("bootLogo").innerHTML = window.NESTY_LOGO("b", true);</script>
+
+<div id="modelSheet" onclick="if(event.target===this)closeModelMenu()"><div class="box"><h3>Choose a model</h3><div class="muted2" id="modelNote"></div><div id="modelList"></div></div></div>
 
 <div id="landing">
   <div class="lpTop"><img class="lpLogo" src="/icon-192.png" alt=""><span class="lpBrand">Nesty AI</span><button class="lpSkip" onclick="landingDone()" data-i="lp_skip"></button></div>
@@ -278,7 +359,7 @@ header .hbtn{margin:0;padding:7px 10px;font-size:13px;white-space:nowrap}
 
 <div id="auth">
   <div id="authCard">
-    <img id="authLogo" src="/icon-192.png" alt="Nesty AI">
+    <div id="authLogo" role="img" aria-label="Nesty AI"></div><script>document.getElementById("authLogo").innerHTML = window.NESTY_LOGO("a", true);</script>
     <h1>Nesty AI</h1>
     <p class="sub" id="authSub"></p>
 
@@ -336,7 +417,7 @@ header .hbtn{margin:0;padding:7px 10px;font-size:13px;white-space:nowrap}
 <div id="app">
   <header>
     <div><button class="hbtn" style="margin-left:0" onclick="openSide()">&#9776;</button><button class="hbtn" id="planBtn" onclick="openPlans()"></button></div>
-    <div class="logo">Nesty AI<span class="mtag">NREV11</span></div>
+    <div class="logo">Nesty AI<span class="mtag" id="mtag" onclick="openModelMenu()"></span></div>
     <div>
       <button class="hbtn" id="spk" onclick="toggleSpeak()"></button>
       <button class="hbtn" onclick="newChat()" data-i="new"></button>
@@ -344,8 +425,8 @@ header .hbtn{margin:0;padding:7px 10px;font-size:13px;white-space:nowrap}
   </header>
   <div id="chat"></div>
   <div id="inputWrap">
-    <div id="promoBar"><button class="x" onclick="hidePromo()">&times;</button><div id="promoTxt"></div><div class="upRow"><button onclick="openPlans('premium')" data-i="btn_premium"></button><button onclick="openPlans('ultra')" data-i="btn_ultra"></button></div></div>
-    <div id="limitBar"><div id="limitTxt"></div><div class="upRow"><button onclick="openPlans('ultra')" data-i="btn_ultra"></button><button onclick="openPlans('premium')" data-i="btn_premium"></button></div></div>
+    <div id="promoBar"><button class="x" onclick="hidePromo()">&times;</button><div id="promoTxt"></div><div class="upRow"><button onclick="openPlans('go')">Go</button><button onclick="openPlans('learnover')">Learnover</button><button onclick="openPlans('ultra')">Ultra</button></div></div>
+    <div id="limitBar"><div id="limitTxt"></div><div class="upRow"><button onclick="openPlans('go')">Go</button><button onclick="openPlans('learnover')">Learnover</button><button onclick="openPlans('ultra')">Ultra</button></div></div>
     <div id="modeRow"><button class="cpbtn" id="studyBtn" onclick="toggleStudy()"></button><button class="cpbtn" id="deepBtn" onclick="toggleDeep()"></button></div>
     <div id="chip"><span id="chipName"></span><button onclick="removeFile()">&times;</button></div>
     <div id="bar">
@@ -783,7 +864,7 @@ e_exists:"An account with this email already exists. Please sign in.",e_pwreq:"E
 e_login:"Wrong email or password. If you forgot your password, tap Forgot password.",
 needverify:"Please verify your email to continue.",
 upgrade:"Upgrade",plans_btn:"Plans & upgrade",btn_premium:"Premium Features",btn_ultra:"Ultra Features",
-promo:"You are using the Free plan. Upgrade to Premium and get sorted, or get more than Premium with Ultra!",
+promo:"You are using the Free plan. Need more? Go is great for everyday work, Pro for office work, Learnover if you study, and Ultra gives you everything. Get sorted!",
 lim_file:"You have reached the file attachment limit for now. You can attach files again at {t} (in {r}).",
 plans_title:"Plans",current:"Current",free_price:"Free",monthly:"month",yearly:"year",
 pl_msg:"{n} messages per hour",pl_file:"{n} file attachments per hour",pl_img:"{n} image creations per hour",
@@ -2088,6 +2169,7 @@ async function ask(){
         memory: getMem(),
         recall: recallFor(lu && lu.text),
         study: studyOn,
+        model: activeModel(),
         place: getPlace(),
         deep: useDeep,
         stream: true,
@@ -2485,8 +2567,8 @@ fileInput.addEventListener("change", async function(){
     }
     var isSheetFile = (lower.slice(-5) === ".xlsx" || lower.slice(-4) === ".csv");
     if(isSheetFile){
-      var ultra = !!(me && me.plan === "ultra");
-      if(!ultra && lower.slice(-5) === ".xlsx"){ toast(L("xlsx_up")); openPlans("ultra"); return; }
+      var ultra = !!(me && me.data);
+      if(!ultra && lower.slice(-5) === ".xlsx"){ toast(L("xlsx_up")); openPlans("pro"); return; }
       if(ultra){
         if(f.size > 8 * 1000000){ toast(L("file_big")); return; }
         showChip(L("reading", {n: name}));
@@ -2868,11 +2950,11 @@ STR.en.study = "Study";
 STR.en.deep = "Deep search";
 STR.en.study_on = "Study mode on: Nesty will teach step by step.";
 STR.en.study_off = "Study mode off.";
-STR.en.deep_up = "Deep search is part of NREV15 on the Ultra plan.";
+STR.en.deep_up = "Deep search is part of the Tyra model (Premium and Ultra plans).";
 STR.en.deep_on = "Deep search is on for your next question.";
 STR.en.deep_off = "Deep search off.";
 STR.en.deep_wait = "Researching many sources...";
-STR.en.xlsx_up = "Excel analysis is part of NREV15 on the Ultra plan.";
+STR.en.xlsx_up = "Excel analysis is part of Hiaru 5.1 (Pro and Ultra plans).";
 function drawModes(){
   var a = $("studyBtn"), b = $("deepBtn");
   if(!a || !b) return;
@@ -2889,7 +2971,7 @@ function toggleStudy(){
   toast(L(studyOn ? "study_on" : "study_off"));
 }
 function toggleDeep(){
-  if(!me || me.plan !== "ultra"){ toast(L("deep_up")); openPlans("ultra"); return; }
+  if(!(me && me.deep)){ toast(L("deep_up")); openPlans("premium"); return; }
   deepOn = !deepOn;
   drawModes();
   toast(L(deepOn ? "deep_on" : "deep_off"));
@@ -3251,8 +3333,8 @@ s_loc:"Location",
 s_loc_d:"Let Nesty know roughly where you are (for example Kakamega, Kenya) so weather, news and examples fit your area. Nesty uses it only when it helps. Your phone will ask for permission.",
 loc_on:"Use my location",loc_refresh:"Update my location",loc_off:"Turn off",loc_now:"Nesty knows you are near: {p}",
 loc_na:"Location is not supported on this device.",loc_asking:"Please allow location when your phone asks.",
-loc_denied:"Location was blocked. Allow it in your browser or phone site settings.",loc_fail:"Could not find your place. Please try again.",
-loc_set:"Location saved: {p}",loc_cleared:"Location turned off."
+loc_denied:"Location is blocked for Nesty. Open your browser menu, go to Site settings (or Permissions), set Location to Allow for this site, then tap Use my location again.",loc_fail:"Could not find your place. Please try again.",
+loc_set:"Location saved: {p}",loc_cleared:"Location turned off.",loc_approx:"Approximate location saved: {p}"
 });
 function getPlace(){ try{ return localStorage.getItem("nestyPlace") || ""; }catch(e){ return ""; } }
 function drawLoc(){
@@ -3262,42 +3344,31 @@ function drawLoc(){
   $("locOn").textContent = L(p ? "loc_refresh" : "loc_on");
   $("locOff").style.display = p ? "inline-block" : "none";
 }
-async function reverseGeo(lat, lon){
-  function uniq(list){
-    var seen = {}, out = [];
-    list.forEach(function(x){ x = String(x || "").replace(/\s+County$/i, "").trim(); var k = x.toLowerCase(); if(x && !seen[k]){ seen[k] = 1; out.push(x); } });
-    return out.slice(0, 4).join(", ");
-  }
+async function placeFrom(lat, lon, approx){
   try{
-    var r = await fetch("https://api.bigdatacloud.net/data/reverse-geocode-client?latitude=" + lat + "&longitude=" + lon + "&localityLanguage=en");
-    if(r.ok){
-      var d = await r.json();
-      var t = uniq([d.locality, d.city, d.principalSubdivision, d.countryName]);
-      if(t) return t;
-    }
-  }catch(e){}
-  try{
-    var r2 = await fetch("https://nominatim.openstreetmap.org/reverse?format=jsonv2&zoom=14&lat=" + lat + "&lon=" + lon, {headers: {"Accept": "application/json"}});
-    if(r2.ok){
-      var d2 = await r2.json(), a = d2.address || {};
-      var t2 = uniq([a.suburb || a.neighbourhood || a.village || a.town, a.city || a.county, a.state, a.country]);
-      if(t2) return t2;
-    }
-  }catch(e){}
-  return "";
+    var d = await api("/api/place", {lat: lat, lon: lon, approx: !!approx});
+    return (d && d.ok && d.place) ? d : null;
+  }catch(e){ return null; }
+}
+function saveLoc(d){
+  try{ localStorage.setItem("nestyPlace", d.place); localStorage.setItem("nestyPlaceAt", String(Date.now())); }catch(e){}
+  drawLoc();
+  toast(L(d.approx ? "loc_approx" : "loc_set", {p: d.place}));
+}
+async function approxLoc(){
+  var d = await placeFrom(null, null, true);
+  if(d) saveLoc(d); else toast(L("loc_fail"));
 }
 function enableLocation(){
-  if(!navigator.geolocation){ toast(L("loc_na")); return; }
+  if(!navigator.geolocation){ approxLoc(); return; }
   toast(L("loc_asking"));
   navigator.geolocation.getCurrentPosition(async function(pos){
-    var place = await reverseGeo(pos.coords.latitude, pos.coords.longitude);
-    if(!place){ toast(L("loc_fail")); return; }
-    try{ localStorage.setItem("nestyPlace", place); localStorage.setItem("nestyPlaceAt", String(Date.now())); }catch(e){}
-    drawLoc();
-    toast(L("loc_set", {p: place}));
+    var d = await placeFrom(pos.coords.latitude, pos.coords.longitude, true);
+    if(d) saveLoc(d); else toast(L("loc_fail"));
   }, function(err){
-    toast(L(err && err.code === 1 ? "loc_denied" : "loc_fail"));
-  }, {enableHighAccuracy: false, timeout: 12000, maximumAge: 600000});
+    if(err && err.code === 1){ toast(L("loc_denied")); return; }
+    approxLoc();
+  }, {enableHighAccuracy: false, timeout: 20000, maximumAge: 600000});
 }
 function disableLocation(){
   try{ localStorage.removeItem("nestyPlace"); localStorage.removeItem("nestyPlaceAt"); }catch(e){}
@@ -3311,8 +3382,8 @@ function refreshPlaceQuiet(){
   navigator.permissions.query({name: "geolocation"}).then(function(st){
     if(st.state !== "granted") return;
     navigator.geolocation.getCurrentPosition(async function(pos){
-      var place = await reverseGeo(pos.coords.latitude, pos.coords.longitude);
-      if(place){ try{ localStorage.setItem("nestyPlace", place); localStorage.setItem("nestyPlaceAt", String(Date.now())); }catch(e){} }
+      var d = await placeFrom(pos.coords.latitude, pos.coords.longitude, false);
+      if(d){ try{ localStorage.setItem("nestyPlace", d.place); localStorage.setItem("nestyPlaceAt", String(Date.now())); }catch(e){} }
     }, function(){}, {timeout: 10000, maximumAge: 600000});
   }).catch(function(){});
 }
@@ -3327,22 +3398,28 @@ function prefill(t, auto){
   box.focus();
   if(auto) send();
 }
+var UP = ["free", "go", "premium", "pro", "learnover"];
 var TIPS = [
-  {id: "img", used: "img", cta: "Make an image", txt: "\ud83c\udfa8 Have you tried image creation? Ask Nesty to make an image and see wonders that never end!", go: function(){ prefill("Draw a "); }},
-  {id: "study", used: "study", cta: "Open Study mode", txt: "\ud83c\udf93 Studying? Students are sorted! Make flashcards, create exams and learn step by step. Become a genius!", go: function(){ if(!studyOn) toggleStudy(); }},
-  {id: "weather", cta: "Ask now", txt: "\u26c5 What is tomorrow's weather, {name}? Don't be left behind. Ask Nesty today!", go: function(){ prefill("What is the weather like tomorrow?", true); }},
-  {id: "deep", ultraHide: true, cta: "See Ultra", txt: "\ud83d\udd0e Need deep research with sources? Try Ultra, get NREV15 and get sorted!", go: function(){ openPlans("ultra"); }},
-  {id: "doc", cta: "Try it", txt: "\ud83d\udcc4 Need a CV, a letter or an Excel sheet? Nesty makes real Word, PDF and Excel files for you.", go: function(){ prefill("Make me a CV as a Word file"); }},
-  {id: "file", used: "file", cta: "Attach a file", txt: "\ud83d\udcce Got a PDF or Word file? Attach it and Nesty will summarise it in seconds.", go: function(){ $("file").click(); }},
-  {id: "voice", used: "voice", cta: "Try voice mode", txt: "\ud83c\udf99\ufe0f Try voice mode, {name}: just talk and Nesty answers out loud.", go: function(){ startVoiceMode(); }},
-  {id: "loc", hideIf: function(){ return !!getPlace(); }, cta: "Turn on", txt: "\ud83d\udccd Allow your location and Nesty can give answers that fit your area.", go: function(){ enableLocation(); }},
-  {id: "foot", cta: "Premier League table", txt: "\u26bd Want live scores and tables? Nesty has them, ask about the Premier League.", go: function(){ prefill("Premier League table", true); }},
-  {id: "ultra", ultraHide: true, cta: "See plans", txt: "\u2728 Ultra gives you NREV15: data analysis with charts, deep search and bigger limits.", go: function(){ openPlans("ultra"); }}
+  {id: "img", used: "img", cta: "Make an image", txt: "🎨 Have you tried image creation? Ask Nesty to make an image and see wonders that never end!", go: function(){ prefill("Draw a "); }},
+  {id: "study", used: "study", cta: "Open Study mode", txt: "🎓 Studying? Students are sorted! Make flashcards, create exams and learn step by step. Become a genius!", go: function(){ if(!studyOn) toggleStudy(); }},
+  {id: "student", only: ["free", "go", "premium", "pro"], cta: "See Learnover", txt: "🎓 Are you a student using the {plan} plan? Mh, that's not good. Upgrade to Learnover or Ultra and get sorted!", go: function(){ openPlans("learnover"); }},
+  {id: "weather", cta: "Ask now", txt: "⛅ What is tomorrow's weather, {name}? Don't be left behind. Ask Nesty today!", go: function(){ prefill("What is the weather like tomorrow?", true); }},
+  {id: "research", only: ["free", "go", "pro", "learnover"], cta: "See Premium", txt: "🔎 Need deep research with sources? Premium gives you Tyra, built for research. Ultra gives you every model!", go: function(){ openPlans("premium"); }},
+  {id: "office", only: ["free", "go", "premium", "learnover"], cta: "See Pro", txt: "📊 Working with documents, Excel or data? Pro gives you Hiaru 5.1 for office work and data analysis.", go: function(){ openPlans("pro"); }},
+  {id: "everyday", only: ["free"], cta: "See Go", txt: "⚡ Want smarter answers for everyday work? Go gives you Nuvida 5.5 for just KSh 70 a month.", go: function(){ openPlans("go"); }},
+  {id: "models", only: ["free", "ultra"], cta: "Choose a model", txt: "🧠 You can switch models, {name}! Tap the model name at the top to change how Nesty answers.", go: function(){ openModelMenu(); }},
+  {id: "doc", cta: "Try it", txt: "📄 Need a CV, a letter or an Excel sheet? Nesty makes real Word, PDF and Excel files for you.", go: function(){ prefill("Make me a CV as a Word file"); }},
+  {id: "file", used: "file", cta: "Attach a file", txt: "📎 Got a PDF or Word file? Attach it and Nesty will summarise it in seconds.", go: function(){ $("file").click(); }},
+  {id: "voice", used: "voice", cta: "Try voice mode", txt: "🎙️ Try voice mode, {name}: just talk and Nesty answers out loud.", go: function(){ startVoiceMode(); }},
+  {id: "loc", hideIf: function(){ return !!getPlace(); }, cta: "Turn on", txt: "📍 Allow your location and Nesty can give answers that fit your area.", go: function(){ enableLocation(); }},
+  {id: "foot", cta: "Premier League table", txt: "⚽ Want live scores and tables? Nesty has them, ask about the Premier League.", go: function(){ prefill("Premier League table", true); }},
+  {id: "images50", only: UP, cta: "See Ultra", txt: "🖼️ Love making pictures? Ultra gives you up to 50 image creations every hour.", go: function(){ openPlans("ultra"); }},
+  {id: "ultra", only: UP, cta: "See Ultra", txt: "✨ Ultra unlocks every model, 100 messages an hour, 100 file attachments and 50 images. Get sorted!", go: function(){ openPlans("ultra"); }}
 ];
 var tipCur = null, tipTimer = 0, tipSession = 0, tipOpenedAt = Date.now(), tipOn = false;
 function tipBusy(){
   if(!user || $("app").style.display !== "flex" || loading || vmOn) return true;
-  var ids = ["settings", "plans", "fbSheet", "srcSheet", "prev", "editor"];
+  var ids = ["settings", "plans", "fbSheet", "srcSheet", "prev", "editor", "modelSheet"];
   for(var i = 0; i < ids.length; i++){ var d = $(ids[i]).style.display; if(d === "block" || d === "flex") return true; }
   if($("side").classList.contains("open")) return true;
   if(box.value.trim()) return true;
@@ -3351,11 +3428,11 @@ function tipBusy(){
 function tipNext(){
   var seen = {};
   try{ seen = JSON.parse(lsGet("nestyTipSeen", "{}")); }catch(e){}
-  var idx = parseInt(lsGet("nestyTipIdx", "0"), 10) || 0, ultra = !!(me && me.plan === "ultra");
+  var idx = parseInt(lsGet("nestyTipIdx", "0"), 10) || 0, cpl = curPlan();
   for(var k = 0; k < TIPS.length; k++){
     var t = TIPS[(idx + k) % TIPS.length];
     if(t.used && lsGet("nestyUsed_" + t.used, "") === "1") continue;
-    if(t.ultraHide && ultra) continue;
+    if(t.only && t.only.indexOf(cpl) < 0) continue;
     if(t.hideIf && t.hideIf()) continue;
     if((seen[t.id] || 0) >= 2) continue;
     lsSet("nestyTipIdx", (idx + k + 1) % TIPS.length);
@@ -3377,7 +3454,7 @@ function tipTick(){
   tipCur = t;
   tipSession++;
   lsSet("nestyTipAt", now);
-  $("tipTxt").textContent = t.txt.replace("{name}", firstName() || "friend");
+  $("tipTxt").textContent = t.txt.replace("{name}", firstName() || "friend").replace("{plan}", PLAN_DATA[curPlan()].n);
   $("tipGo").textContent = t.cta;
   $("tip").classList.add("show");
   clearTimeout(tipTimer);
@@ -3490,11 +3567,52 @@ function sendFeedback(){
 
 /* ---------- Plans, usage, activation codes ---------- */
 var PAY_NUMBER = "0701244268";
-var PLAN_DATA = {
-  free: {n: "Free", msg: 40, file: 30, img: 6, model: "NREV11", tts: 12},
-  premium: {n: "Premium", msg: 60, file: 50, img: 6, m: 50, y: 600, model: "NREV11", tts: 40},
-  ultra: {n: "Ultra", msg: 80, file: 70, img: 20, m: 100, y: 1200, model: "NREV15", tts: 120, extras: ["Deep search: many sources, one cited report", "Data analysis for CSV and Excel files, with charts", "Longer, deeper answers"]}
+var PLAN_ORDER = ["free", "go", "premium", "pro", "learnover", "ultra"];
+var MODEL_INFO = {
+  neptune: {n: "NEPTUNE 5.5", d: "Fastest, for quick answers"},
+  nova: {n: "Nova 5.5", d: "Most efficient, for the simplest tasks"},
+  nuvida: {n: "Nuvida 5.5", d: "For complex tasks and everyday work"},
+  hiaru: {n: "Hiaru 5.1", d: "For your toughest challenges and office work: documents, files and data analysis"},
+  smart: {n: "Smart 5.5", d: "For education and learning"},
+  tyra: {n: "Tyra", d: "For research and Deep search"}
 };
+var PLAN_DATA = {
+  free: {n: "Free", msg: 40, file: 30, img: 6, tts: 12, models: ["neptune", "nova"]},
+  go: {n: "Go", msg: 60, file: 50, img: 10, tts: 40, m: 70, y: 840, models: ["nuvida"]},
+  premium: {n: "Premium", msg: 55, file: 45, img: 7, tts: 35, m: 50, y: 600, models: ["tyra"], extras: ["Deep search: many sources, one cited report"]},
+  pro: {n: "Pro", msg: 75, file: 65, img: 15, tts: 40, m: 120, y: 1440, models: ["hiaru"], extras: ["Data analysis for CSV and Excel files, with charts", "Office work: documents, files and data"]},
+  learnover: {n: "Learnover", msg: 85, file: 75, img: 20, tts: 80, m: 150, y: 1800, models: ["smart"], extras: ["Made for students: Smart 5.5 teaches step by step"]},
+  ultra: {n: "Ultra", msg: 100, file: 100, img: 50, tts: 120, m: 599, y: 7188, models: ["neptune", "nova", "nuvida", "hiaru", "smart", "tyra"], extras: ["All six models, you choose", "Deep search and data analysis with charts", "The biggest limits"]}
+};
+function modelName(id){ return MODEL_INFO[id] ? MODEL_INFO[id].n : id; }
+function modelLine(id){
+  var m = PLAN_DATA[id].models;
+  if(id === "ultra") return "Models: <b>all six, you choose</b>";
+  if(m.length > 1) return "Models: <b>" + m.map(modelName).join(" or ") + "</b> (you choose)";
+  return "Model: <b>" + modelName(m[0]) + "</b> – " + MODEL_INFO[m[0]].d;
+}
+function allowedModels(){ return (me && me.models && me.models.length) ? me.models : PLAN_DATA[curPlan()].models; }
+function activeModel(){ var a = allowedModels(), s = lsGet("nestyModel", ""); return a.indexOf(s) > -1 ? s : a[0]; }
+function drawModelTag(){
+  var mt = $("mtag");
+  if(!mt) return;
+  var a = allowedModels();
+  mt.textContent = modelName(activeModel()) + (a.length > 1 ? " ▾" : "");
+  mt.style.background = curPlan() === "ultra" ? "#7c3aed" : "#1a56db";
+}
+function openModelMenu(){
+  var a = allowedModels(), cur = activeModel();
+  if(a.length < 2){ toast(modelName(cur) + ": " + MODEL_INFO[cur].d + "."); return; }
+  var h = "";
+  a.forEach(function(id){
+    h += '<button class="mrow' + (id === cur ? ' on' : '') + '" onclick="pickModel(\'' + id + '\')"><b>' + MODEL_INFO[id].n + (id === cur ? ' ✓' : '') + '</b><span>' + MODEL_INFO[id].d + '</span></button>';
+  });
+  $("modelList").innerHTML = h;
+  $("modelNote").textContent = curPlan() === "ultra" ? "Ultra can use every model." : "Your plan lets you choose between these models.";
+  $("modelSheet").style.display = "flex";
+}
+function closeModelMenu(){ $("modelSheet").style.display = "none"; }
+function pickModel(id){ lsSet("nestyModel", id); drawModelTag(); closeModelMenu(); toast("Now using " + modelName(id)); }
 var me = null, plansOpen = false, plansFocus = "", promoTimer = null;
 function money(n){ return "KSh " + String(n).replace(/\B(?=(\d{3})+(?!\d))/g, ","); }
 function curPlan(){ return (me && PLAN_DATA[me.plan]) ? me.plan : "free"; }
@@ -3511,8 +3629,7 @@ function drawPlanBtn(){
   var b = $("planBtn");
   if(!b) return;
   var cp = curPlan();
-  var mt = document.querySelector(".mtag");
-  if(mt){ mt.textContent = PLAN_DATA[cp].model; mt.style.background = cp === "ultra" ? "#7c3aed" : "#1a56db"; }
+  drawModelTag();
   b.textContent = cp === "free" ? L("upgrade") : PLAN_DATA[cp].n;
   b.className = "hbtn " + (cp === "free" ? "up" : "plan");
 }
@@ -3562,11 +3679,11 @@ function renderPlans(){
     h += '</ul></div>';
   }
   if(me && me.limiter === false){ h += '<div class="pcard" style="border-color:#e53935"><b>Usage counter not connected.</b><div class="muted2">The server cannot count your messages yet, so limits are not enforced. (Admin: check that the LIMITER Durable Object binding exists in Cloudflare.)</div></div>'; }
-  ["free","premium","ultra"].forEach(function(id){
+  PLAN_ORDER.forEach(function(id){
     var p = PLAN_DATA[id];
     h += '<div class="pcard' + (id === cp ? ' cur' : '') + (id === plansFocus ? ' focus' : '') + '" id="pc_' + id + '"><h3>' + p.n + (id === cp ? ' · ' + L("current") : '') + '</h3>';
     h += '<div class="price">' + (id === "free" ? L("free_price") : money(p.m) + ' / ' + L("monthly") + ' · ' + money(p.y) + ' / ' + L("yearly")) + '</div>';
-    h += '<ul><li>Model: <b>' + p.model + '</b></li><li>' + L("pl_msg", {n: p.msg}) + '</li><li>' + L("pl_file", {n: p.file}) + '</li><li>' + L("pl_img", {n: p.img}) + '</li><li>Study mode</li><li>Natural voices: ' + p.tts + ' clips per hour</li>' + (p.extras || []).map(function(x){ return '<li>' + x + '</li>'; }).join("") + '</ul></div>';
+    h += '<ul><li>' + modelLine(id) + '</li><li>' + L("pl_msg", {n: p.msg}) + '</li><li>' + L("pl_file", {n: p.file}) + '</li><li>' + L("pl_img", {n: p.img}) + '</li><li>Study mode</li><li>Natural voices: ' + p.tts + ' clips per hour</li>' + (p.extras || []).map(function(x){ return '<li>' + x + '</li>'; }).join("") + '</ul></div>';
   });
   h += '<div class="muted2">' + L("pl_win") + '</div>';
   body.innerHTML = h;

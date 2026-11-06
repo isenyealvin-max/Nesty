@@ -12,16 +12,24 @@ const ICONS = {
 
 /* ---------- Plans (the server is the only place these limits are enforced) ---------- */
 const WINDOW_MS = 1 * 60 * 60 * 1000; // every usage window is 1 hour
+const MODELS = { neptune: "NEPTUNE 5.5", nova: "Nova 5.5", nuvida: "Nuvida 5.5", hiaru: "Hiaru 5.1", smart: "Smart 5.5", tyra: "Tyra" };
 const PLANS = {
-  free: { name: "Free", msg: 40, file: 30, img: 6 },
-  premium: { name: "Premium", msg: 60, file: 50, img: 6 },
-  ultra: { name: "Ultra", msg: 80, file: 70, img: 20 },
+  free: { name: "Free", msg: 40, file: 30, img: 6, tts: 12, models: ["neptune", "nova"], deep: false, data: false },
+  go: { name: "Go", msg: 60, file: 50, img: 10, tts: 40, models: ["nuvida"], deep: false, data: false },
+  premium: { name: "Premium", msg: 55, file: 45, img: 7, tts: 35, models: ["tyra"], deep: true, data: false },
+  pro: { name: "Pro", msg: 75, file: 65, img: 15, tts: 40, models: ["hiaru"], deep: false, data: true },
+  learnover: { name: "Learnover", msg: 85, file: 75, img: 20, tts: 80, models: ["smart"], deep: false, data: false },
+  ultra: { name: "Ultra", msg: 100, file: 100, img: 50, tts: 120, models: ["neptune", "nova", "nuvida", "hiaru", "smart", "tyra"], deep: true, data: true },
 };
-const TTS_LIMITS = { free: 12, premium: 40, ultra: 120 }; // natural voice clips per hour
-const RANK = { free: 0, premium: 1, ultra: 2 };
+const TTS_LIMITS = {}; // natural voice clips per hour, taken from the plans above
+Object.keys(PLANS).forEach(function (k) { TTS_LIMITS[k] = PLANS[k].tts; });
+const RANK = { free: 0, premium: 1, go: 2, pro: 3, learnover: 4, ultra: 5 }; // by price
 const PRICES = {
   premium: { monthly: 50, yearly: 600 },
-  ultra: { monthly: 100, yearly: 1200 },
+  go: { monthly: 70, yearly: 840 },
+  pro: { monthly: 120, yearly: 1440 },
+  learnover: { monthly: 150, yearly: 1800 },
+  ultra: { monthly: 599, yearly: 7188 },
 };
 
 /* Adds one calendar month or one year, keeping the day of the month when possible. */
@@ -184,7 +192,9 @@ async function verify(token, origin) {
     if (!res.ok) return null;
     const u = await res.json();
     if (!u || !u.$id) return null;
-    const user = { $id: u.$id, verified: u.emailVerification === true, pwSet: !!(u.prefs && u.prefs.pwSet === true) };
+    // The password flag comes from Appwrite itself (passwordUpdate), not from profile data the user can edit.
+    const pwSet = typeof u.passwordUpdate === "string" ? u.passwordUpdate !== "" : !!(u.prefs && u.prefs.pwSet === true);
+    const user = { $id: u.$id, verified: u.emailVerification === true, pwSet: pwSet };
     if (tokenCache.size > 500) tokenCache.clear();
     tokenCache.set(token, { user: user, exp: Date.now() + (user.verified && user.pwSet ? 5 * 60 * 1000 : 15 * 1000) });
     return user;
@@ -332,8 +342,14 @@ async function handleChat(request, env, ctx) {
         return json({ reply: "limit", limited: true, kind: "file", resetAt: fr.resetAt, plan: plan.plan }, 429);
       }
     }
+    const wantM = String(body.model || "");
+    const chosen = lim.models.indexOf(wantM) > -1 ? wantM : lim.models[0];
     body.planInfo = {
       plan: plan.plan,
+      model: chosen,
+      modelName: MODELS[chosen],
+      deep: !!lim.deep,
+      data: !!lim.data,
       name: lim.name,
       period: plan.period || "",
       expiresAt: plan.expiresAt || 0,
@@ -389,6 +405,9 @@ async function handleMe(request, env) {
   ]);
   return json({
     limiter: true,
+    models: lim.models,
+    deep: !!lim.deep,
+    data: !!lim.data,
     plan: plan.plan,
     period: plan.period || "",
     expiresAt: plan.expiresAt || 0,
@@ -470,7 +489,7 @@ function safeEq(a, b) {
 
 async function handleAdmin(request, env, action) {
   if (!env.ADMIN_KEY || !env.LIMITER) return json({ error: "Admin is not set up." }, 503);
-  const guard = stub(env, "adminfail");
+  const guard = stub(env, "adminfail|" + (request.headers.get("CF-Connecting-IP") || "unknown")); // per visitor, so strangers cannot lock the owner out
   const key = request.headers.get("X-Admin-Key") || "";
   if (!safeEq(key, env.ADMIN_KEY)) {
     const g = await guard.hit(10, 15 * 60 * 1000);
@@ -590,6 +609,72 @@ async function handleFeedback(request, env) {
   return json({ ok: true });
 }
 
+/* ---------- Where the user is (only after they press the button and allow it) ---------- */
+function joinPlace(list) {
+  const seen = {};
+  const out = [];
+  list.forEach(function (x) {
+    x = String(x || "").replace(/\s+County$/i, "").trim();
+    const k = x.toLowerCase();
+    if (x && !seen[k]) { seen[k] = 1; out.push(x); }
+  });
+  return out.slice(0, 4).join(", ");
+}
+async function fetchJson(url, headers) {
+  const ctrl = new AbortController();
+  const t = setTimeout(function () { ctrl.abort(); }, 6000);
+  try {
+    const r = await fetch(url, { headers: headers || {}, signal: ctrl.signal });
+    if (!r.ok) return null;
+    return await r.json();
+  } catch (e) {
+    return null;
+  } finally {
+    clearTimeout(t);
+  }
+}
+async function geocode(lat, lon) {
+  const a = await fetchJson("https://api.bigdatacloud.net/data/reverse-geocode-client?latitude=" + lat + "&longitude=" + lon + "&localityLanguage=en");
+  if (a) {
+    const t = joinPlace([a.locality, a.city, a.principalSubdivision, a.countryName]);
+    if (t) return t;
+  }
+  const b = await fetchJson("https://nominatim.openstreetmap.org/reverse?format=jsonv2&zoom=14&lat=" + lat + "&lon=" + lon,
+    { "User-Agent": "NestyAI/1.0 (https://github.com/isenyealvin-max/Nesty)", "Accept": "application/json" });
+  if (b) {
+    const x = b.address || {};
+    const t = joinPlace([x.suburb || x.neighbourhood || x.village || x.town, x.city || x.county, x.state, x.country]);
+    if (t) return t;
+  }
+  return "";
+}
+function countryName(code) {
+  try { return new Intl.DisplayNames(["en"], { type: "region" }).of(String(code).toUpperCase()); } catch (e) { return String(code || ""); }
+}
+async function handlePlace(request, env) {
+  const auth = await needUser(request);
+  if (auth.res) return auth.res;
+  let b = {};
+  try { b = await request.json(); } catch (e) {}
+  if (env.LIMITER) {
+    const r = await stub(env, "place|" + auth.user.$id).hit(30, 60 * 60 * 1000);
+    if (!r.ok) return json({ ok: false, error: "Too many tries. Please try again later." }, 429);
+  }
+  let place = "";
+  let approx = false;
+  if (typeof b.lat === "number" && typeof b.lon === "number" && Math.abs(b.lat) <= 90 && Math.abs(b.lon) <= 180) {
+    place = await geocode(b.lat, b.lon);
+  }
+  if (!place && b.approx === true) {
+    // The person pressed the button but the phone could not give a position: use the rough area of the connection.
+    const cf = request.cf || {};
+    if (cf.country) place = joinPlace([cf.city, cf.region, countryName(cf.country)]);
+    approx = !!place;
+  }
+  if (!place) return json({ ok: false, error: "Could not find the place." });
+  return json({ ok: true, place: place, approx: approx });
+}
+
 export default {
   async fetch(request, env, ctx) {
     const url = new URL(request.url);
@@ -602,6 +687,7 @@ export default {
         return handleImage(request, env, { needUser: needUser, stub: stub, json: json, PLANS: PLANS, WINDOW_MS: WINDOW_MS });
       },
       "/api/me": function () { return handleMe(request, env); },
+      "/api/place": function () { return handlePlace(request, env); },
       "/api/tts": function () { return handleTts(request, env); },
       "/api/redeem": function () { return handleRedeem(request, env); },
       "/api/admin/generate": function () { return handleAdmin(request, env, "generate"); },
