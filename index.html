@@ -223,7 +223,7 @@ header .hbtn{margin:0;padding:7px 10px;font-size:13px;white-space:nowrap}
 #landing{display:none;position:fixed;inset:0;z-index:60;flex-direction:column;align-items:center;padding:14px 18px 22px;overflow-y:auto;color:#3a2a00;background:radial-gradient(circle at 15% 8%,#fffbe0 0,rgba(255,251,224,0) 42%),linear-gradient(160deg,#fff4b8 0%,#ffd84d 46%,#f2a900 100%)}
 #landing *{box-sizing:border-box}
 .lpTop{width:100%;max-width:440px;display:flex;align-items:center;gap:8px}
-.lpLogo{height:34px;width:auto}
+.lpLogo{height:36px;width:36px;border-radius:10px;box-shadow:0 2px 8px rgba(120,80,0,.3)}
 .lpBrand{font-weight:800;font-size:19px;flex:1;color:#3a2a00}
 .lpSkip{background:none;border:0;color:#6b4a00;font-size:15px;font-weight:700;text-decoration:underline;padding:8px 4px}
 .lpStage{flex:1;display:flex;align-items:center;width:100%;max-width:440px;margin:10px 0}
@@ -231,7 +231,7 @@ header .hbtn{margin:0;padding:7px 10px;font-size:13px;white-space:nowrap}
 .lpAnim{animation:lpIn .38s ease}
 @keyframes lpIn{from{opacity:0;transform:translateX(26px)}to{opacity:1;transform:none}}
 .lpIcon{width:108px;height:108px;border-radius:50%;margin:0 auto 14px;display:flex;align-items:center;justify-content:center;font-size:56px;background:radial-gradient(circle at 35% 28%,#fffbd0,#ffc928 58%,#e59a00);box-shadow:0 8px 20px rgba(190,120,0,.4)}
-.lpIcon img{width:66px;height:66px;object-fit:contain}
+.lpIcon img{width:78px;height:78px;object-fit:cover;border-radius:22px;box-shadow:0 4px 12px rgba(120,80,0,.3)}
 .lpCard h2{font-size:27px;line-height:1.15;margin:0 0 8px;font-weight:800;color:#3a2a00}
 .lpCard p{font-size:16.5px;line-height:1.55;margin:0 0 10px;color:#4d3700}
 .lpList{margin:12px 0 0;padding:0}
@@ -240,6 +240,26 @@ header .hbtn{margin:0;padding:7px 10px;font-size:13px;white-space:nowrap}
 .lpDots{display:flex;gap:7px;margin:4px 0 14px}
 .lpDots i{width:9px;height:9px;border-radius:9px;background:rgba(58,42,0,.28);transition:all .25s}
 .lpDots i.on{width:26px;background:#3a2a00}
+.fcWrap{padding:14px;background:var(--card);text-align:center}
+.fcCard{perspective:1000px;cursor:pointer;-webkit-tap-highlight-color:transparent}
+.fcInner{position:relative;height:210px;transition:transform .5s;transform-style:preserve-3d}
+.fcCard.flip .fcInner{transform:rotateY(180deg)}
+.fcFace{position:absolute;inset:0;backface-visibility:hidden;-webkit-backface-visibility:hidden;display:flex;align-items:center;justify-content:center;padding:28px 18px 16px;border-radius:20px;font-size:19px;line-height:1.45;font-weight:600;overflow:auto;box-shadow:0 6px 16px rgba(0,0,0,.2)}
+.fcFace small{position:absolute;top:10px;left:0;right:0;font-size:11px;letter-spacing:1.6px;font-weight:800;opacity:.85}
+.fcFront{background:linear-gradient(150deg,#2f62e0,#0a1a58);color:#fff}
+.fcBack{background:linear-gradient(150deg,#ffe680,#f2a900);color:#3a2a00;transform:rotateY(180deg)}
+.fcBar{display:flex;align-items:center;justify-content:center;gap:10px;margin-top:12px}
+.fcBar span{font-weight:700;min-width:64px}
+.fcBar .cpbtn{margin:0}
+.fcHint{font-size:12.5px;color:var(--muted);margin-top:6px}
+#authLogo,#welcome img{box-shadow:0 4px 14px rgba(190,130,0,.28)}
+#tip{position:fixed;top:72px;left:50%;transform:translateX(-50%);width:calc(100% - 24px);max-width:540px;z-index:58;display:none;align-items:center;gap:10px;padding:10px 8px 10px 14px;border-radius:16px;background:linear-gradient(135deg,#fff4b8,#ffd84d);color:#3a2a00;box-shadow:0 10px 26px rgba(120,80,0,.3);font-size:14.5px;line-height:1.4;font-weight:600}
+#tip.show{display:flex;animation:tipIn .35s ease}
+@keyframes tipIn{from{opacity:0;transform:translate(-50%,-12px)}to{opacity:1;transform:translate(-50%,0)}}
+#tip span{flex:1}
+#tip button{border:0;cursor:pointer;font-family:inherit}
+#tipGo{background:#3a2a00;color:#ffd84d;border-radius:12px;padding:8px 12px;font-weight:800;font-size:13px;white-space:nowrap}
+#tipX{background:none;color:#6b4a00;font-size:24px;line-height:1;padding:0 6px}
 .lpNav{display:flex;gap:10px;width:100%;max-width:440px}
 .lpBack{flex:0 0 auto;background:rgba(255,255,255,.6);color:#3a2a00;border:2px solid #3a2a00;border-radius:16px;padding:14px 20px;font-size:16px;font-weight:800}
 .lpNext{flex:1;background:linear-gradient(180deg,#4a3500,#241800);color:#ffd84d;border:0;border-radius:16px;padding:15px 20px;font-size:18px;font-weight:800;box-shadow:0 8px 18px rgba(60,40,0,.35)}
@@ -250,7 +270,7 @@ header .hbtn{margin:0;padding:7px 10px;font-size:13px;white-space:nowrap}
 <div id="boot">Loading...</div>
 
 <div id="landing">
-  <div class="lpTop"><img class="lpLogo" src="/nesty-mark.png" alt=""><span class="lpBrand">Nesty AI</span><button class="lpSkip" onclick="landingDone()" data-i="lp_skip"></button></div>
+  <div class="lpTop"><img class="lpLogo" src="/icon-192.png" alt=""><span class="lpBrand">Nesty AI</span><button class="lpSkip" onclick="landingDone()" data-i="lp_skip"></button></div>
   <div class="lpStage"><div id="lpSlide" class="lpCard"></div></div>
   <div class="lpDots" id="lpDots"></div>
   <div class="lpNav"><button class="lpBack" id="lpBack" onclick="lpGo(-1)" data-i="lp_back"></button><button class="lpNext" id="lpNext" onclick="lpGo(1)"></button></div>
@@ -439,6 +459,12 @@ header .hbtn{margin:0;padding:7px 10px;font-size:13px;white-space:nowrap}
     </div>
 
     <div class="sec">
+      <h3 data-i="s_loc"></h3>
+      <div class="muted2" id="locTxt"></div>
+      <div class="row"><button class="sbtn dark" id="locOn" onclick="enableLocation()"></button><button class="sbtn" id="locOff" onclick="disableLocation()" data-i="loc_off"></button></div>
+    </div>
+
+    <div class="sec">
       <h3 data-i="s_voice"></h3>
       <div class="muted2" data-i="s_voice_d"></div>
       <select id="sVoice" class="sel" onchange="setVoiceName(this.value)"></select>
@@ -494,11 +520,12 @@ header .hbtn{margin:0;padding:7px 10px;font-size:13px;white-space:nowrap}
 <div id="srcSheet" onclick="if(event.target===this)closeSources()"><div class="sheet"><div class="sheetHead"><b data-i="sources_btn"></b><button class="sbtn" onclick="closeSources()" data-i="close"></button></div><div id="srcList"></div></div></div>
 <div id="prev"><div class="prevIn"><div class="sheetHead"><b data-i="prev_title"></b><button class="sbtn" onclick="closePreview()" data-i="close"></button></div><iframe id="prevFrame" sandbox="allow-scripts"></iframe></div></div>
 <div id="fbSheet" onclick="if(event.target===this)closeFeedback()"><div class="sheet"><div class="sheetHead"><b id="fbTitle"></b><button class="sbtn" onclick="closeFeedback()" data-i="close"></button></div><div class="chips" id="fbChips"></div><textarea id="fbText" maxlength="500" rows="3" dir="auto" data-ph="fb_ph" style="width:100%;margin-top:8px;padding:11px 12px;border:1.5px solid var(--border);border-radius:10px;font-size:16px;font-family:inherit;background:var(--card);color:var(--text)"></textarea><div style="display:flex;gap:8px;margin-top:10px"><button class="sbtn dark" onclick="sendFeedbackNote(true)" data-i="fb_send"></button><button class="sbtn" onclick="sendFeedbackNote(false)" data-i="fb_skip"></button></div></div></div>
+<div id="tip"><span id="tipTxt"></span><button id="tipGo" onclick="tipAct()"></button><button id="tipX" onclick="tipClose(true)" aria-label="Close">&times;</button></div>
 <div id="toast"></div>
 <div id="updateBar"></div>
 
 <script>
-var VERSION = "V19";
+var VERSION = "V21";
 
 /* ---------- Interface languages ---------- */
 var STR = {
@@ -1057,6 +1084,8 @@ function showApp(){
   newChat();
   loadList();
   loadMe();
+  refreshPlaceQuiet();
+  tipInit();
 }
 
 function firstName(){
@@ -1809,6 +1838,10 @@ function buildBot(m, isLast){
         var svgc = chartSvg(code);
         if(svgc){ pre = document.createElement("div"); pre.className = "docprev"; pre.innerHTML = svgc; }
       }
+      if(lang === "flashcards" || lang === "flashcard"){
+        var fcEl = flashcardsEl(code);
+        if(fcEl) pre = fcEl;
+      }
       wrap.appendChild(bar);
       wrap.appendChild(pre);
       d.appendChild(wrap);
@@ -2055,6 +2088,7 @@ async function ask(){
         memory: getMem(),
         recall: recallFor(lu && lu.text),
         study: studyOn,
+        place: getPlace(),
         deep: useDeep,
         stream: true,
         search: wantSearch,
@@ -2239,6 +2273,7 @@ async function makeImage(prompt, inputImage){
       return;
     }
     if(data.image){
+      markUsed("img");
       messages.push({role:"assistant", content:"[Nesty created a picture for: " + prompt + "]", genImage:{data:await addLogo(data.image), prompt:prompt}});
       if(typeof data.left === "number" && data.left <= 2){
         toast(L("left_i", {n: data.left}));
@@ -2444,6 +2479,7 @@ fileInput.addEventListener("change", async function(){
       var data = await fitImage(f, 1280, false, 0.82);
       pendingFile = null;
       pendingImage = {name: name, data: data};
+      markUsed("file");
       showChip(name);
       return;
     }
@@ -2489,6 +2525,7 @@ fileInput.addEventListener("change", async function(){
     if(text.length > 20000){ text = text.slice(0, 20000) + "\n...[file cut because it is long]"; }
     pendingImage = null;
     pendingFile = {name: name, text: text};
+    markUsed("file");
     showChip(name);
   }catch(e){
     removeFile();
@@ -2568,6 +2605,7 @@ function notifText(){
 function drawSettings(){
   fillLangs();
   fillVoices();
+  drawLoc();
   var ab = $("avBig");
   ab.innerHTML = "";
   ab.appendChild(avatarNode(84));
@@ -2845,6 +2883,7 @@ function drawModes(){
 }
 function toggleStudy(){
   studyOn = !studyOn;
+  if(studyOn) markUsed("study");
   try{ localStorage.setItem("nestyStudy", studyOn ? "1" : "0"); }catch(e){}
   drawModes();
   toast(L(studyOn ? "study_on" : "study_off"));
@@ -3089,7 +3128,7 @@ function setThemeColor(c){
 }
 function lpRender(){
   var sl = LP[lpIdx], k = "lp" + sl.n;
-  var h = '<div class="lpIcon">' + (sl.icon === "img" ? '<img src="/nesty-mark.png" alt="">' : sl.icon) + '</div><h2>' + esc(L(k + "_t")) + '</h2><p>' + esc(L(k + "_d")) + '</p>';
+  var h = '<div class="lpIcon">' + (sl.icon === "img" ? '<img src="/icon-192.png" alt="">' : sl.icon) + '</div><h2>' + esc(L(k + "_t")) + '</h2><p>' + esc(L(k + "_d")) + '</p>';
   if(sl.items){
     h += '<ul class="lpList">';
     for(var i = 1; i <= sl.items; i++) h += '<li>' + esc(L(k + "_" + i)) + '</li>';
@@ -3146,6 +3185,224 @@ document.addEventListener("touchend", function(e){
   lpX = null;
   if(Math.abs(dx) > 70) lpGo(dx < 0 ? 1 : -1);
 }, {passive: true});
+
+/* ---------- Flip flashcards from ```flashcards blocks (Q: / A: pairs) ---------- */
+STR.en.fc_q = "QUESTION";
+STR.en.fc_a = "ANSWER";
+STR.en.fc_hint = "Tap the card to flip";
+function parseCards(t){
+  var cards = [], cur = null, mode = "";
+  String(t).split("\n").forEach(function(l){
+    var q = /^\s*(?:\d+[.)]\s*)?Q\s*[:\-.)]\s*(.*)$/i.exec(l), a = /^\s*A\s*[:\-.)]\s*(.*)$/i.exec(l);
+    if(q){ cur = {q: q[1].trim(), a: ""}; cards.push(cur); mode = "q"; }
+    else if(a && cur){ cur.a = a[1].trim(); mode = "a"; }
+    else if(cur && l.trim()){ if(mode === "a") cur.a += " " + l.trim(); else cur.q += " " + l.trim(); }
+  });
+  return cards.filter(function(c){ return c.q && c.a; });
+}
+function flashcardsEl(code){
+  var cards = parseCards(code);
+  if(!cards.length) return null;
+  var idx = 0;
+  var wrap = document.createElement("div");
+  wrap.className = "fcWrap";
+  var card = document.createElement("div");
+  card.className = "fcCard";
+  var inner = document.createElement("div");
+  inner.className = "fcInner";
+  var front = document.createElement("div"), back = document.createElement("div");
+  front.className = "fcFace fcFront";
+  back.className = "fcFace fcBack";
+  inner.appendChild(front); inner.appendChild(back); card.appendChild(inner);
+  var bar = document.createElement("div");
+  bar.className = "fcBar";
+  var prev = document.createElement("button"), next = document.createElement("button"), shuf = document.createElement("button"), cnt = document.createElement("span");
+  [prev, next, shuf].forEach(function(b){ b.className = "cpbtn"; });
+  prev.textContent = "\u2190"; next.textContent = "\u2192"; shuf.textContent = "\ud83d\udd00";
+  bar.appendChild(prev); bar.appendChild(cnt); bar.appendChild(next); bar.appendChild(shuf);
+  var hint = document.createElement("div");
+  hint.className = "fcHint";
+  hint.textContent = L("fc_hint");
+  function show(){
+    card.classList.remove("flip");
+    var c = cards[idx];
+    front.innerHTML = "<small>" + L("fc_q") + "</small>";
+    back.innerHTML = "<small>" + L("fc_a") + "</small>";
+    var fq = document.createElement("div"), fa = document.createElement("div");
+    fq.textContent = c.q; fa.textContent = c.a;
+    front.appendChild(fq); back.appendChild(fa);
+    cnt.textContent = (idx + 1) + " / " + cards.length;
+  }
+  card.onclick = function(){ card.classList.toggle("flip"); };
+  prev.onclick = function(){ idx = (idx - 1 + cards.length) % cards.length; show(); };
+  next.onclick = function(){ idx = (idx + 1) % cards.length; show(); };
+  shuf.onclick = function(){
+    for(var i = cards.length - 1; i > 0; i--){ var j = Math.floor(Math.random() * (i + 1)); var t = cards[i]; cards[i] = cards[j]; cards[j] = t; }
+    idx = 0; show();
+  };
+  wrap.appendChild(card); wrap.appendChild(bar); wrap.appendChild(hint);
+  show();
+  return wrap;
+}
+
+/* ---------- Location (only if the user allows it; only a place name is kept, on this device) ---------- */
+Object.assign(STR.en, {
+s_loc:"Location",
+s_loc_d:"Let Nesty know roughly where you are (for example Kakamega, Kenya) so weather, news and examples fit your area. Nesty uses it only when it helps. Your phone will ask for permission.",
+loc_on:"Use my location",loc_refresh:"Update my location",loc_off:"Turn off",loc_now:"Nesty knows you are near: {p}",
+loc_na:"Location is not supported on this device.",loc_asking:"Please allow location when your phone asks.",
+loc_denied:"Location was blocked. Allow it in your browser or phone site settings.",loc_fail:"Could not find your place. Please try again.",
+loc_set:"Location saved: {p}",loc_cleared:"Location turned off."
+});
+function getPlace(){ try{ return localStorage.getItem("nestyPlace") || ""; }catch(e){ return ""; } }
+function drawLoc(){
+  if(!$("locTxt")) return;
+  var p = getPlace();
+  $("locTxt").textContent = p ? L("loc_now", {p: p}) : L("s_loc_d");
+  $("locOn").textContent = L(p ? "loc_refresh" : "loc_on");
+  $("locOff").style.display = p ? "inline-block" : "none";
+}
+async function reverseGeo(lat, lon){
+  function uniq(list){
+    var seen = {}, out = [];
+    list.forEach(function(x){ x = String(x || "").replace(/\s+County$/i, "").trim(); var k = x.toLowerCase(); if(x && !seen[k]){ seen[k] = 1; out.push(x); } });
+    return out.slice(0, 4).join(", ");
+  }
+  try{
+    var r = await fetch("https://api.bigdatacloud.net/data/reverse-geocode-client?latitude=" + lat + "&longitude=" + lon + "&localityLanguage=en");
+    if(r.ok){
+      var d = await r.json();
+      var t = uniq([d.locality, d.city, d.principalSubdivision, d.countryName]);
+      if(t) return t;
+    }
+  }catch(e){}
+  try{
+    var r2 = await fetch("https://nominatim.openstreetmap.org/reverse?format=jsonv2&zoom=14&lat=" + lat + "&lon=" + lon, {headers: {"Accept": "application/json"}});
+    if(r2.ok){
+      var d2 = await r2.json(), a = d2.address || {};
+      var t2 = uniq([a.suburb || a.neighbourhood || a.village || a.town, a.city || a.county, a.state, a.country]);
+      if(t2) return t2;
+    }
+  }catch(e){}
+  return "";
+}
+function enableLocation(){
+  if(!navigator.geolocation){ toast(L("loc_na")); return; }
+  toast(L("loc_asking"));
+  navigator.geolocation.getCurrentPosition(async function(pos){
+    var place = await reverseGeo(pos.coords.latitude, pos.coords.longitude);
+    if(!place){ toast(L("loc_fail")); return; }
+    try{ localStorage.setItem("nestyPlace", place); localStorage.setItem("nestyPlaceAt", String(Date.now())); }catch(e){}
+    drawLoc();
+    toast(L("loc_set", {p: place}));
+  }, function(err){
+    toast(L(err && err.code === 1 ? "loc_denied" : "loc_fail"));
+  }, {enableHighAccuracy: false, timeout: 12000, maximumAge: 600000});
+}
+function disableLocation(){
+  try{ localStorage.removeItem("nestyPlace"); localStorage.removeItem("nestyPlaceAt"); }catch(e){}
+  drawLoc();
+  toast(L("loc_cleared"));
+}
+function refreshPlaceQuiet(){
+  var at = 0;
+  try{ at = parseInt(localStorage.getItem("nestyPlaceAt"), 10) || 0; }catch(e){}
+  if(!getPlace() || Date.now() - at < 6 * 3600 * 1000 || !navigator.geolocation || !navigator.permissions) return;
+  navigator.permissions.query({name: "geolocation"}).then(function(st){
+    if(st.state !== "granted") return;
+    navigator.geolocation.getCurrentPosition(async function(pos){
+      var place = await reverseGeo(pos.coords.latitude, pos.coords.longitude);
+      if(place){ try{ localStorage.setItem("nestyPlace", place); localStorage.setItem("nestyPlaceAt", String(Date.now())); }catch(e){} }
+    }, function(){}, {timeout: 10000, maximumAge: 600000});
+  }).catch(function(){});
+}
+
+/* ---------- Gentle tips: one at a time, never while you are busy ---------- */
+function lsGet(k, d){ try{ var v = localStorage.getItem(k); return v === null ? d : v; }catch(e){ return d; } }
+function lsSet(k, v){ try{ localStorage.setItem(k, String(v)); }catch(e){} }
+function markUsed(k){ lsSet("nestyUsed_" + k, "1"); }
+function prefill(t, auto){
+  box.value = t;
+  box.dispatchEvent(new Event("input"));
+  box.focus();
+  if(auto) send();
+}
+var TIPS = [
+  {id: "img", used: "img", cta: "Make an image", txt: "\ud83c\udfa8 Have you tried image creation? Ask Nesty to make an image and see wonders that never end!", go: function(){ prefill("Draw a "); }},
+  {id: "study", used: "study", cta: "Open Study mode", txt: "\ud83c\udf93 Studying? Students are sorted! Make flashcards, create exams and learn step by step. Become a genius!", go: function(){ if(!studyOn) toggleStudy(); }},
+  {id: "weather", cta: "Ask now", txt: "\u26c5 What is tomorrow's weather, {name}? Don't be left behind. Ask Nesty today!", go: function(){ prefill("What is the weather like tomorrow?", true); }},
+  {id: "deep", ultraHide: true, cta: "See Ultra", txt: "\ud83d\udd0e Need deep research with sources? Try Ultra, get NREV15 and get sorted!", go: function(){ openPlans("ultra"); }},
+  {id: "doc", cta: "Try it", txt: "\ud83d\udcc4 Need a CV, a letter or an Excel sheet? Nesty makes real Word, PDF and Excel files for you.", go: function(){ prefill("Make me a CV as a Word file"); }},
+  {id: "file", used: "file", cta: "Attach a file", txt: "\ud83d\udcce Got a PDF or Word file? Attach it and Nesty will summarise it in seconds.", go: function(){ $("file").click(); }},
+  {id: "voice", used: "voice", cta: "Try voice mode", txt: "\ud83c\udf99\ufe0f Try voice mode, {name}: just talk and Nesty answers out loud.", go: function(){ startVoiceMode(); }},
+  {id: "loc", hideIf: function(){ return !!getPlace(); }, cta: "Turn on", txt: "\ud83d\udccd Allow your location and Nesty can give answers that fit your area.", go: function(){ enableLocation(); }},
+  {id: "foot", cta: "Premier League table", txt: "\u26bd Want live scores and tables? Nesty has them, ask about the Premier League.", go: function(){ prefill("Premier League table", true); }},
+  {id: "ultra", ultraHide: true, cta: "See plans", txt: "\u2728 Ultra gives you NREV15: data analysis with charts, deep search and bigger limits.", go: function(){ openPlans("ultra"); }}
+];
+var tipCur = null, tipTimer = 0, tipSession = 0, tipOpenedAt = Date.now(), tipOn = false;
+function tipBusy(){
+  if(!user || $("app").style.display !== "flex" || loading || vmOn) return true;
+  var ids = ["settings", "plans", "fbSheet", "srcSheet", "prev", "editor"];
+  for(var i = 0; i < ids.length; i++){ var d = $(ids[i]).style.display; if(d === "block" || d === "flex") return true; }
+  if($("side").classList.contains("open")) return true;
+  if(box.value.trim()) return true;
+  return false;
+}
+function tipNext(){
+  var seen = {};
+  try{ seen = JSON.parse(lsGet("nestyTipSeen", "{}")); }catch(e){}
+  var idx = parseInt(lsGet("nestyTipIdx", "0"), 10) || 0, ultra = !!(me && me.plan === "ultra");
+  for(var k = 0; k < TIPS.length; k++){
+    var t = TIPS[(idx + k) % TIPS.length];
+    if(t.used && lsGet("nestyUsed_" + t.used, "") === "1") continue;
+    if(t.ultraHide && ultra) continue;
+    if(t.hideIf && t.hideIf()) continue;
+    if((seen[t.id] || 0) >= 2) continue;
+    lsSet("nestyTipIdx", (idx + k + 1) % TIPS.length);
+    seen[t.id] = (seen[t.id] || 0) + 1;
+    lsSet("nestyTipSeen", JSON.stringify(seen));
+    return t;
+  }
+  return null;
+}
+function tipTick(){
+  if(tipCur || tipBusy()) return;
+  var now = Date.now();
+  if(now - tipOpenedAt < 75000) return;
+  if(now < (parseInt(lsGet("nestyTipSnooze", "0"), 10) || 0)) return;
+  if(now - (parseInt(lsGet("nestyTipAt", "0"), 10) || 0) < 5 * 60 * 1000) return;
+  if(tipSession >= 3) return;
+  var t = tipNext();
+  if(!t) return;
+  tipCur = t;
+  tipSession++;
+  lsSet("nestyTipAt", now);
+  $("tipTxt").textContent = t.txt.replace("{name}", firstName() || "friend");
+  $("tipGo").textContent = t.cta;
+  $("tip").classList.add("show");
+  clearTimeout(tipTimer);
+  tipTimer = setTimeout(function(){ tipClose(false); }, 12000);
+}
+function tipClose(byUser){
+  $("tip").classList.remove("show");
+  clearTimeout(tipTimer);
+  tipCur = null;
+  if(byUser){
+    var d = (parseInt(lsGet("nestyTipDis", "0"), 10) || 0) + 1;
+    if(d >= 3){ lsSet("nestyTipSnooze", Date.now() + 3 * 86400000); d = 0; }
+    lsSet("nestyTipDis", d);
+  }
+}
+function tipAct(){
+  var t = tipCur;
+  tipClose(false);
+  lsSet("nestyTipDis", "0");
+  if(t && t.go) t.go();
+}
+function tipInit(){
+  tipOpenedAt = Date.now();
+  if(!tipOn){ tipOn = true; setInterval(tipTick, 20000); }
+}
 
 /* ---------- Remembering between chats ---------- */
 async function removeFacts(list){
@@ -3236,7 +3493,7 @@ var PAY_NUMBER = "0701244268";
 var PLAN_DATA = {
   free: {n: "Free", msg: 40, file: 30, img: 6, model: "NREV11", tts: 12},
   premium: {n: "Premium", msg: 60, file: 50, img: 6, m: 50, y: 600, model: "NREV11", tts: 40},
-  ultra: {n: "Ultra", msg: 80, file: 70, img: 20, m: 100, y: 36000, model: "NREV15", tts: 120, extras: ["Deep search: many sources, one cited report", "Data analysis for CSV and Excel files, with charts", "Longer, deeper answers"]}
+  ultra: {n: "Ultra", msg: 80, file: 70, img: 20, m: 100, y: 1200, model: "NREV15", tts: 120, extras: ["Deep search: many sources, one cited report", "Data analysis for CSV and Excel files, with charts", "Longer, deeper answers"]}
 };
 var me = null, plansOpen = false, plansFocus = "", promoTimer = null;
 function money(n){ return "KSh " + String(n).replace(/\B(?=(\d{3})+(?!\d))/g, ","); }
@@ -3570,6 +3827,7 @@ function startVoiceMode(){
   if(!SR){ toast(L("vm_na")); return; }
   if(!user) return;
   vmOn = true;
+  markUsed("voice");
   $("vmode").style.display = "flex";
   vmListen();
 }

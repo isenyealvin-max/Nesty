@@ -184,9 +184,7 @@ async function verify(token, origin) {
     if (!res.ok) return null;
     const u = await res.json();
     if (!u || !u.$id) return null;
-    // The password flag comes from Appwrite itself (passwordUpdate), not from profile data the user can edit.
-    const pwSet = typeof u.passwordUpdate === "string" ? u.passwordUpdate !== "" : !!(u.prefs && u.prefs.pwSet === true);
-    const user = { $id: u.$id, verified: u.emailVerification === true, pwSet: pwSet };
+    const user = { $id: u.$id, verified: u.emailVerification === true, pwSet: !!(u.prefs && u.prefs.pwSet === true) };
     if (tokenCache.size > 500) tokenCache.clear();
     tokenCache.set(token, { user: user, exp: Date.now() + (user.verified && user.pwSet ? 5 * 60 * 1000 : 15 * 1000) });
     return user;
@@ -472,7 +470,7 @@ function safeEq(a, b) {
 
 async function handleAdmin(request, env, action) {
   if (!env.ADMIN_KEY || !env.LIMITER) return json({ error: "Admin is not set up." }, 503);
-  const guard = stub(env, "adminfail|" + (request.headers.get("CF-Connecting-IP") || "unknown")); // per visitor, so strangers cannot lock the owner out
+  const guard = stub(env, "adminfail");
   const key = request.headers.get("X-Admin-Key") || "";
   if (!safeEq(key, env.ADMIN_KEY)) {
     const g = await guard.hit(10, 15 * 60 * 1000);
