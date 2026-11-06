@@ -389,7 +389,7 @@ async function decideSearch(env, text) {
 const SEARCH_RULES = " STRICT RULES FOR ANSWERS BASED ON SEARCH: use only facts that appear in the search results; never fill gaps from memory; copy numbers, names, scores and table rows exactly as found; if the results do not contain the exact data asked for (for example a full league table), say so and give only what you found instead of inventing rows; say \"as of <date>\" when facts change over time; never invent match statistics, minute-by-minute events, possession, shots, line-ups or injuries; do not write a Sources section or paste links, the app shows them.";
 
 const STUDY_MODE = " STUDY MODE IS ON. Act as a patient tutor. Teach ONE small step at a time (at most about 120 words) with a simple example, then ask ONE short question to check understanding and wait for the answer. Praise effort, correct mistakes kindly and explain why. After the user answers, give feedback, then move to the next step. After a topic, offer a 3-question quiz; make flashcards in a code block tagged flashcards when asked. If you do not know the user's level, ask their grade or level first. Never dump a whole lesson at once. When a topic is finished, save progress with a [[remember: ...]] line.";
-const ULTRA_POWERS = " ULTRA POWERS (NREV15): give deeper, more thorough, well-structured answers when the question deserves it. For attached CSV or Excel data, the app puts exact computed statistics at the top of the file text: trust those numbers, look for patterns, outliers and trends, show key results in a Markdown table, and never invent numbers that are not in the data. When a chart would help, add a code block tagged chart containing JSON such as {\"type\":\"bar\",\"title\":\"Sales by month\",\"labels\":[\"Jan\",\"Feb\"],\"values\":[120,90]} (type may be bar or line; for several series use \"series\":[{\"name\":\"A\",\"values\":[1,2]}]).";
+const ULTRA_POWERS = " DATA AND DEEP-THINKING POWERS: give deeper, more thorough, well-structured answers when the question deserves it. For attached CSV or Excel data, the app puts exact computed statistics at the top of the file text: trust those numbers, look for patterns, outliers and trends, show key results in a Markdown table, and never invent numbers that are not in the data. When a chart would help, add a code block tagged chart containing JSON such as {\"type\":\"bar\",\"title\":\"Sales by month\",\"labels\":[\"Jan\",\"Feb\"],\"values\":[120,90]} (type may be bar or line; for several series use \"series\":[{\"name\":\"A\",\"values\":[1,2]}]).";
 
 async function callText(env, system, userText, maxTokens) {
   if (env.GROQ_API_KEY) {
@@ -453,7 +453,7 @@ async function planQueries(env, question) {
   return [String(question).slice(0, 120)];
 }
 
-// NREV15 Deep search: many searches, many sources, one short cited report.
+// Deep search (Tyra): many searches, many sources, one short cited report.
 async function deepResearch(env, body, question, today) {
   if (env.LIMITER && body.uid) {
     try {
@@ -488,7 +488,7 @@ async function deepResearch(env, body, question, today) {
   items = items.slice(0, 12);
   if (!items.length && !notes) return { text: "I could not find enough sources for a reliable report. Please try again in a moment.", via: "", sources: [] };
   const ctx = items.map(function (it, i) { return "[" + (i + 1) + "] " + it.title + " (" + it.uri + ")\n" + (it.text || ""); }).join("\n\n") + (notes ? "\n\nBACKGROUND NOTES (no numbers; cite the numbered sources only):\n" + notes : "");
-  const sys = "You are Nesty's deep research writer (NREV15). Write a short, clear report in the language of the question, under 450 words, with: a 2-line **Summary**; **Key findings** as 4 to 6 bullets, each ending with citations like [1][3]; **Disagreements or uncertainty**; **What to check next** (1 or 2 bullets). Use ONLY the sources provided. Every factual claim needs a citation number from the list. If the sources do not support something, say so. Never invent facts, numbers or quotes. Do not write a Sources section or paste links; the app shows them.";
+  const sys = "You are Nesty's deep research writer. Write a short, clear report in the language of the question, under 450 words, with: a 2-line **Summary**; **Key findings** as 4 to 6 bullets, each ending with citations like [1][3]; **Disagreements or uncertainty**; **What to check next** (1 or 2 bullets). Use ONLY the sources provided. Every factual claim needs a citation number from the list. If the sources do not support something, say so. Never invent facts, numbers or quotes. Do not write a Sources section or paste links; the app shows them.";
   const out = await callText(env, sys, "Question: " + question + "\nToday: " + today + "\n\nSOURCES:\n" + ctx, 3000);
   if (!out) return { text: "I found sources but could not write the report just now. Please try again.", via: "", sources: [] };
   return { text: out, via: "nrev15-deep", sources: items.map(function (i) { return { title: i.title, uri: i.uri }; }) };
@@ -497,13 +497,17 @@ async function deepResearch(env, body, question, today) {
 // Everything Nesty may say about itself. The numbers here must match worker.js.
 const NESTY_FACTS =
   " FACTS ABOUT NESTY AI (use only these facts about Nesty; never invent plans, prices, limits, policies, payment statuses or features)." +
-  " Nesty AI was made by Red element. Nesty's normal model is called NREV11 (Nesty Red Element Version 11), used on the Free and Premium plans. The Ultra plan uses NREV15 (Nesty Red Element Version 15), which adds Deep search reports with citations, data analysis with charts for CSV and Excel files, and longer, deeper answers. Every plan has Study mode and natural voices (limited per hour)." +
-  " Nesty's logo is a blue and gold interlocking knot shaped like an X on a cream background. When a user asks you to show or generate your logo, the app displays the real logo itself, so never describe or invent a different design." +
+  " Nesty AI was made by Red element. MODELS (mention a model name ONLY when the user asks which model or AI they are using; otherwise just say you are Nesty AI): NEPTUNE 5.5 is the fastest, for quick answers (Free plan). Nova 5.5 is the most efficient, for the simplest tasks (Free plan). Nuvida 5.5 is for complex tasks and everyday work (Go plan). Hiaru 5.1 is for your toughest challenges and for office work: documents, files and data analysis with charts (Pro plan). Smart 5.5 is for education and learning (Learnover plan). Tyra is for research and Deep search (Premium plan). The Ultra plan includes all six models. On Free the user chooses between NEPTUNE 5.5 and Nova 5.5; on Ultra the user can choose any model; every other plan has one model. The user changes model by tapping the model name next to the Nesty AI title. Deep search works on the Premium and Ultra plans; data analysis for CSV and Excel files works on the Pro and Ultra plans. Every plan has Study mode and natural voices (limited per hour)." +
+  " Nesty's logo is a golden letter N inside a gold ring, with a small nest and a sparkle, on white. When a user asks you to show or generate your logo, the app displays the real logo itself, so never describe or invent a different design." +
   " Features: chat in many languages, Markdown answers, file attachments (pictures, PDF, Word .docx and text files), picture creation and photo editing (just ask in plain words, for example \"draw a lion\", or attach a photo and say \"make it night time\"), code and file downloads (code blocks have a Download button), automatic live web search when a question needs current information, voice input and spoken answers, custom instructions and memory (Settings), 7 app languages (English, Kiswahili, French, Spanish, Portuguese, Arabic, Hindi), background colours, saved chat history. Accounts: to create one the user enters first name, second name, age (13 or older) and email, verifies the email with a code sent to it, then sets a password (at least 8 characters with an uppercase letter, a lowercase letter, a number and a special character). Users who continue with Google must also set a password. Sign-in is with email and password (or Continue with Google). Codes are not used to sign in. A forgotten password is reset with the Forgot password link, which sends a reset email." +
   " PLANS. Every limit is per user. Each limit has its own 1-hour window. A window starts at the user's first use of that limit and the limit resets exactly 1 hour after the window began; the app shows the exact reset time when a limit is reached." +
-  " FREE: 40 messages, 30 file attachments and 6 image creations per 1-hour window." +
-  " PREMIUM: KSh 50 per month or KSh 600 per year; 60 messages, 50 file attachments and 6 image creations per 1-hour window." +
-  " ULTRA: KSh 100 per month or KSh 1,200 per year; 80 messages, 70 file attachments and 20 image creations per 1-hour window." +
+  " FREE: KSh 0; model NEPTUNE 5.5 or Nova 5.5 (user chooses); 40 messages, 30 file attachments, 6 image creations and 12 natural-voice clips per 1-hour window." +
+  " GO: KSh 70 per month or KSh 840 per year; model Nuvida 5.5; 60 messages, 50 file attachments, 10 image creations and 40 natural-voice clips per 1-hour window." +
+  " PREMIUM: KSh 50 per month or KSh 600 per year; model Tyra (with Deep search); 55 messages, 45 file attachments, 7 image creations and 35 natural-voice clips per 1-hour window." +
+  " PRO: KSh 120 per month or KSh 1,440 per year; model Hiaru 5.1 (with data analysis); 75 messages, 65 file attachments, 15 image creations and 40 natural-voice clips per 1-hour window." +
+  " LEARNOVER (for students and learning): KSh 150 per month or KSh 1,800 per year; model Smart 5.5; 85 messages, 75 file attachments, 20 image creations and 80 natural-voice clips per 1-hour window." +
+  " ULTRA: KSh 599 per month or KSh 7,188 per year; all models; 100 messages, 100 file attachments, 50 image creations and 120 natural-voice clips per 1-hour window." +
+  " Plans rank by price from lowest to highest: Premium, Go, Pro, Learnover, Ultra." +
   " HOW TO UPGRADE: pay the plan price directly to the phone number 0701244268; send the payment confirmation and your Nesty email to the administrator (the Plans screen has a button that opens an email); the administrator checks the payment by hand and sends a unique activation code; enter the code in Plans under Activation code; the server checks the code and activates the plan automatically. There is no automatic card or M-Pesa checkout in the app." +
   " Each code is single-use and is for one plan and one period (monthly or yearly). A monthly plan lasts one calendar month and a yearly plan one year from activation. Activating the same plan again adds time after the current expiry. Activating a higher plan replaces the current plan. A lower-plan code cannot be used while a higher plan is active. When a plan expires the account goes back to Free." +
   " You cannot see payments, issue or check codes, activate or extend plans, or change limits. Never say that a payment was received or a plan was activated. For the user's own plan or usage, use only the details given below in this prompt, or tell the user to open Plans in the app. If you do not know something about Nesty, say so.";
@@ -547,7 +551,11 @@ export async function onRequestPost(context) {
   const userMessages = clipMessages(body.messages);
   const name = String(body.userName || "").slice(0, 40);
   const today = String(body.today || "").slice(0, 80);
-  const isUltra = !!(body.planInfo && body.planInfo.plan === "ultra");
+  const pinfo = body.planInfo || {};
+  const MODEL_NAMES = { neptune: "NEPTUNE 5.5", nova: "Nova 5.5", nuvida: "Nuvida 5.5", hiaru: "Hiaru 5.1", smart: "Smart 5.5", tyra: "Tyra" };
+  const modelId = MODEL_NAMES[pinfo.model] ? pinfo.model : "nuvida";
+  const canDeep = !!pinfo.deep;
+  const canData = !!pinfo.data;
   const usageInfo = body.usageInfo || null;
   const wantStream = !!body.stream;
   const place = String(body.place || "").replace(/[^\p{L}\p{N}\s,.\-']/gu, "").trim().slice(0, 120);
@@ -561,8 +569,8 @@ export async function onRequestPost(context) {
   });
 
   if (body.deep) {
-    if (!isUltra) {
-      return reply("Deep search is part of NREV15 on the Ultra plan. Open Plans to upgrade. ✨");
+    if (!canDeep) {
+      return reply("Deep search is part of the Tyra model on the Premium and Ultra plans. Open Plans to upgrade. ✨");
     }
     const dr = await deepResearch(env, body, lastText(userMessages), today);
     return reply(dr.text, dr.via, dr.sources);
@@ -586,7 +594,7 @@ export async function onRequestPost(context) {
 
   // The whole personality is ONE template string (between the backticks).
   // Do not put a backtick or a dollar-brace inside it.
-  let system = `You are NREV11 (Nesty Red Element Version 11), the normal model of Nesty AI, made by Red Element. You are warm, friendly, clever and a little playful, like a smart friend, never like a textbook or a robot.
+  let system = `You are Nesty AI, made by Red Element. You are warm, friendly, clever and a little playful, like a smart friend, never like a textbook or a robot.
 
 HOW YOU TALK
 - Chat naturally and keep replies short by default: usually 2 to 6 short lines. Go longer only when the task really needs it (an essay, code, a detailed plan).
@@ -610,17 +618,16 @@ PICTURES
 
 SEARCH AND IDENTITY
 - The app searches the web by itself when a question needs current facts, and shows the sources behind a small Sources button. Never paste long lists of links in your answer.
-- You were created by Red Element. When asked your name or version, say you are NREV11, Nesty Red Element Version 11.`;
+- You were created by Red Element. Your name is Nesty AI. Never mention a model name or version unless the user asks which model or AI they are talking to; if they ask, tell them the model named in CURRENT MODEL below.`;
 
-  if (isUltra) {
-    system = system
-      .replace(/NREV11/g, "NREV15")
-      .replace(/Version 11/g, "Version 15")
-      .replace("the normal model of Nesty AI", "the advanced model of Nesty AI, available on the Ultra plan");
-  }
   system += NESTY_FACTS;
-  if (isUltra) system += ULTRA_POWERS;
-  if (body.study) system += STUDY_MODE;
+  if (canData) system += ULTRA_POWERS;
+  if (body.study || modelId === "smart") system += STUDY_MODE;
+  system += " CURRENT MODEL (say it ONLY if the user asks which model or AI they are using): " + MODEL_NAMES[modelId] + ".";
+  if (modelId === "neptune") system += " Keep answers especially quick and brief.";
+  if (modelId === "nova") system += " Keep answers simple, clear and efficient.";
+  if (modelId === "tyra") system += " You are the research model: be careful and well organised, separate facts from opinions, mention dates, and suggest the Deep search button for big research questions.";
+  if (modelId === "smart") system += " You are the education model: explain patiently, use examples from a student's life, and check understanding.";
 
   if (today) {
     system += " Today's date is " + today + ".";
@@ -754,22 +761,24 @@ SEARCH AND IDENTITY
     });
   }
 
-  if (!hasImage) {
-    add(env.GROQ_API_KEY, GROQ_URL, ["openai/gpt-oss-120b", "openai/gpt-oss-20b"], {
-      reasoning_effort: isUltra ? "medium" : "low",
-      max_completion_tokens: isUltra ? 6000 : 4096,
+  const GEMINI_FULL = ["gemini-3.8-flash", "gemini-3.7-flash", "gemini-3.6-flash", "gemini-3-flash-preview", "gemini-3.5-flash-lite", "gemini-3.1-flash-lite", "gemini-2.5-flash", "gemini-2.5-flash-lite"];
+  const GEMINI_LITE = ["gemini-3.5-flash-lite", "gemini-3.1-flash-lite", "gemini-2.5-flash-lite", "gemini-3.8-flash", "gemini-3.7-flash", "gemini-3.6-flash", "gemini-3-flash-preview", "gemini-2.5-flash"];
+  const fastModel = modelId === "neptune";
+  const deepThink = modelId === "hiaru" || modelId === "tyra";
+  function addGroq() {
+    if (hasImage) return;
+    add(env.GROQ_API_KEY, GROQ_URL, fastModel ? ["openai/gpt-oss-20b", "openai/gpt-oss-120b"] : ["openai/gpt-oss-120b", "openai/gpt-oss-20b"], {
+      reasoning_effort: modelId === "hiaru" ? "high" : (deepThink || modelId === "smart" || modelId === "nuvida") ? "medium" : "low",
+      max_completion_tokens: deepThink ? 6000 : (fastModel ? 2048 : 4096),
     });
   }
-  add(env.GEMINI_API_KEY, GEMINI_URL, [
-    "gemini-3.8-flash",
-    "gemini-3.7-flash",
-    "gemini-3.6-flash",
-    "gemini-3-flash-preview",
-    "gemini-3.5-flash-lite",
-    "gemini-3.1-flash-lite",
-    "gemini-2.5-flash",
-    "gemini-2.5-flash-lite",
-  ]);
+  if (modelId === "nova") {
+    add(env.GEMINI_API_KEY, GEMINI_URL, GEMINI_LITE);
+    addGroq();
+  } else {
+    addGroq();
+    add(env.GEMINI_API_KEY, GEMINI_URL, GEMINI_FULL);
+  }
   if (!hasImage) {
     add(env.OPENROUTER_API_KEY, OR_URL, ["openai/gpt-oss-120b:free", "openrouter/free"]);
   }
