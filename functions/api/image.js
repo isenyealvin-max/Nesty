@@ -160,7 +160,7 @@ export async function handleImage(request, env, d) {
   let limit = d.PLANS.free.img;
   if (env.LIMITER) {
     const plan = await d.stub(env, "plan|" + user.$id).getPlan();
-    limit = (d.PLANS[plan.plan] || d.PLANS.free).img;
+    limit = (plan.lim || d.PLANS.free).img;
     stb = d.stub(env, "img|" + user.$id);
     const r = await stb.hit(limit, d.WINDOW_MS);
     if (!r.ok) {
