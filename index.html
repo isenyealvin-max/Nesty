@@ -429,8 +429,8 @@ document.getElementById("bootLogo").innerHTML = window.NESTY_LOGO("b", true);</s
   </header>
   <div id="chat"></div>
   <div id="inputWrap">
-    <div id="promoBar"><button class="x" onclick="hidePromo()">&times;</button><div id="promoTxt"></div><div class="upRow"><button onclick="openPlans('go')">Go</button><button onclick="openPlans('learnover')">Learnover</button><button onclick="openPlans('ultra')">Ultra</button></div></div>
-    <div id="limitBar"><div id="limitTxt"></div><div class="upRow"><button onclick="openPlans('go')">Go</button><button onclick="openPlans('learnover')">Learnover</button><button onclick="openPlans('ultra')">Ultra</button></div></div>
+    <div id="promoBar"><button class="x" onclick="hidePromo()">&times;</button><div id="promoTxt"></div><div class="upRow"><button onclick="openPlans('go')">Go</button><button onclick="openPlans('learnover')">Smart</button><button onclick="openPlans('ultra')">Ultra</button></div></div>
+    <div id="limitBar"><div id="limitTxt"></div><div class="upRow"><button onclick="openPlans('go')">Go</button><button onclick="openPlans('learnover')">Smart</button><button onclick="openPlans('ultra')">Ultra</button></div></div>
     <div id="modeRow"><button class="cpbtn" id="studyBtn" onclick="toggleStudy()"></button><button class="cpbtn" id="deepBtn" onclick="toggleDeep()"></button></div>
     <div id="chip"><span id="chipName"></span><button onclick="removeFile()">&times;</button></div>
     <div id="bar">
@@ -877,7 +877,7 @@ e_exists:"An account with this email already exists. Please sign in.",e_pwreq:"E
 e_login:"Wrong email or password. If you forgot your password, tap Forgot password.",
 needverify:"Please verify your email to continue.",
 upgrade:"Upgrade",plans_btn:"Plans & upgrade",btn_premium:"Premium Features",btn_ultra:"Ultra Features",
-promo:"You are using the Free plan. Need more? Go is great for everyday work, Pro for office work, Learnover if you study, and Ultra gives you everything. Get sorted!",
+promo:"You are using the Free plan. Need more? Go is great for everyday work, Pro for office work, Smart if you study, and Ultra gives you everything. Get sorted!",
 lim_file:"You have reached the file attachment limit for now. You can attach files again at {t} (in {r}).",
 plans_title:"Plans",current:"Current",free_price:"Free",monthly:"month",yearly:"year",
 pl_msg:"{n} messages per hour",pl_file:"{n} file attachments per hour",pl_img:"{n} image creations per hour",
@@ -1934,6 +1934,19 @@ function buildBot(m, isLast){
       var isSheet = (lang === "xlsx" || lang === "excel");
       var pre = document.createElement("pre");
       pre.textContent = code;
+      var isPpt = (lang === "pptx" || lang === "ppt" || lang === "powerpoint");
+      if(isPpt){
+        bar.removeChild(dbtn);
+        var pbt = document.createElement("button");
+        pbt.className = "cpbtn";
+        pbt.textContent = "Download PowerPoint";
+        (function(c, b){ b.onclick = function(){ downloadPptx(c, b); }; })(code, pbt);
+        bar.insertBefore(pbt, cb);
+        pre = document.createElement("div");
+        pre.className = "txt docprev";
+        var sl = parseSlides(code);
+        pre.innerHTML = '<div style="font-weight:800">\ud83d\udcca ' + esc(sl.title || "Presentation") + ' \u00b7 ' + sl.slides.length + ' slides</div>' + sl.slides.map(function(s, i){ return '<div style="margin:6px 0;padding:8px 10px;border-left:4px solid #ffc933;background:rgba(255,201,51,.12)"><b>' + (i + 1) + '. ' + esc(s.title) + '</b>' + (s.bullets.length ? '<div style="font-size:13px">' + s.bullets.slice(0, 3).map(esc).join(" \u00b7 ") + '</div>' : '') + (s.chart ? '<div style="font-size:13px">\ud83d\udcc8 chart: ' + esc(s.chart.title || s.chart.type) + '</div>' : '') + '</div>'; }).join("");
+      }
       if(isDoc || isSheet){
         bar.removeChild(dbtn);
         var fbtn = document.createElement("button");
@@ -2016,6 +2029,21 @@ function buildBot(m, isLast){
     };
     act.appendChild(fb);
   });
+  if(window.shareMsg){
+    var shb = document.createElement("button");
+    shb.className = "cpbtn";
+    shb.textContent = "\u2934 Share";
+    shb.onclick = function(){ shareMsg(m); };
+    act.appendChild(shb);
+  }
+  if(window.reportWrong){
+    var rpb = document.createElement("button");
+    rpb.className = "cpbtn";
+    rpb.textContent = "\u26a0";
+    rpb.title = "Report a wrong answer";
+    rpb.onclick = function(){ reportWrong(m); };
+    act.appendChild(rpb);
+  }
   if(isLast){
     var rg = document.createElement("button");
     rg.className = "cpbtn";
@@ -2069,10 +2097,11 @@ function renderAll(){
     var n = firstName();
     var title = n ? L("hello", {n: esc(n)}) : L("help");
     var sub = n ? L("help2") : L("ask");
+    var sugList = ["i1","i2","i3","i4"].map(function(k){ return L(k); });
+    if((!uiLang || uiLang === "en") && window.nestyGreeting){ var gr = window.nestyGreeting(n); title = gr.title; sub = gr.sub; sugList = gr.sugs; }
     chat.innerHTML = '<div id="welcome"><img src="/icon-192.png" alt=""><h2>' + title + '</h2><div>' + sub + '</div><div class="sugs" id="sugs"></div></div>';
-    ["i1","i2","i3","i4"].forEach(function(k){
+    sugList.forEach(function(label){
       var b = document.createElement("button");
-      var label = L(k);
       b.textContent = label;
       b.onclick = function(){ useSuggestion(label); };
       $("sugs").appendChild(b);
@@ -3023,7 +3052,16 @@ function syncModes(){
   }
   sc.textContent = "\ud83c\udf93 Study Center";
   sc.style.display = showS ? "" : "none";
-  row.style.display = (showD || showS) ? "" : "none";
+  var bz = $("bzBtn");
+  if(!bz){
+    bz = document.createElement("button");
+    bz.className = "cpbtn"; bz.id = "bzBtn";
+    bz.onclick = function(){ if(window.goBiz) goBiz(); };
+    row.appendChild(bz);
+  }
+  bz.textContent = "\ud83d\udcbc Business tools";
+  bz.style.display = (m === "hiaru") ? "" : "none";
+  row.style.display = "";
 }
 function toggleStudy(){
   studyOn = !studyOn;
@@ -3472,8 +3510,8 @@ var TIPS = [
   {id: "exam", only: ["learnover", "ultra"], cta: "Make an exam", txt: "📝 Ready for a test? Make a practice exam, get marked at once and see exactly where to improve.", go: function(){ goStudy(); }},
   {id: "stories", only: ["learnover", "ultra"], cta: "Read a story", txt: "📖 Story time! Ask Study Center for a story, novella or novel that fits your age, with new words to learn.", go: function(){ goStudy(); }},
   {id: "timetable", only: ["learnover", "ultra"], cta: "Build a timetable", txt: "🗓️ Let Nesty build your study timetable from how you perform in exams. No more guessing what to revise!", go: function(){ goStudy(); }},
-  {id: "student", only: ["free", "go", "premium", "pro"], cta: "See Learnover", txt: "🎓 Are you a student using the {plan} plan? Mh, that's not good. Upgrade to Learnover or Ultra and get sorted!", go: function(){ openPlans("learnover"); }},
-  {id: "sc_teaser", only: ["free", "go", "premium", "pro"], cta: "Meet Omni smart", txt: "📚 Exams, notes, flashcards, a timetable and stories, all in one Study Center. Meet Omni smart on Learnover!", go: function(){ openPlans("learnover"); }},
+  {id: "student", only: ["free", "go", "premium", "pro"], cta: "See Smart", txt: "🎓 Are you a student using the {plan} plan? Mh, that's not good. Upgrade to Smart or Ultra and get sorted!", go: function(){ openPlans("learnover"); }},
+  {id: "sc_teaser", only: ["free", "go", "premium", "pro"], cta: "Meet Omni smart", txt: "📚 Exams, notes, flashcards, a timetable and stories, all in one Study Center. Meet Omni smart on Smart!", go: function(){ openPlans("learnover"); }},
   {id: "weather", cta: "Ask now", txt: "⛅ What is tomorrow's weather, {name}? Don't be left behind. Ask Nesty today!", go: function(){ prefill("What is the weather like tomorrow?", true); }},
   {id: "research", only: ["free", "go", "pro", "learnover"], cta: "See Premium", txt: "🔎 Need deep research with sources? Premium gives you Tyra, built for research. Ultra gives you every model!", go: function(){ openPlans("premium"); }},
   {id: "office", only: ["free", "go", "premium", "learnover"], cta: "See Pro", txt: "📊 Need Excel tables with borders, or a Word file in Times New Roman? Pro gives you Hiaru 5.1 for office work.", go: function(){ openPlans("pro"); }},
@@ -3653,7 +3691,7 @@ var PLAN_DATA = {
   go: {n: "Go", msg: 60, file: 50, img: 10, tts: 40, m: 70, y: 840, models: ["nuvida"]},
   premium: {n: "Premium", msg: 55, file: 45, img: 7, tts: 35, m: 50, y: 600, models: ["tyra"], extras: ["Deep search: many sources, one cited report"]},
   pro: {n: "Pro", msg: 75, file: 65, img: 15, tts: 40, m: 120, y: 1440, models: ["hiaru"], extras: ["Data analysis for CSV and Excel files, with charts", "Office work: documents, files and data"]},
-  learnover: {n: "Learnover", msg: 85, file: 75, img: 20, tts: 80, m: 150, y: 1800, models: ["smart"], extras: ["Study Center: exams that Nesty marks, notes, flashcards, timetable, stories, novellas and novels", "Progress charts with friendly tips"]},
+  learnover: {n: "Smart", msg: 85, file: 75, img: 20, tts: 80, m: 150, y: 1800, models: ["smart"], extras: ["Study Center: exams that Nesty marks, notes, flashcards, timetable, stories, novellas and novels", "Progress charts with friendly tips"]},
   ultra: {n: "Ultra", msg: 100, file: 100, img: 50, tts: 120, m: 599, y: 7188, models: ["neptune", "nova", "nuvida", "hiaru", "smart", "tyra"], extras: ["All six models, you choose", "Deep search and data analysis with charts", "The biggest limits"]}
 };
 function modelName(id){ return MODEL_INFO[id] ? MODEL_INFO[id].n : id; }
@@ -3834,6 +3872,80 @@ async function emailReset(){
 STR.en.dl_word = "Download Word";
 STR.en.dl_pdf = "Save as PDF";
 STR.en.dl_xlsx = "Download Excel";
+/* ---------- PowerPoint (native charts) ---------- */
+function parseSlides(code){
+  var lines = String(code).replace(/\r/g, "").split("\n"), opt = {font: "Calibri", theme: "blue"}, body = [];
+  lines.forEach(function(l){
+    var m = /^@(font|theme)\s*:\s*(.+)$/i.exec(l.trim());
+    if(m && !body.length) opt[m[1].toLowerCase()] = m[2].trim(); else body.push(l);
+  });
+  var parts = body.join("\n").split(/\n\s*---+\s*\n/), out = {title: "", subtitle: "", opt: opt, slides: []};
+  parts.forEach(function(blk, i){
+    var s = {title: "", bullets: [], chart: null, notes: "", sub: ""};
+    blk.split("\n").forEach(function(l){
+      var t = l.trim(); if(!t) return;
+      var m;
+      if(i === 0 && /^#\s+/.test(t) && !/^##/.test(t)){ out.title = t.replace(/^#\s+/, ""); return; }
+      if(/^##\s+/.test(t)){ s.title = t.replace(/^##\s+/, ""); return; }
+      if(/^#\s+/.test(t)){ s.title = t.replace(/^#\s+/, ""); return; }
+      if((m = /^subtitle\s*:\s*(.+)$/i.exec(t))){ out.subtitle = m[1]; return; }
+      if((m = /^notes?\s*:\s*(.+)$/i.exec(t))){ s.notes = m[1]; return; }
+      if((m = /^chart\s*:\s*(.+)$/i.exec(t))){
+        var p = m[1].split("|").map(function(x){ return x.trim(); });
+        var type = (p[0] || "bar").toLowerCase(), labels = (p[2] || "").split(",").map(function(x){ return x.trim(); }), series = [];
+        var vs = p[3] || "";
+        vs.split(";").forEach(function(sx, k){
+          var nm = "Series " + (k + 1), vals = sx;
+          if(sx.indexOf("=") > -1){ nm = sx.split("=")[0].trim(); vals = sx.slice(sx.indexOf("=") + 1); }
+          series.push({name: nm, values: vals.split(",").map(function(x){ return parseFloat(x); }).map(function(x){ return isNaN(x) ? 0 : x; })});
+        });
+        if(["bar","line","pie","doughnut"].indexOf(type) < 0) type = "bar";
+        s.chart = {type: type, title: p[1] || "", labels: labels, series: series};
+        return;
+      }
+      if(/^[-*\u2022]\s+/.test(t)){ s.bullets.push(t.replace(/^[-*\u2022]\s+/, "")); return; }
+      if(!s.title && i > 0) s.title = t; else s.bullets.push(t);
+    });
+    if(i === 0 && !out.title && s.title) out.title = s.title;
+    if(i > 0 || s.bullets.length || s.chart) { if(i === 0 && !s.title && !s.chart && !s.bullets.length) return; if(i > 0 || s.chart || s.bullets.length) out.slides.push(s); }
+  });
+  return out;
+}
+var PPT_THEMES = {blue: ["1A56DB", "E8F0FE"], green: ["12805C", "E3F5EA"], gold: ["D99A00", "FFF3C4"], red: ["C62828", "FDECEA"], dark: ["222B45", "EEF0F6"]};
+function loadScriptOnce(src){
+  return new Promise(function(res, rej){
+    if(window.PptxGenJS) return res();
+    var s = document.createElement("script"); s.src = src; s.onload = res; s.onerror = function(){ rej(new Error("load")); };
+    document.head.appendChild(s);
+  });
+}
+async function downloadPptx(code, btn){
+  var old = btn ? btn.textContent : "";
+  try{
+    if(btn){ btn.textContent = "Making..."; btn.disabled = true; }
+    await loadScriptOnce("https://cdn.jsdelivr.net/npm/pptxgenjs@3.12.0/dist/pptxgen.bundle.js");
+    var d = parseSlides(code), th = PPT_THEMES[String(d.opt.theme).toLowerCase()] || PPT_THEMES.blue, font = d.opt.font || "Calibri";
+    var pptx = new PptxGenJS(); pptx.layout = "LAYOUT_WIDE";
+    var s0 = pptx.addSlide(); s0.background = {color: th[0]};
+    s0.addText(d.title || "Presentation", {x: 0.8, y: 2.2, w: 11.7, h: 1.6, fontFace: font, fontSize: 40, bold: true, color: "FFFFFF", align: "left"});
+    if(d.subtitle) s0.addText(d.subtitle, {x: 0.8, y: 3.9, w: 11.7, h: 0.8, fontFace: font, fontSize: 20, color: "F5F5F5"});
+    d.slides.forEach(function(s){
+      var sl = pptx.addSlide(); sl.background = {color: "FFFFFF"};
+      sl.addShape(pptx.ShapeType.rect, {x: 0, y: 0, w: 0.35, h: 7.5, fill: {color: th[0]}, line: {color: th[0]}});
+      sl.addText(s.title || "", {x: 0.8, y: 0.4, w: 11.8, h: 0.9, fontFace: font, fontSize: 30, bold: true, color: th[0]});
+      var hasChart = !!(s.chart && s.chart.series.length && s.chart.labels.length);
+      if(s.bullets.length) sl.addText(s.bullets.map(function(b){ return {text: b, options: {bullet: true, breakLine: true}}; }), {x: 0.8, y: 1.5, w: hasChart ? 5.4 : 11.6, h: 5.3, fontFace: font, fontSize: 20, color: "222222", valign: "top", paraSpaceAfter: 10});
+      if(hasChart){
+        var tm = {bar: pptx.charts.BAR, line: pptx.charts.LINE, pie: pptx.charts.PIE, doughnut: pptx.charts.DOUGHNUT}[s.chart.type];
+        var data = s.chart.series.map(function(se){ return {name: se.name, labels: s.chart.labels, values: se.values}; });
+        sl.addChart(tm, data, {x: s.bullets.length ? 6.4 : 1.2, y: 1.5, w: s.bullets.length ? 6.4 : 10.8, h: 5.2, showLegend: s.chart.series.length > 1 || s.chart.type === "pie" || s.chart.type === "doughnut", legendPos: "b", showTitle: !!s.chart.title, title: s.chart.title, titleFontFace: font, chartColors: [th[0], "FFC933", "2E9E5B", "D6246E", "0B8FD6", "7C3AED"], showValue: true, dataLabelFontFace: font});
+      }
+      if(s.notes) sl.addNotes(s.notes);
+    });
+    await pptx.writeFile({fileName: (d.title || "nesty-presentation").replace(/[^\w\- ]+/g, "").trim().replace(/\s+/g, "-").slice(0, 40) + ".pptx"});
+  }catch(e){ toast("Could not make the PowerPoint. Check your internet and try again."); }
+  if(btn){ btn.textContent = old; btn.disabled = false; }
+}
 function saveBlob(blob, name){
   var url = URL.createObjectURL(blob);
   var a = document.createElement("a");
@@ -4104,5 +4216,9 @@ init();
 <script src="/notify.js"></script>
 <script src="/study.js"></script>
 <script src="/help.js"></script>
+<script src="/extras.js"></script>
+<script src="/business.js"></script>
+<script src="/plans.js"></script>
+<script src="/tips.js"></script>
 </body>
 </html>

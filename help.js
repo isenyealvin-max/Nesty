@@ -1,44 +1,51 @@
-/* Nesty Help Center: quick answers + a limited Help assistant. Golden yellow and white. */
+/* Nesty Help Center: quick answers + a limited Help assistant. Gold, white and sky blue. */
 (function () {
   "use strict";
   if (window.openHelp) return;
   var MAIL = "isenyealvin@gmail.com";
   var CSS = "" +
-    "#hc{display:none;position:fixed;inset:0;z-index:91;flex-direction:column;background:#ffe9a8;color:#3a2a00}" +
+    "#hc{display:none;position:fixed;inset:0;z-index:91;flex-direction:column;background:#fffdf3;color:#2b2600}" +
     "#hc *{box-sizing:border-box}" +
-    "#hc .top{display:flex;align-items:center;gap:10px;padding:11px 14px;background:#ffc933;box-shadow:0 2px 10px rgba(120,80,0,.18)}" +
-    "#hc .top b{font-size:18px;flex:1}#hc .ib{background:#fff;border:0;border-radius:50%;width:36px;height:36px;font-size:17px;color:#3a2a00;box-shadow:0 1px 4px rgba(0,0,0,.2)}" +
+    "#hc .top{display:flex;align-items:center;gap:10px;padding:11px 14px;background:#ffc933;box-shadow:0 2px 10px rgba(120,80,0,.18);border-bottom:4px solid #38b6f2}" +
+    "#hc .top b{font-size:18px;flex:1;color:#3a2a00}#hc .ib{background:#fff;border:0;border-radius:50%;width:36px;height:36px;font-size:17px;color:#3a2a00;box-shadow:0 1px 4px rgba(0,0,0,.2)}" +
     "#hcMain{flex:1;overflow-y:auto;padding:14px 14px 60px;max-width:700px;width:100%;margin:0 auto}" +
-    "#hc input,#hc textarea{width:100%;font:inherit;font-size:15px;padding:11px 12px;border:1.5px solid #f2c94c;border-radius:12px;background:#fff;color:#3a2a00}" +
-    "#hc input:focus,#hc textarea:focus{outline:0;border-color:#ffb800;box-shadow:0 0 0 3px #ffe9a3}" +
-    "#hc .card{background:#fff4c8;border:1.5px solid #ffe08a;border-radius:16px;padding:13px;margin:10px 0;box-shadow:0 2px 8px rgba(200,140,0,.12)}" +
-    "#hc .card.gold{border-color:#ffd566;background:#ffe08a}" +
-    "#hc h3{margin:16px 0 6px;font-size:16px}.hm{color:#7a5c14;font-size:13.5px}" +
-    "#hc .q{width:100%;text-align:left;background:#fff4c8;border:1.5px solid #ffe08a;border-radius:13px;padding:12px;margin-top:8px;font:inherit;font-weight:700;color:#3a2a00;display:flex;gap:8px}" +
-    "#hc .q span{flex:1}#hc .q.open{background:#fff8dc;border-color:#ffd566}" +
-    "#hc .a{display:none;background:#fffbec;border-radius:0 0 13px 13px;padding:10px 13px;margin-top:-4px;line-height:1.55;font-size:14.5px}" +
-    "#hc .hb{display:inline-block;background:#ffc933;color:#3a2a00;border:0;border-radius:12px;padding:10px 15px;font-weight:800;font-size:14px;margin:8px 8px 0 0;font-family:inherit;text-decoration:none}" +
-    "#hc .hb.blue{background:#ffe27a;color:#3a2a00}#hc .hb:disabled{opacity:.55}" +
+    "#hc input,#hc textarea{width:100%;font:inherit;font-size:15px;padding:11px 12px;border:2px solid #9ed8f5;border-radius:12px;background:#fff;color:#2b2600}" +
+    "#hc input:focus,#hc textarea:focus{outline:0;border-color:#38b6f2;box-shadow:0 0 0 3px #cdeefc}" +
+    "#hc .card{background:#fff;border:2px solid #cfe9f7;border-radius:16px;padding:13px;margin:10px 0}" +
+    "#hc .card.gold{border-color:#ffd566;background:#fff3c4}" +
+    "#hc h3{margin:16px 0 6px;font-size:16px;color:#3a2a00}.hm{color:#6b5a1e;font-size:13.5px}" +
+    "#hc .q{width:100%;text-align:left;background:#fff;border:2px solid #cfe9f7;border-radius:13px;padding:12px;margin-top:8px;font:inherit;font-weight:700;color:#2b2600;display:flex;gap:8px}" +
+    "#hc .q span{flex:1}#hc .q b{color:#1c8fd0}#hc .q.open{background:#e8f6fd;border-color:#38b6f2}" +
+    "#hc .a{display:none;background:#f4fbff;border-radius:0 0 13px 13px;padding:10px 13px;margin-top:-4px;line-height:1.55;font-size:14.5px;border:2px solid #cfe9f7;border-top:0}" +
+    "#hc .hb{display:inline-block;background:#38b6f2;color:#06283d;border:0;border-radius:12px;padding:10px 15px;font-weight:800;font-size:14px;margin:8px 8px 0 0;font-family:inherit;text-decoration:none}" +
+    "#hc .hb.blue{background:#ffc933;color:#3a2a00}#hc .hb:disabled{opacity:.55}" +
     "#hc .msg{padding:10px 12px;border-radius:14px;margin:8px 0;line-height:1.5;font-size:14.5px;white-space:pre-wrap}" +
-    "#hc .me{background:#fff0b8;margin-left:28px}#hc .ai{background:#fff3c4;margin-right:28px}" +
-    "#hc .chip{display:inline-block;background:#fff3c4;border:1.5px solid #f2c94c;border-radius:20px;padding:6px 11px;margin:5px 6px 0 0;font-size:13px;color:#b36b00;font-family:inherit;font-weight:600}";
+    "#hc .me{background:#dff3fd;margin-left:28px}#hc .ai{background:#fff;border:2px solid #ffe08a;margin-right:28px}" +
+    "#hc .chip{display:inline-block;background:#fff;border:2px solid #38b6f2;border-radius:20px;padding:6px 11px;margin:5px 6px 0 0;font-size:13px;color:#0b5f8f;font-family:inherit;font-weight:700}";
 
   var FAQ = [
-    ["How do I change the AI model?", "Tap the model name at the top of the chat (it has a small arrow). Free users can choose NEPTUNE 5.5 or Nova 5.5, and Ultra users can use all six models. Other plans have one model that comes with the plan. You can also find it in Settings under AI model."],
-    ["What are the plans and prices?", "Free is KSh 0. Premium is KSh 50 a month or KSh 600 a year. Go is KSh 70 a month or KSh 840 a year. Pro is KSh 120 a month or KSh 1,440 a year. Learnover is KSh 150 a month or KSh 1,800 a year. Ultra is KSh 599 a month or KSh 7,188 a year. Open Plans in the app to compare them."],
-    ["How do I pay and get my plan?", "Pay by M-Pesa to 0701244268 and email your payment confirmation to the contact address on the Terms page. After the owner checks the payment you receive a one-time activation code. Open Plans, type the code, and your plan starts straight away."],
+    ["How do I pay for a plan?", "Open Plans, choose a plan and tap Monthly or Yearly, then tap Pay with M-Pesa. Type your Safaricom number and tap Send M-Pesa request. Enter your M-Pesa PIN when your phone asks. Your plan starts by itself in a few seconds. If money was taken but the plan did not start, tap Email us and send the M-Pesa message."],
+    ["What are the plans and prices?", "Free is KSh 0. Diamond is KSh 30 a month or KSh 360 a year and unlocks the Manuva model. Premium is KSh 50 or KSh 600 a year. Go is KSh 70 or KSh 840 a year. Pro is KSh 120 or KSh 1,440 a year. Smart is KSh 150 or KSh 1,800 a year. Ultra is KSh 599 or KSh 7,188 a year. Open Plans to compare them."],
+    ["Can I have more than one plan?", "Yes. Plans add together. For example you can have Diamond and Go at the same time, and you get the models from both. Each plan keeps its own end date."],
+    ["What is Diamond and Manuva?", "Diamond is a cheap add-on plan that unlocks Manuva, the model for tough challenges like hard maths, logic, science and coding. You get up to 20 Manuva messages per hour."],
+    ["How do I change the AI model?", "Tap the model name at the top of the chat (it has a small arrow). Free users choose NEPTUNE 5.5 or Nova 5.5. If you have several plans, you can choose between the models they give you. Ultra can use all seven models."],
     ["What do the hourly limits mean?", "Each plan has a number of messages, file attachments, pictures and natural-voice clips per hour. The hour starts when you first use that item and resets exactly one hour later. The app tells you the exact time when you reach a limit."],
-    ["What is the Study Center?", "Switch to the Omni smart model (Learnover or Ultra plan) and a Study Center button appears above the message box. Inside you can make exams that Nesty marks, notes, flashcards, a timetable, stories, novellas and novels, and see your progress."],
+    ["What is the Study Center?", "Choose the Omni smart model (Smart or Ultra plan) and a Study Center button appears above the message box. Inside you can make exams that Nesty marks (including KCPE, KPSEA and KCSE style), notes, flashcards that come back at the right time, a timetable, stories, novellas and novels, reports for parents, and Scan and solve for homework photos. Content can be in English or Kiswahili."],
+    ["What are Business tools?", "With the Hiaru 5.1 model (Pro or Ultra) a Business tools button appears above the message box. Make invoices, receipts and quotations, keep a cash book, plan a budget and make a price list. You can download, print or send them on WhatsApp. They do not use your messages."],
+    ["Can Nesty make Excel, Word, PDF and PowerPoint files?", "Yes. Hiaru 5.1 (Pro and Ultra) is made for office work. Ask for a Word, PDF, Excel or PowerPoint file and say which font you want, for example Times New Roman or Calibri. Excel can have borders and formulas. PowerPoint can have charts."],
     ["What is Deep search?", "Deep search reads many sources and writes one report with sources. It comes with the Tyra model on the Premium plan, and on Ultra when you choose Tyra."],
-    ["Can Nesty work with Excel, Word and PDF files?", "Yes. The Hiaru 5.1 model (Pro and Ultra) is made for office work. Ask for a Word, PDF or Excel file and say which font you want, for example Times New Roman or Calibri. For Excel you can ask for rows, columns, formulas and border lines."],
-    ["How do I make pictures?", "Just ask in plain words, for example: draw a lion at sunset. You can also attach a photo and ask Nesty to edit it. Pictures use your hourly picture limit. Pictures of real people are made as illustrations, not photographs."],
-    ["How do natural voices work?", "Tap the speaker under an answer or use voice mode. Natural voices have an hourly limit by plan. When it is used up Nesty switches to your phone's own voice."],
-    ["How do I turn on my location?", "Open Settings and tap Use my location, then allow it when your phone asks. Phones only ask once. If you blocked it, open your browser menu, go to Site settings, set Location to Allow for Nesty, and try again."],
-    ["How do I change or reset my password?", "Open Settings and tap Email me a reset link, or tap Forgot password on the sign-in screen. Open the link in your email and choose a new password. A password must have at least 8 characters with upper and lower case letters, a number and a symbol, and must not contain your name, email or phone number."],
+    ["What is in the More menu?", "Tap More above the message box. You will find prompt templates and saved prompts, a to-do list with reminders (they ring while Nesty is open), a daily briefing, voice calls with Nesty, invite friends, backup and restore, and display settings like text size, dark mode and data saver."],
+    ["How do invites work?", "Open More, then Invite friends, and share your link. When a new friend joins with it, you both get one free day of the Go plan. Each person can earn up to 10 invite rewards."],
+    ["How do I back up my notes and tools?", "Open More, then Backup and restore. Tap Back up now to save your Study Center, Business tools and saved prompts. On a new phone sign in and tap Restore. You can also download a backup file."],
+    ["How do I pin chats, make folders or share an answer?", "Open the side menu: tap the pin on a chat to keep it at the top, or the folder to put it in a folder. Under every answer tap Share to send it as a link, a picture or text."],
+    ["Does Nesty work offline?", "You can read your recent chats without internet. To send a message you need internet. Data saver in More, then Display makes pictures smaller to save your bundles."],
+    ["How do I turn on my location?", "Open Settings and tap Use my location, then allow it when your phone asks. Nesty then knows your area, ward and village for local weather and places. If it was blocked, open your browser menu, go to Site settings, set Location to Allow for Nesty, and try again."],
+    ["How do I make pictures or use voices?", "Just ask in plain words, for example: draw a lion at sunset. You can attach a photo and ask Nesty to edit it. For voices, tap the speaker under an answer or use voice mode. Both have hourly limits by plan."],
+    ["How do I change or reset my password?", "Open Settings and tap Email me a reset link, or tap Forgot password on the sign-in screen. A password must have at least 8 characters with upper and lower case letters, a number and a symbol, and must not contain your name, email or phone number."],
     ["I did not get my email code", "Check your spam or junk folder and wait one minute before asking for a new code. Make sure you typed the email correctly. If it still does not arrive, contact us below."],
     ["How do I delete my account or my data?", "Open Settings and use the delete account button, which removes your chats and closes your account. To have every trace removed, contact us using the email below."],
-    ["Is my information safe?", "Nesty does not sell your information. Your chats are stored for your account, and your messages are sent to the services that help Nesty answer. Read the Privacy page for the full details."],
-    ["Why is an answer wrong?", "Nesty is an AI and can make mistakes. Check important facts, especially medical, legal, money and school facts, with a trusted source. Tap the thumbs-down under an answer to tell us what went wrong."]
+    ["Is my information safe?", "Nesty does not sell your information. Your chats are stored for your account, and your messages are sent to the services that help Nesty answer. Nesty never sees your M-Pesa PIN. Read the Privacy page for the full details."],
+    ["Why is an answer wrong?", "Nesty is an AI and can make mistakes. Check important facts, especially medical, legal, money and school facts, with a trusted source. Tap the warning sign under an answer to report a wrong answer."]
   ];
   var root = null, left = null, hist = [];
   function $(i) { return document.getElementById(i); }
@@ -52,7 +59,7 @@
     document.body.appendChild(root);
     $("hcX").onclick = closeHelp;
     var h = '<h3 style="margin-top:2px">How can we help?</h3><input id="hcSearch" placeholder="Search questions, e.g. password, payment, model" autocomplete="off"><div id="hcList"></div>' +
-      '<div class="card gold"><b>🤖 Ask the Help assistant</b><div class="hm">Type your own question about Nesty. You get a limited number of Help questions each day.</div>' +
+      '<div class="card gold"><b>🤖 Ask the Help assistant</b><div class="hm">Type your own question about Nesty. You can ask up to 20 Help questions each hour.</div>' +
       '<div id="hcChat"></div><textarea id="hcQ" rows="2" maxlength="400" placeholder="Type your question here" style="margin-top:8px"></textarea><button class="hb" id="hcSend">Ask</button><span class="hm" id="hcLeft"></span></div>' +
       '<div class="card"><b>📩 Still stuck?</b><div class="hm">If you could not get the right answer, contact the Nesty team. Tell us what you tried.</div><a class="hb blue" id="hcMail" href="mailto:' + MAIL + '">Email us</a></div>';
     $("hcMain").innerHTML = h;
@@ -77,10 +84,10 @@
   }
   function drawChat() {
     var h = hist.map(function (m) { return '<div class="msg ' + (m.role === "user" ? "me" : "ai") + '">' + E(m.content) + '</div>'; }).join("");
-    if (!hist.length) h = '<div style="margin-top:6px">' + ["How do I pay?", "What does Learnover include?", "Why can't I use Deep search?", "How do I switch model?"].map(function (t) { return '<button class="chip">' + E(t) + '</button>'; }).join("") + '</div>';
+    if (!hist.length) h = '<div style="margin-top:6px">' + ["How do I pay?", "What does Smart include?", "Can I have two plans?", "How do I switch model?"].map(function (t) { return '<button class="chip">' + E(t) + '</button>'; }).join("") + '</div>';
     $("hcChat").innerHTML = h;
     Array.prototype.forEach.call($("hcChat").querySelectorAll(".chip"), function (c) { c.onclick = function () { $("hcQ").value = c.textContent; askHelp(); }; });
-    $("hcLeft").textContent = left === null ? "" : left + " Help question" + (left === 1 ? "" : "s") + " left today";
+    $("hcLeft").textContent = left === null ? "" : left + " Help question" + (left === 1 ? "" : "s") + " left this hour";
   }
   async function askHelp() {
     var q = ($("hcQ").value || "").trim();
@@ -91,7 +98,7 @@
       var d = await api("/api/help", { messages: hist.slice(-6).map(function (m) { return { role: m.role, content: String(m.content).slice(0, 500) }; }) });
       if (d && d.limited) {
         left = 0;
-        hist.push({ role: "assistant", content: "You have used all your Help questions for today. Please read the quick answers above, or contact the Nesty team by email and we will help you." });
+        hist.push({ role: "assistant", content: "You have used your 20 Help questions for this hour. Please try again later. Please read the quick answers above, or contact the Nesty team by email and we will help you." });
       } else if (d && d.reply) {
         if (typeof d.left === "number") left = d.left;
         hist.push({ role: "assistant", content: d.reply + "\n\nDid this answer your question? If not, tap Email us below." });

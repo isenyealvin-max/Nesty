@@ -38,12 +38,13 @@ td,th{padding:7px 6px;border-bottom:1px solid #ddd;text-align:left}
 <div class="card">
   <b>New codes</b>
   <div class="row">
-    <div><label for="plan">Plan</label><select id="plan"><option value="premium">Premium</option><option value="go">Go</option><option value="pro">Pro</option><option value="learnover">Learnover</option><option value="ultra">Ultra</option></select></div>
+    <div><label for="plan">Plan</label><select id="plan"><option value="diamond">Diamond</option><option value="premium">Premium</option><option value="go">Go</option><option value="pro">Pro</option><option value="learnover">Smart</option><option value="ultra">Ultra</option></select></div>
     <div><label for="period">Period</label><select id="period"><option value="monthly">Monthly</option><option value="yearly">Yearly</option></select></div>
   </div>
   <div class="row">
     <div><label for="count">How many (1 to 50)</label><input id="count" type="number" min="1" max="50" value="1" inputmode="numeric"></div>
     <div><label for="label">Note (who paid)</label><input id="label" maxlength="60" placeholder="e.g. Amina 0712..."></div>
+    <div><label for="seats">Seats (1 = one person)</label><input id="seats" type="number" min="1" max="50" value="1" inputmode="numeric"></div>
   </div>
   <button onclick="gen()">Generate codes</button>
   <div id="genOut"></div>
@@ -59,6 +60,25 @@ td,th{padding:7px 6px;border-bottom:1px solid #ddd;text-align:left}
   <div class="row" style="margin-top:8px"><div><select id="fbFilter" onchange="renderFb()"><option value="all">All</option><option value="down">👎 Not helpful</option><option value="up">👍 Helpful</option></select></div><div><button class="alt" style="margin-top:0" onclick="loadFeedback()">Load feedback</button></div></div>
   <div id="fbSummary" class="muted" style="margin-top:8px"></div>
   <div id="fbList" style="margin-top:8px"></div>
+</div>
+<div class="card">
+  <b>Dashboard</b>
+  <div class="muted">Counts only (never what people write). Last 14 days.</div>
+  <div><button class="alt" onclick="loadStats()">Load dashboard</button></div>
+  <div id="statsOut" style="margin-top:10px;overflow-x:auto"></div>
+</div>
+<div class="card">
+  <b>Cost estimate</b>
+  <div class="muted">Type what each kind of call costs you per 1,000 calls (in KSh). Prices are not guessed here: take them from your provider bills. Saved on this phone only.</div>
+  <div id="costOut" style="margin-top:10px"></div>
+</div>
+<div class="card">
+  <b>Announcement</b>
+  <div class="muted">Shows as a banner to everyone who opens Nesty, until it expires.</div>
+  <label for="annText">Message (200 letters)</label><input id="annText" maxlength="200" placeholder="e.g. New: Study Center stories now in Kiswahili!">
+  <div class="row"><div><label for="annLink">Link (optional)</label><input id="annLink" placeholder="https://..."></div><div><label for="annDays">Days to show</label><input id="annDays" type="number" min="1" max="30" value="3"></div></div>
+  <button onclick="sendAnn()">Publish</button> <button class="alt" onclick="clearAnn()">Remove current</button>
+  <div id="annNow" class="muted" style="margin-top:6px"></div>
 </div>
 <div id="msg" class="muted"></div>
 </main>
@@ -80,7 +100,7 @@ async function call(path, payload){
   }catch(e){ $("msg").innerHTML = '<span class="bad">Network error.</span>'; return null; }
 }
 async function gen(){
-  var d = await call("/api/admin/generate", {plan: $("plan").value, period: $("period").value, count: parseInt($("count").value, 10) || 1, label: $("label").value});
+  var d = await call("/api/admin/generate", {plan: $("plan").value, period: $("period").value, count: parseInt($("count").value, 10) || 1, label: $("label").value, seats: parseInt($("seats").value, 10) || 1});
   if(!d) return;
   var txt = d.codes.join("\n");
   $("genOut").innerHTML = '<pre id="codesTxt">' + esc(txt) + '</pre><div class="muted">' + esc(d.plan) + " " + esc(d.period) + " - KSh " + esc(d.price) + ' each. Copy them now: only a scrambled version is stored, so they cannot be shown again.</div><button class="alt" onclick="copyCodes()">Copy codes</button>';
@@ -102,6 +122,69 @@ async function loadList(){
       (c.used ? '<span class="bad">Used</span><br><span class="muted">' + esc(dt(c.usedAt)) + '</span>' : '<span class="ok">Unused</span>') + '</td></tr>';
   });
   $("list").innerHTML = h + "</table>";
+}
+function lastDays(n){ var o = []; for(var i = n - 1; i >= 0; i--) o.push(new Date(Date.now() - i * 864e5).toISOString().slice(0, 10)); return o; }
+var statsData = null;
+async function loadStats(){
+  var d = await call("/api/admin/stats", {});
+  if(!d) return;
+  statsData = d.counters || {};
+  var days = lastDays(14), C = statsData;
+  function g(day, k){ return C["d:" + day + ":" + k] || 0; }
+  var plans = ["free", "diamond", "premium", "go", "pro", "learnover", "ultra"];
+  var h = '<table><tr><th>Day</th><th>Active users</th><th>Messages</th><th>Free</th><th>Paid</th><th>Pictures</th><th>Voice</th><th>Study</th><th>Deep</th><th>Help</th><th>Plans sold</th><th>Invites</th></tr>';
+  days.slice().reverse().forEach(function(day){
+    var free = g(day, "msg:plan:free"), tot = g(day, "msg"), sold = 0;
+    plans.forEach(function(p){ sold += g(day, "act:" + p); });
+    h += "<tr><td>" + esc(day.slice(5)) + "</td><td>" + g(day, "users") + "</td><td>" + tot + "</td><td>" + free + "</td><td>" + Math.max(0, tot - free) + "</td><td>" + g(day, "img") + "</td><td>" + g(day, "tts") + "</td><td>" + g(day, "sc") + "</td><td>" + g(day, "deep") + "</td><td>" + g(day, "help") + "</td><td>" + sold + "</td><td>" + g(day, "invite") + "</td></tr>";
+  });
+  h += "</table>";
+  var byModel = {}, byVia = {};
+  days.forEach(function(day){
+    Object.keys(C).forEach(function(k){
+      if(k.indexOf("d:" + day + ":model:") === 0) byModel[k.split(":model:")[1]] = (byModel[k.split(":model:")[1]] || 0) + C[k];
+      if(k.indexOf("d:" + day + ":via:") === 0) byVia[k.split(":via:")[1]] = (byVia[k.split(":via:")[1]] || 0) + C[k];
+    });
+  });
+  h += '<div class="muted" style="margin-top:10px"><b>Messages by Nesty model (14 days):</b> ' + (Object.keys(byModel).map(function(k){ return esc(k) + " " + byModel[k]; }).join(", ") || "none yet") + "</div>";
+  $("statsOut").innerHTML = h;
+  var items = {};
+  Object.keys(byVia).forEach(function(k){ items["Chat: " + k] = byVia[k]; });
+  var sums = {img: 0, tts: 0};
+  days.forEach(function(day){ sums.img += g(day, "img"); sums.tts += g(day, "tts"); });
+  items["Pictures"] = sums.img; items["Natural voice"] = sums.tts;
+  var saved = {};
+  try{ saved = JSON.parse(localStorage.getItem("nestyCost") || "{}"); }catch(e){}
+  var ch = '<table><tr><th>Kind</th><th>Calls (14 days)</th><th>KSh per 1,000</th><th>Estimate</th></tr>';
+  var keys = Object.keys(items);
+  keys.forEach(function(k, i){
+    ch += "<tr><td>" + esc(k) + "</td><td>" + items[k] + '</td><td><input style="width:90px;padding:6px" data-k="' + esc(k) + '" data-n="' + items[k] + '" value="' + esc(saved[k] || "") + '" oninput="calcCost()" inputmode="decimal"></td><td id="cc' + i + '">-</td></tr>';
+  });
+  ch += '<tr><td colspan="3"><b>Estimated total</b></td><td id="ccTot"><b>-</b></td></tr></table><div class="muted">Free-plan messages are the main cost you carry. Compare the Free column above with the total.</div>';
+  $("costOut").innerHTML = ch;
+  calcCost();
+  if(d.announce) $("annNow").textContent = "Showing now: " + d.announce.text;
+}
+function calcCost(){
+  var saved = {}, tot = 0;
+  var ins = $("costOut").querySelectorAll("input");
+  Array.prototype.forEach.call(ins, function(inp, i){
+    var v = parseFloat(inp.value);
+    saved[inp.getAttribute("data-k")] = inp.value;
+    var est = isNaN(v) ? 0 : v * parseInt(inp.getAttribute("data-n"), 10) / 1000;
+    tot += est;
+    var c = document.getElementById("cc" + i); if(c) c.textContent = isNaN(v) ? "-" : "KSh " + est.toFixed(2);
+  });
+  try{ localStorage.setItem("nestyCost", JSON.stringify(saved)); }catch(e){}
+  var t = document.getElementById("ccTot"); if(t) t.innerHTML = "<b>KSh " + tot.toFixed(2) + "</b>";
+}
+async function sendAnn(){
+  var d = await call("/api/admin/announce", {text: $("annText").value, link: $("annLink").value, days: parseInt($("annDays").value, 10) || 3});
+  if(d){ $("annNow").textContent = "Showing now: " + d.announce.text; }
+}
+async function clearAnn(){
+  var d = await call("/api/admin/announce-clear", {});
+  if(d){ $("annNow").textContent = "No announcement is showing."; }
 }
 var fbData = [];
 async function loadFeedback(){

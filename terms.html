@@ -17,8 +17,92 @@ ul{padding-left:22px}
 .top a{text-decoration:none;font-size:15px}
 .muted{color:#777;font-size:14px}
 </style>
+<style>
+body{background:#fffdf3!important}
+.hero{background:#ffc933;margin:0;padding:22px 18px 18px;text-align:center;border-bottom:5px solid #1f8a5b}
+.hero .lg{width:120px;height:120px;margin:0 auto;background:#fff;border-radius:50%;border:4px solid #fff;box-shadow:0 4px 14px rgba(120,80,0,.3);overflow:hidden}
+.hero .lg svg{width:100%;height:100%;display:block}
+.hero h1{margin:12px 0 2px;font-size:28px;color:#3a2a00}
+.hero .muted{color:#5a4300;margin:0}
+main{max-width:720px;margin:0 auto;padding:16px 18px 60px}
+main .top{margin-bottom:6px}
+main>h1{display:none}
+main>p.muted{display:none}
+h2{border-left:6px solid #ffc933;padding:3px 0 3px 10px;border-radius:3px;background:#fff6d6;color:#3a2a00}
+h2:nth-of-type(4n+2){border-left-color:#1f8a5b;background:#e3f5ea}
+h2:nth-of-type(4n+3){border-left-color:#0ea5e9;background:#e1f3ff}
+h2:nth-of-type(4n+4){border-left-color:#e07b00;background:#ffecd0}
+a{color:#0b6fb0}
+</style>
 </head>
 <body>
+<div class="hero"><div class="lg" id="lg" role="img" aria-label="Nesty AI"></div><h1>Terms of Use</h1><p class="muted">Last updated: 28 October 2026</p></div>
+<script>window.NESTY_LOGO = function(uid, animate, opts){
+  var u = String(uid || "x"), A = animate !== false, o = opts || {}, c = "nl" + u;
+  var N = "M58 60 L96 60 L96 65 L94.5 65 L124 124 L124 65 L116 65 L116 60 L138 60 L138 65 L130 65 L130 136 L108 136 L76 72 L76 131 L84 131 L84 136 L62 136 L62 131 L70 131 L70 65 L58 65 Z";
+  var css = "";
+  if(A){
+    css = "<style>" +
+      "@keyframes "+c+"d{from{stroke-dasharray:1;stroke-dashoffset:1}to{stroke-dasharray:1;stroke-dashoffset:0}}" +
+      "@keyframes "+c+"f{from{opacity:0}to{opacity:1}}" +
+      "@keyframes "+c+"p{from{opacity:0;transform:scale(.3)}to{opacity:1;transform:scale(1)}}" +
+      "@keyframes "+c+"s{0%{transform:translateX(-80px)}40%,100%{transform:translateX(240px)}}" +
+      "@keyframes "+c+"t{0%,100%{transform:scale(1) rotate(0deg);opacity:1}50%{transform:scale(.72) rotate(25deg);opacity:.75}}" +
+      "."+c+"r{animation:"+c+"d 1.3s ease-in-out .1s both}" +
+      "."+c+"q{animation:"+c+"d 1s ease-in-out .7s both}" +
+      "."+c+"m{animation:"+c+"f .4s ease both}" +
+      "."+c+"n{animation:"+c+"d 1.5s ease-in-out .5s both}" +
+      "."+c+"k{animation:"+c+"f .7s ease 1.9s both}" +
+      "."+c+"a{animation:"+c+"d 1s ease-in-out 2s both}" +
+      "."+c+"e{transform-box:fill-box;transform-origin:center bottom;animation:"+c+"p .45s ease both}" +
+      "."+c+"x{transform-box:fill-box;transform-origin:center;animation:"+c+"p .6s ease 2.7s both,"+c+"t 2.6s ease-in-out 3.4s infinite}" +
+      "."+c+"h{animation:"+c+"s 5s ease-in-out 3.6s infinite}" +
+      "@media (prefers-reduced-motion:reduce){svg *{animation:none!important}}" +
+      "</style>";
+  }
+  function cl(k, extra){ return A ? ' class="'+c+k+'"' + (extra || "") : ""; }
+  var dm = "";
+  for(var i = 0; i < 48; i++){
+    var an = i * Math.PI / 24, k = (i % 4 === 0) ? 2.7 : 1.5;
+    var px = 100 + 84.5 * Math.cos(an), py = 100 + 84.5 * Math.sin(an);
+    dm += '<path d="M'+px.toFixed(2)+' '+(py-k).toFixed(2)+'L'+(px+k).toFixed(2)+' '+py.toFixed(2)+'L'+px.toFixed(2)+' '+(py+k).toFixed(2)+'L'+(px-k).toFixed(2)+' '+py.toFixed(2)+'Z"' + cl("m", ' style="animation-delay:'+(1.1+i*0.02).toFixed(2)+'s"') + '/>';
+  }
+  var G = "url(#g"+u+")", DK = "#7e5608";
+  return '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" width="100%" height="100%" role="img" aria-label="Nesty AI">' + css +
+    '<defs>' +
+      '<linearGradient id="g'+u+'" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#fff3b0"/><stop offset=".22" stop-color="#f4cd56"/><stop offset=".48" stop-color="#c99a1d"/><stop offset=".7" stop-color="#f0cf63"/><stop offset="1" stop-color="#96680a"/></linearGradient>' +
+      '<linearGradient id="gl'+u+'" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fff" stop-opacity=".75"/><stop offset=".5" stop-color="#fff" stop-opacity="0"/></linearGradient>' +
+      '<linearGradient id="sh'+u+'" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#fff" stop-opacity="0"/><stop offset=".5" stop-color="#fff" stop-opacity=".9"/><stop offset="1" stop-color="#fff" stop-opacity="0"/></linearGradient>' +
+      '<filter id="sd'+u+'" x="-20%" y="-20%" width="140%" height="150%"><feDropShadow dx="0" dy="2.6" stdDeviation="1.7" flood-color="#6b4600" flood-opacity=".55"/></filter>' +
+      '<clipPath id="cp'+u+'"><path d="'+N+'"/></clipPath>' +
+    '</defs>' +
+    (o.disc === false ? '' : '<circle cx="100" cy="100" r="91" fill="#fff"/>') +
+    '<circle cx="100" cy="100" r="92" fill="none" stroke="'+DK+'" stroke-width="6.4" pathLength="1"'+cl("r")+'/>' +
+    '<circle cx="100" cy="100" r="92" fill="none" stroke="'+G+'" stroke-width="4.6" pathLength="1"'+cl("r")+'/>' +
+    '<circle cx="100" cy="100" r="77" fill="none" stroke="'+G+'" stroke-width="1.4" pathLength="1"'+cl("q")+'/>' +
+    '<g fill="'+G+'">' + dm + '</g>' +
+    '<path d="M147.5 137.3A50 30 0 0 1 52.5 137.3" fill="none" stroke="'+DK+'" stroke-width="4" stroke-linecap="round" pathLength="1"'+cl("a")+'/>' +
+    '<path d="M147.5 137.3A50 30 0 0 1 52.5 137.3" fill="none" stroke="'+G+'" stroke-width="3" stroke-linecap="round" pathLength="1"'+cl("a")+'/>' +
+    '<path d="M150.2 145A58 38 0 0 1 49.8 145" fill="none" stroke="'+G+'" stroke-width="1.4" stroke-linecap="round" pathLength="1"'+cl("a")+'/>' +
+    '<g fill="'+G+'" stroke="'+DK+'" stroke-width=".7">' +
+      '<ellipse cx="91" cy="150.5" rx="4" ry="5"'+cl("e",' style="animation-delay:2.4s"')+'/>' +
+      '<ellipse cx="109" cy="150.5" rx="4" ry="5"'+cl("e",' style="animation-delay:2.55s"')+'/>' +
+      '<ellipse cx="100" cy="152.5" rx="4.2" ry="5.2"'+cl("e",' style="animation-delay:2.7s"')+'/>' +
+    '</g>' +
+    '<path d="M100 26L102 33L109 35L102 37L100 44L98 37L91 35L98 33Z" fill="'+G+'" stroke="'+DK+'" stroke-width=".6"'+cl("x")+'/>' +
+    '<g transform="translate(2 -2)"><g filter="url(#sd'+u+')">' +
+      '<path d="'+N+'" fill="none" stroke="'+DK+'" stroke-width="1.6" stroke-linejoin="round" pathLength="1"'+cl("n")+'/>' +
+      '<path d="'+N+'" fill="'+G+'" stroke="'+DK+'" stroke-width="1.2" stroke-linejoin="round"'+cl("k")+'/>' +
+      '<path d="'+N+'" fill="url(#gl'+u+')"'+cl("k")+'/>' +
+    '</g>' +
+    '<g clip-path="url(#cp'+u+')">' +
+      '<path d="'+N+'" fill="none" stroke="#fff7cf" stroke-width="1" transform="translate(-.8 -.8)" opacity=".8"'+cl("k")+'/>' +
+      '<g'+cl("h")+'><rect x="30" y="40" width="26" height="130" fill="url(#sh'+u+')" transform="skewX(-18)"/></g>' +
+    '</g></g>' +
+    '</svg>';
+};
+
+document.getElementById("lg").innerHTML = window.NESTY_LOGO("p", true);</script>
 <main>
 <div class="top"><a href="/">&larr; Back to Nesty AI</a></div>
 <h1>Terms of Use</h1>
@@ -27,6 +111,9 @@ ul{padding-left:22px}
 
 <h2>What Nesty is</h2>
 <p>Nesty is an AI assistant that answers questions and helps with writing, learning and everyday tasks. It is made by Red element and offered "as is". It has a free plan and optional paid plans.</p>
+
+<h2>Payments</h2>
+<p>Plans are paid for with M-Pesa through the Safaricom Daraja service. When you tap Pay with M-Pesa, Safaricom sends a request to your phone and you enter your PIN there; Nesty never sees or stores your PIN. A plan starts after Safaricom confirms the payment. Plans can be added together, and they end on their expiry date. If money was taken but your plan did not start, email us the M-Pesa message and we will fix it. Payments are for digital access, so please check the plan before you pay.</p>
 
 <h2>AI can make mistakes</h2>
 <p>Nesty's answers are created by AI and may be wrong, out of date or incomplete. Nesty can look up current information when Web search is on, but search results can also be wrong, biased or out of date, and when Web search is off Nesty may not know recent events. Always check important information, especially news, prices, health, legal and money matters. Nesty is not a doctor, lawyer, financial adviser or other professional, and its answers are not professional advice. In an emergency, contact the proper services.</p>

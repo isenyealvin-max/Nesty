@@ -12,19 +12,21 @@ const ICONS = {
 
 /* ---------- Plans (the server is the only place these limits are enforced) ---------- */
 const WINDOW_MS = 1 * 60 * 60 * 1000; // every usage window is 1 hour
-const MODELS = { neptune: "NEPTUNE 5.5", nova: "Nova 5.5", nuvida: "Nuvida 5.5", hiaru: "Hiaru 5.1", smart: "Omni smart", tyra: "Tyra" };
+const MODELS = { neptune: "NEPTUNE 5.5", nova: "Nova 5.5", nuvida: "Nuvida 5.5", hiaru: "Hiaru 5.1", smart: "Omni smart", tyra: "Tyra", manuva: "Manuva" };
 const PLANS = {
   free: { name: "Free", msg: 40, file: 30, img: 6, tts: 12, models: ["neptune", "nova"], deep: false, data: false },
+  diamond: { name: "Diamond", addon: true, msg: 30, file: 20, img: 4, tts: 10, models: ["manuva"], deep: false, data: false, mvCap: 20 },
   go: { name: "Go", msg: 60, file: 50, img: 10, tts: 40, models: ["nuvida"], deep: false, data: false },
   premium: { name: "Premium", msg: 55, file: 45, img: 7, tts: 35, models: ["tyra"], deep: true, data: false },
   pro: { name: "Pro", msg: 75, file: 65, img: 15, tts: 40, models: ["hiaru"], deep: false, data: true },
-  learnover: { name: "Learnover", msg: 85, file: 75, img: 20, tts: 80, models: ["smart"], deep: false, data: false },
-  ultra: { name: "Ultra", msg: 100, file: 100, img: 50, tts: 120, models: ["neptune", "nova", "nuvida", "hiaru", "smart", "tyra"], deep: true, data: true },
+  learnover: { name: "Smart", msg: 85, file: 75, img: 20, tts: 80, models: ["smart"], deep: false, data: false },
+  ultra: { name: "Ultra", msg: 90, file: 90, img: 30, tts: 70, models: ["neptune", "nova", "nuvida", "hiaru", "smart", "tyra", "manuva"], deep: true, data: true, mvCap: 25, dpCap: 8 },
 };
 const TTS_LIMITS = {}; // natural voice clips per hour, taken from the plans above
 Object.keys(PLANS).forEach(function (k) { TTS_LIMITS[k] = PLANS[k].tts; });
-const RANK = { free: 0, premium: 1, go: 2, pro: 3, learnover: 4, ultra: 5 }; // by price
+const RANK = { free: 0, diamond: 0.5, premium: 1, go: 2, pro: 3, learnover: 4, ultra: 5 }; // by price (only used to name the top plan)
 const PRICES = {
+  diamond: { monthly: 30, yearly: 360 },
   premium: { monthly: 50, yearly: 600 },
   go: { monthly: 70, yearly: 840 },
   pro: { monthly: 120, yearly: 1440 },
@@ -73,35 +75,65 @@ export class Limiter extends DurableObject {
     return { count: st.count, resetAt: st.start + windowMs };
   }
 
-  /* ----- a user's plan ----- */
+  /* ----- a user's plans: several plans can be active at the same time (they stack) ----- */
+  async readPlans() {
+    let m = await this.ctx.storage.get("plans");
+    if (!m) {
+      m = {};
+      const old = await this.ctx.storage.get("plan");
+      if (old && old.plan) m[old.plan] = { period: old.period, expiresAt: old.expiresAt, activatedAt: old.activatedAt };
+    }
+    return m;
+  }
+
   async getPlan() {
-    const p = await this.ctx.storage.get("plan");
-    if (!p) return { plan: "free", expiresAt: 0 };
-    if (p.expiresAt > Date.now()) return p;
-    return { plan: "free", expiresAt: 0, expiredPlan: p.plan, expiredAt: p.expiresAt };
+    const m = await this.readPlans();
+    const now = Date.now();
+    const act = [];
+    let lastExp = null;
+    Object.keys(m).forEach(function (k) {
+      if (!PLANS[k] || k === "free") return;
+      if (m[k].expiresAt > now) act.push({ plan: k, period: m[k].period, expiresAt: m[k].expiresAt, activatedAt: m[k].activatedAt });
+      else if (!lastExp || m[k].expiresAt > lastExp.expiresAt) lastExp = { plan: k, expiresAt: m[k].expiresAt };
+    });
+    if (!act.length) {
+      const o = { plan: "free", expiresAt: 0, active: [], lim: PLANS.free };
+      if (lastExp) { o.expiredPlan = lastExp.plan; o.expiredAt = lastExp.expiresAt; }
+      return o;
+    }
+    act.sort(function (a, b) { return RANK[b.plan] - RANK[a.plan]; });
+    const base = act.filter(function (a) { return !PLANS[a.plan].addon; });
+    const lim = { name: "", msg: 0, file: 0, img: 0, tts: 0, models: [], deep: false, data: false, mvCap: 0, dpCap: 0 };
+    const src = (base.length ? base : [{ plan: "free" }]).concat(act.filter(function (a) { return PLANS[a.plan].addon; }));
+    const names = [];
+    src.forEach(function (a) {
+      const p = PLANS[a.plan];
+      lim.msg = Math.max(lim.msg, p.msg); lim.file = Math.max(lim.file, p.file); lim.img = Math.max(lim.img, p.img); lim.tts = Math.max(lim.tts, p.tts);
+      p.models.forEach(function (x) { if (lim.models.indexOf(x) < 0) lim.models.push(x); });
+      if (p.deep) lim.deep = true;
+      if (p.data) lim.data = true;
+      lim.mvCap = Math.max(lim.mvCap, p.mvCap || 0);
+      if (p.dpCap) lim.dpCap = lim.dpCap ? Math.max(lim.dpCap, p.dpCap) : p.dpCap;
+    });
+    act.forEach(function (a) { names.push(PLANS[a.plan].name); });
+    lim.name = names.join(" + ");
+    const top = act[0];
+    return { plan: top.plan, period: top.period, expiresAt: top.expiresAt, activatedAt: top.activatedAt, active: act, lim: lim };
   }
 
   async canActivate(plan) {
-    const cur = await this.getPlan();
-    if (RANK[cur.plan] > RANK[plan]) {
-      return {
-        ok: false,
-        error: "You already have an active " + PLANS[cur.plan].name + " plan. Use this code after it ends.",
-      };
-    }
     return { ok: true };
   }
 
   async activate(plan, period) {
-    const cur = await this.getPlan();
-    if (RANK[cur.plan] > RANK[plan]) {
-      return { ok: false, error: "You already have an active " + PLANS[cur.plan].name + " plan." };
-    }
+    const m = await this.readPlans();
     const now = Date.now();
-    const base = cur.plan === plan && cur.expiresAt > now ? cur.expiresAt : now;
-    const rec = { plan: plan, period: period, expiresAt: addPeriod(base, period), activatedAt: now };
-    await this.ctx.storage.put("plan", rec);
-    return Object.assign({ ok: true }, rec);
+    const cur = m[plan];
+    const base = cur && cur.expiresAt > now ? cur.expiresAt : now;
+    const rec = { period: period, expiresAt: addPeriod(base, period), activatedAt: now };
+    m[plan] = rec;
+    await this.ctx.storage.put("plans", m);
+    return Object.assign({ ok: true, plan: plan }, rec);
   }
 
   /* ----- activation codes (only a hash of each code is stored) ----- */
@@ -113,6 +145,8 @@ export class Limiter extends DurableObject {
         label: e.label,
         createdAt: Date.now(),
         used: false,
+        seats: e.seats || 1,
+        count: 0,
       });
     }
     return true;
@@ -125,9 +159,21 @@ export class Limiter extends DurableObject {
   async claimCode(h, userId) {
     const c = await this.ctx.storage.get("c:" + h);
     if (!c || c.used) return { ok: false };
-    c.used = true;
-    c.usedAt = Date.now();
-    c.usedBy = userId;
+    const seats = c.seats || 1;
+    if (seats > 1) {
+      // School or family code: several different people can each use it once, up to the number of seats.
+      const list = c.usedByList || [];
+      if (list.indexOf(userId) > -1) return { ok: false };
+      list.push(userId);
+      c.usedByList = list;
+      c.count = list.length;
+      if (c.count >= seats) { c.used = true; c.usedAt = Date.now(); }
+    } else {
+      c.used = true;
+      c.usedAt = Date.now();
+      c.usedBy = userId;
+      c.count = 1;
+    }
     await this.ctx.storage.put("c:" + h, c);
     return { ok: true, plan: c.plan, period: c.period };
   }
@@ -144,10 +190,60 @@ export class Limiter extends DurableObject {
         createdAt: v.createdAt,
         used: !!v.used,
         usedAt: v.usedAt || 0,
+        seats: v.seats || 1,
+        count: v.count || (v.used ? 1 : 0),
       });
     });
     out.sort(function (a, b) { return b.createdAt - a.createdAt; });
     return out.slice(0, 200);
+  }
+
+  /* ----- reward days (invites): free users get Go for a while, paid users get their plan extended ----- */
+  async grantDays(days) {
+    const cur = await this.getPlan();
+    const m = await this.readPlans();
+    const now = Date.now();
+    if (cur.plan === "free") m.go = { period: "reward", expiresAt: now + days * 86400000, activatedAt: now };
+    else m[cur.plan] = { period: cur.period, expiresAt: cur.expiresAt + days * 86400000, activatedAt: cur.activatedAt || now };
+    await this.ctx.storage.put("plans", m);
+    return true;
+  }
+
+  /* ----- M-Pesa payments: one record per STK push, finished exactly once ----- */
+  async mpPut(id, rec) { await this.ctx.storage.put("mp:" + id, rec); return true; }
+  async mpGet(id) { return (await this.ctx.storage.get("mp:" + id)) || null; }
+  async mpFinish(id, status, extra) {
+    const r = await this.ctx.storage.get("mp:" + id);
+    if (!r) return { ok: false };
+    if (r.status !== "pending") return { ok: false, rec: r };
+    r.status = status; r.doneAt = Date.now();
+    if (extra) Object.assign(r, extra);
+    await this.ctx.storage.put("mp:" + id, r);
+    return { ok: true, rec: r };
+  }
+
+  /* ----- small key-value store, counters and unique sets (stats, announcement, invites, backups, shares) ----- */
+  async kvGet(k) { const v = await this.ctx.storage.get("k:" + k); return v === undefined ? null : v; }
+  async kvSet(k, v) { await this.ctx.storage.put("k:" + k, v); return true; }
+  async kvDel(k) { await this.ctx.storage.delete("k:" + k); return true; }
+  async incr(k, n) {
+    const key = "n:" + k;
+    const v = ((await this.ctx.storage.get(key)) || 0) + (n || 1);
+    await this.ctx.storage.put(key, v);
+    return v;
+  }
+  async counters(prefix) {
+    const m = await this.ctx.storage.list({ prefix: "n:" + (prefix || "") });
+    const o = {};
+    m.forEach(function (v, k) { o[k.slice(2)] = v; });
+    return o;
+  }
+  async seen(day, id) {
+    const k = "s:" + day + ":" + id;
+    if (await this.ctx.storage.get(k)) return false;
+    await this.ctx.storage.put(k, 1);
+    await this.incr("d:" + day + ":users", 1);
+    return true;
   }
 
   /* ----- answer feedback (thumbs and reasons), read on the admin page ----- */
@@ -177,6 +273,21 @@ function stub(env, name) {
 
 const tokenCache = new Map();
 
+/* Counts what is used (never what people write) so the owner can see growth and cost on the admin page. */
+function dayKey(t) { return new Date(t || Date.now()).toISOString().slice(0, 10); }
+function track(env, ctx, keys, uid) {
+  if (!env.LIMITER) return;
+  const s = stub(env, "stats");
+  const day = dayKey();
+  const job = (async function () {
+    try {
+      for (const k of keys) await s.incr(k.replace("{d}", day));
+      if (uid) await s.seen(day, uid);
+    } catch (e) {}
+  })();
+  if (ctx && ctx.waitUntil) ctx.waitUntil(job);
+}
+
 async function verify(token, origin) {
   if (!token) return null;
   const hit = tokenCache.get(token);
@@ -194,7 +305,7 @@ async function verify(token, origin) {
     if (!u || !u.$id) return null;
     // The password flag comes from Appwrite itself (passwordUpdate), not from profile data the user can edit.
     const pwSet = typeof u.passwordUpdate === "string" ? u.passwordUpdate !== "" : !!(u.prefs && u.prefs.pwSet === true);
-    const user = { $id: u.$id, verified: u.emailVerification === true, pwSet: pwSet };
+    const user = { $id: u.$id, verified: u.emailVerification === true, pwSet: pwSet, created: Date.parse(u.$createdAt) || 0 };
     if (tokenCache.size > 500) tokenCache.clear();
     tokenCache.set(token, { user: user, exp: Date.now() + (user.verified && user.pwSet ? 5 * 60 * 1000 : 15 * 1000) });
     return user;
@@ -331,7 +442,7 @@ async function handleChat(request, env, ctx) {
 
   if (env.LIMITER) {
     plan = await stub(env, "plan|" + user.$id).getPlan();
-    lim = PLANS[plan.plan] || PLANS.free;
+    lim = plan.lim || PLANS.free;
     mstub = stub(env, user.$id);
     r = await mstub.hit(lim.msg, WINDOW_MS);
     if (!r.ok) {
@@ -347,6 +458,22 @@ async function handleChat(request, env, ctx) {
     }
     const wantM = String(body.model || "");
     const chosen = lim.models.indexOf(wantM) > -1 ? wantM : lim.models[0];
+    if (chosen === "manuva" && lim.mvCap) {
+      const mv = await stub(env, "mv|" + user.$id).hit(lim.mvCap, WINDOW_MS);
+      if (!mv.ok) {
+        await mstub.refund();
+        if (fstub) await fstub.refund();
+        return json({ reply: "limit", limited: true, kind: "manuva", resetAt: mv.resetAt, plan: plan.plan }, 429);
+      }
+    }
+    if (body.deep === true && lim.dpCap) {
+      const dp = await stub(env, "dp|" + user.$id).hit(lim.dpCap, WINDOW_MS);
+      if (!dp.ok) {
+        await mstub.refund();
+        if (fstub) await fstub.refund();
+        return json({ reply: "limit", limited: true, kind: "deep", resetAt: dp.resetAt, plan: plan.plan }, 429);
+      }
+    }
     if (wantSc && chosen === "smart") body.sc = true; // Study Center tasks only run on Omni smart
     body.planInfo = {
       plan: plan.plan,
@@ -354,7 +481,7 @@ async function handleChat(request, env, ctx) {
       modelName: MODELS[chosen],
       deep: !!lim.deep,
       data: !!lim.data,
-      name: lim.name,
+      name: lim.name || (PLANS[plan.plan] || PLANS.free).name,
       period: plan.period || "",
       expiresAt: plan.expiresAt || 0,
       msgUsed: r.used,
@@ -362,6 +489,7 @@ async function handleChat(request, env, ctx) {
       msgResetAt: r.resetAt,
     };
     body.usageInfo = { left: Math.max(0, lim.msg - r.used), used: r.used, resetAt: r.resetAt, plan: plan.plan };
+    track(env, ctx, ["d:{d}:msg", "d:{d}:msg:plan:" + plan.plan, "d:{d}:model:" + chosen].concat(body.sc ? ["d:{d}:sc"] : []).concat(body.deep ? ["d:{d}:deep"] : []), user.$id);
   }
 
   if (POLICY_RE.test(lastUserText(body.messages))) {
@@ -384,6 +512,7 @@ async function handleChat(request, env, ctx) {
       if (fstub) await fstub.refund();
       return json(d);
     }
+    track(env, ctx, ["d:{d}:via:" + String(d.via).slice(0, 60)]);
     d.left = Math.max(0, lim.msg - r.used);
     d.used = r.used;
     d.resetAt = r.resetAt;
@@ -401,13 +530,19 @@ async function handleMe(request, env) {
   const id = auth.user.$id;
   if (!env.LIMITER) return json({ plan: "free", usage: {}, limiter: false });
   const plan = await stub(env, "plan|" + id).getPlan();
-  const lim = PLANS[plan.plan] || PLANS.free;
+  const lim = plan.lim || PLANS.free;
   const u = await Promise.all([
     stub(env, id).peek(WINDOW_MS),
     stub(env, "file|" + id).peek(WINDOW_MS),
     stub(env, "img|" + id).peek(WINDOW_MS),
   ]);
+  let announcement = null;
+  try {
+    const a = await stub(env, "stats").kvGet("announce");
+    if (a && a.until > Date.now()) announcement = { id: a.id, text: a.text, link: a.link || "" };
+  } catch (e) {}
   return json({
+    announcement: announcement,
     limiter: true,
     models: lim.models,
     deep: !!lim.deep,
@@ -417,6 +552,7 @@ async function handleMe(request, env) {
     expiresAt: plan.expiresAt || 0,
     expiredPlan: plan.expiredPlan || "",
     expiredAt: plan.expiredAt || 0,
+    active: (plan.active || []).map(function (a) { return { plan: a.plan, expiresAt: a.expiresAt }; }),
     usage: {
       msg: { used: u[0].count, limit: lim.msg, resetAt: u[0].resetAt },
       file: { used: u[1].count, limit: lim.file, resetAt: u[1].resetAt },
@@ -469,15 +605,13 @@ async function handleRedeem(request, env) {
   if (info.used) return json({ ok: false, error: "That code has already been used." });
 
   const pstub = stub(env, "plan|" + id);
-  const can = await pstub.canActivate(info.plan);
-  if (!can.ok) return json({ ok: false, error: can.error });
-
-  const claim = await codes.claimCode(h, id);
+    const claim = await codes.claimCode(h, id);
   if (!claim.ok) return json({ ok: false, error: "That code has already been used." });
 
   const act = await pstub.activate(claim.plan, claim.period);
   await attempts.refund();
   if (!act.ok) return json({ ok: false, error: act.error });
+  track(env, null, ["d:{d}:act:" + act.plan]);
   return json({ ok: true, plan: act.plan, period: act.period, expiresAt: act.expiresAt });
 }
 
@@ -506,6 +640,26 @@ async function handleAdmin(request, env, action) {
   if (action === "feedback") {
     return json({ feedback: await stub(env, "feedback").listFeedback(300) });
   }
+  if (action === "stats") {
+    const s = stub(env, "stats");
+    return json({ counters: await s.counters("d:"), announce: await s.kvGet("announce"), now: Date.now() });
+  }
+  if (action === "announce") {
+    let b3;
+    try { b3 = await request.json(); } catch (e) { return json({ error: "Bad request." }, 400); }
+    const text = String(b3.text || "").trim().slice(0, 200);
+    let link = String(b3.link || "").trim().slice(0, 300);
+    if (!text) return json({ error: "Type the message first." }, 400);
+    if (link && !/^https?:\/\//i.test(link)) link = "";
+    const days = Math.max(1, Math.min(30, parseInt(b3.days, 10) || 3));
+    const a = { id: Date.now().toString(36), text: text, link: link, until: Date.now() + days * 86400000 };
+    await stub(env, "stats").kvSet("announce", a);
+    return json({ ok: true, announce: a });
+  }
+  if (action === "announce_clear") {
+    await stub(env, "stats").kvDel("announce");
+    return json({ ok: true });
+  }
   if (action === "feedback_delete") {
     let b2;
     try { b2 = await request.json(); } catch (e) { return json({ error: "Bad request." }, 400); }
@@ -519,15 +673,16 @@ async function handleAdmin(request, env, action) {
   if (!PRICES[plan] || !PRICES[plan][period]) return json({ error: "Choose a plan and period." }, 400);
   const count = Math.max(1, Math.min(50, parseInt(body.count, 10) || 1));
   const label = String(body.label || "").slice(0, 60);
+  const seats = Math.max(1, Math.min(50, parseInt(body.seats, 10) || 1));
   const made = [];
   const entries = [];
   for (let i = 0; i < count; i++) {
     const c = genCode();
     made.push(fmtCode(c));
-    entries.push({ h: await sha256hex(c), plan: plan, period: period, label: label });
+    entries.push({ h: await sha256hex(c), plan: plan, period: period, label: label, seats: seats });
   }
   await codes.addCodes(entries);
-  return json({ codes: made, plan: plan, period: period, price: PRICES[plan][period] });
+  return json({ codes: made, plan: plan, period: period, price: PRICES[plan][period], seats: seats });
 }
 
 /* ---------- Natural voices (Google Gemini text-to-speech) ---------- */
@@ -557,7 +712,7 @@ async function handleTts(request, env) {
   if (env.LIMITER) {
     const plan = await stub(env, "plan|" + auth.user.$id).getPlan();
     stb = stub(env, "tts|" + auth.user.$id);
-    const r = await stb.hit(TTS_LIMITS[plan.plan] || TTS_LIMITS.free, WINDOW_MS);
+    const r = await stb.hit((plan.lim || PLANS.free).tts, WINDOW_MS);
     if (!r.ok) return json({ error: "Voice limit reached for now." }, 429);
   }
   try {
@@ -614,7 +769,7 @@ async function handleFeedback(request, env) {
 }
 
 /* ---------- Help center assistant (limited questions per day, separate from chat messages) ---------- */
-const HELP_LIMIT = 10;
+const HELP_LIMIT = 20;
 async function handleHelp(request, env, ctx) {
   const auth = await needUser(request);
   if (auth.res) return auth.res;
@@ -629,9 +784,10 @@ async function handleHelp(request, env, ctx) {
   let used = 0;
   if (env.LIMITER) {
     hs = stub(env, "help|" + user.$id);
-    const r = await hs.hit(HELP_LIMIT, 24 * 60 * 60 * 1000);
+    const r = await hs.hit(HELP_LIMIT, 60 * 60 * 1000);
     if (!r.ok) return json({ limited: true, resetAt: r.resetAt, left: 0 });
     used = r.used;
+    track(env, ctx, ["d:{d}:help"]);
   }
   const body = { help: true, stream: false, uid: user.$id, messages: msgs, planInfo: { model: "nova" } };
   const pt = await getPolicyText(env, new URL(request.url).origin);
@@ -650,16 +806,118 @@ async function handleHelp(request, env, ctx) {
   }
 }
 
+/* ---------- Invites: both people get a day of Go (the owner can change REF_DAYS) ---------- */
+const REF_DAYS = 1;
+const REF_CAP = 10;
+async function handleReferral(request, env) {
+  const auth = await needUser(request);
+  if (auth.res) return auth.res;
+  if (!env.LIMITER) return json({ ok: false, error: "Not set up yet." });
+  const user = auth.user;
+  let b = {};
+  try { b = await request.json(); } catch (e) {}
+  const reg = stub(env, "refreg");
+  const mine = (await sha256hex("nestyref|" + user.$id)).slice(0, 8).toUpperCase();
+  if (b.action === "claim") {
+    const rate = await stub(env, "refclaim|" + user.$id).hit(10, 24 * 60 * 60 * 1000);
+    if (!rate.ok) return json({ ok: false, error: "Too many tries." }, 429);
+    const code = String(b.code || "").toUpperCase().replace(/[^A-Z0-9]/g, "").slice(0, 8);
+    if (code.length !== 8) return json({ ok: false, error: "That invite link is not valid." });
+    if (code === mine) return json({ ok: false, error: "You cannot use your own invite." });
+    if (!user.created || Date.now() - user.created > 7 * 86400000) return json({ ok: false, error: "Invites only work for new accounts, in their first 7 days." });
+    if (await reg.kvGet("cl:" + user.$id)) return json({ ok: false, error: "You already used an invite." });
+    const ref = await reg.kvGet("c:" + code);
+    if (!ref) return json({ ok: false, error: "That invite link is not valid." });
+    await reg.kvSet("cl:" + user.$id, ref);
+    await stub(env, "plan|" + user.$id).grantDays(REF_DAYS);
+    const cnt = (await reg.kvGet("n:" + ref)) || 0;
+    if (cnt < REF_CAP) {
+      await stub(env, "plan|" + ref).grantDays(REF_DAYS);
+      await reg.kvSet("n:" + ref, cnt + 1);
+    }
+    track(env, null, ["d:{d}:invite"]);
+    return json({ ok: true, days: REF_DAYS });
+  }
+  await reg.kvSet("c:" + mine, user.$id);
+  const n = (await reg.kvGet("n:" + user.$id)) || 0;
+  return json({ ok: true, code: mine, invited: n, cap: REF_CAP, days: REF_DAYS });
+}
+
+/* ---------- Backup of the person's own Study Center and tools (saved in pieces) ---------- */
+async function handleBackup(request, env) {
+  const auth = await needUser(request);
+  if (auth.res) return auth.res;
+  if (!env.LIMITER) return json({ ok: false, error: "Backup is not set up yet." });
+  let b = {};
+  try { b = await request.json(); } catch (e) {}
+  const id = auth.user.$id;
+  const rate = await stub(env, "bkrate|" + id).hit(30, 60 * 60 * 1000);
+  if (!rate.ok) return json({ ok: false, error: "Too many tries. Please wait a little." }, 429);
+  const s = stub(env, "bk|" + id);
+  const meta = await s.kvGet("meta");
+  if (b.action === "get") {
+    if (!meta) return json({ ok: true, empty: true });
+    let data = "";
+    for (let i = 0; i < meta.n; i++) data += (await s.kvGet("p" + i)) || "";
+    return json({ ok: true, data: data, at: meta.at });
+  }
+  if (b.action === "del") {
+    if (meta) { for (let i = 0; i < meta.n; i++) await s.kvDel("p" + i); await s.kvDel("meta"); }
+    return json({ ok: true });
+  }
+  if (b.action === "put") {
+    const data = typeof b.data === "string" ? b.data : "";
+    if (!data) return json({ ok: false, error: "Nothing to back up." }, 400);
+    if (data.length > 600000) return json({ ok: false, error: "Your data is too big to back up. Delete some old notes or exams and try again." }, 413);
+    const n = Math.ceil(data.length / 100000);
+    for (let i = 0; i < n; i++) await s.kvSet("p" + i, data.slice(i * 100000, (i + 1) * 100000));
+    if (meta) for (let i = n; i < meta.n; i++) await s.kvDel("p" + i);
+    await s.kvSet("meta", { n: n, at: Date.now() });
+    return json({ ok: true, at: Date.now(), size: data.length });
+  }
+  return json({ ok: false, error: "Bad request." }, 400);
+}
+
+/* ---------- Share an answer as a link (the person chooses to share; links last 30 days) ---------- */
+function escHtml(s) { return String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;"); }
+async function handleShare(request, env) {
+  const auth = await needUser(request);
+  if (auth.res) return auth.res;
+  if (!env.LIMITER) return json({ ok: false, error: "Sharing is not set up yet." });
+  let b = {};
+  try { b = await request.json(); } catch (e) {}
+  const a = String(b.a || "").slice(0, 8000).trim();
+  const q = String(b.q || "").slice(0, 600).trim();
+  if (a.length < 2) return json({ ok: false, error: "Nothing to share." }, 400);
+  const rate = await stub(env, "sharerate|" + auth.user.$id).hit(20, 60 * 60 * 1000);
+  if (!rate.ok) return json({ ok: false, error: "Too many shares. Please try again later." }, 429);
+  const bytes = new Uint8Array(8);
+  crypto.getRandomValues(bytes);
+  const id = Array.from(bytes).map(function (x) { return (x % 36).toString(36); }).join("") + Date.now().toString(36).slice(-3);
+  await stub(env, "shares").kvSet("sh:" + id, { q: q, a: a, t: Date.now() });
+  return json({ ok: true, url: new URL(request.url).origin + "/s/" + id });
+}
+async function sharePage(request, env, id) {
+  let rec = null;
+  if (env.LIMITER && /^[a-z0-9]{8,14}$/.test(id)) rec = await stub(env, "shares").kvGet("sh:" + id);
+  const ok = rec && Date.now() - rec.t < 30 * 86400000;
+  const html = '<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="robots" content="noindex,nofollow"><title>Shared from Nesty AI</title>' +
+    '<style>body{margin:0;font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif;background:#fff8e1;color:#2a2200}main{max-width:680px;margin:0 auto;padding:18px 16px 50px}h1{font-size:19px;margin:0 0 12px}.q{background:#ffe9a8;border-radius:14px;padding:11px 14px;font-weight:600;margin-bottom:12px}.a{background:#fff;border:1.5px solid #ffd566;border-radius:14px;padding:14px;line-height:1.6;white-space:pre-wrap;word-wrap:break-word}small{display:block;color:#6b5a1a;margin-top:12px}a.b{display:inline-block;margin-top:16px;background:#ffc933;color:#2a2200;padding:11px 16px;border-radius:12px;font-weight:700;text-decoration:none}</style></head><body><main><h1>✨ Shared from Nesty AI</h1>' +
+    (ok ? (rec.q ? '<div class="q">' + escHtml(rec.q) + '</div>' : '') + '<div class="a">' + escHtml(rec.a) + '</div><small>A person shared this answer. Nesty is an AI and can make mistakes.</small>' : '<div class="a">This link has expired or does not exist.</div>') +
+    '<a class="b" href="/">Try Nesty AI</a></main></body></html>';
+  return new Response(html, { status: ok ? 200 : 404, headers: { "Content-Type": "text/html; charset=utf-8", "X-Robots-Tag": "noindex", "Cache-Control": "no-store" } });
+}
+
 /* ---------- Where the user is (only after they press the button and allow it) ---------- */
 function joinPlace(list) {
   const seen = {};
   const out = [];
   list.forEach(function (x) {
-    x = String(x || "").replace(/\s+County$/i, "").trim();
-    const k = x.toLowerCase();
+    x = String(x || "").trim();
+    const k = x.toLowerCase().replace(/\s+(sub[\s-]?county|county|constituency|ward)$/i, "");
     if (x && !seen[k]) { seen[k] = 1; out.push(x); }
   });
-  return out.slice(0, 4).join(", ");
+  return out.slice(0, 7).join(", ");
 }
 async function fetchJson(url, headers) {
   const ctrl = new AbortController();
@@ -675,19 +933,28 @@ async function fetchJson(url, headers) {
   }
 }
 async function geocode(lat, lon) {
-  const a = await fetchJson("https://api.bigdatacloud.net/data/reverse-geocode-client?latitude=" + lat + "&longitude=" + lon + "&localityLanguage=en");
-  if (a) {
-    const t = joinPlace([a.locality, a.city, a.principalSubdivision, a.countryName]);
-    if (t) return t;
-  }
-  const b = await fetchJson("https://nominatim.openstreetmap.org/reverse?format=jsonv2&zoom=14&lat=" + lat + "&lon=" + lon,
+  const coords = " (" + Number(lat).toFixed(4) + ", " + Number(lon).toFixed(4) + ")";
+  // Most detailed first: village, ward, sub-county, county, region, country (OpenStreetMap), then fill gaps from BigDataCloud.
+  const b = await fetchJson("https://nominatim.openstreetmap.org/reverse?format=jsonv2&addressdetails=1&zoom=18&accept-language=en&lat=" + lat + "&lon=" + lon,
     { "User-Agent": "NestyAI/1.0 (https://github.com/isenyealvin-max/Nesty)", "Accept": "application/json" });
-  if (b) {
-    const x = b.address || {};
-    const t = joinPlace([x.suburb || x.neighbourhood || x.village || x.town, x.city || x.county, x.state, x.country]);
-    if (t) return t;
+  const a = await fetchJson("https://api.bigdatacloud.net/data/reverse-geocode-client?latitude=" + lat + "&longitude=" + lon + "&localityLanguage=en");
+  const x = (b && b.address) || {};
+  const parts = [
+    x.hamlet || x.village || x.neighbourhood || x.quarter || x.isolated_dwelling,
+    x.suburb || x.city_district,
+    x.town || x.city || x.municipality || (a && (a.locality || a.city)),
+    x.state_district || x.county,
+    x.state || (a && a.principalSubdivision),
+    x.country || (a && a.countryName),
+  ];
+  if (a && a.localityInfo && Array.isArray(a.localityInfo.administrative)) {
+    // fill the middle with the sub-county or ward when OpenStreetMap had none
+    const adm = a.localityInfo.administrative.filter(function (z) { return z && z.name && z.adminLevel >= 5; });
+    adm.sort(function (p, q) { return q.adminLevel - p.adminLevel; });
+    adm.slice(0, 2).forEach(function (z) { parts.splice(2, 0, z.name); });
   }
-  return "";
+  const t = joinPlace(parts);
+  return t ? t + coords : "";
 }
 function countryName(code) {
   try { return new Intl.DisplayNames(["en"], { type: "region" }).of(String(code).toUpperCase()); } catch (e) { return String(code || ""); }
@@ -716,6 +983,152 @@ async function handlePlace(request, env) {
   return json({ ok: true, place: place, approx: approx });
 }
 
+/* ---------- M-Pesa (Safaricom Daraja STK push). Secrets: MPESA_CONSUMER_KEY, MPESA_CONSUMER_SECRET, MPESA_SHORTCODE, MPESA_PASSKEY.
+   Optional: MPESA_ENV ("sandbox" for testing, anything else = live), MPESA_TYPE ("till" for a Buy Goods till, otherwise Paybill), MPESA_TILL (till number if different from the shortcode). ---------- */
+let mpToken = { v: "", exp: 0 };
+function mpBase(env) { return String(env.MPESA_ENV || "").toLowerCase() === "sandbox" ? "https://sandbox.safaricom.co.ke" : "https://api.safaricom.co.ke"; }
+function mpReady(env) { return !!(env.MPESA_CONSUMER_KEY && env.MPESA_CONSUMER_SECRET && env.MPESA_SHORTCODE && env.MPESA_PASSKEY); }
+function nairobiStamp() {
+  const d = new Date(Date.now() + 3 * 3600 * 1000);
+  const p = function (n) { return String(n).padStart(2, "0"); };
+  return d.getUTCFullYear() + p(d.getUTCMonth() + 1) + p(d.getUTCDate()) + p(d.getUTCHours()) + p(d.getUTCMinutes()) + p(d.getUTCSeconds());
+}
+async function mpAuth(env) {
+  if (mpToken.v && mpToken.exp > Date.now() + 30000) return mpToken.v;
+  const res = await fetch(mpBase(env) + "/oauth/v1/generate?grant_type=client_credentials", {
+    headers: { Authorization: "Basic " + btoa(env.MPESA_CONSUMER_KEY + ":" + env.MPESA_CONSUMER_SECRET) },
+  });
+  if (!res.ok) throw new Error("auth " + res.status);
+  const d = await res.json();
+  if (!d.access_token) throw new Error("no token");
+  mpToken = { v: d.access_token, exp: Date.now() + (parseInt(d.expires_in, 10) || 3000) * 1000 };
+  return mpToken.v;
+}
+function normPhone(s) {
+  s = String(s || "").replace(/[^\d+]/g, "").replace(/^\+/, "");
+  if (/^0[17]\d{8}$/.test(s)) s = "254" + s.slice(1);
+  else if (/^[17]\d{8}$/.test(s)) s = "254" + s;
+  return /^254[17]\d{8}$/.test(s) ? s : "";
+}
+function periodPrice(plan, period) { return PRICES[plan] && PRICES[plan][period] ? PRICES[plan][period] : 0; }
+
+async function handleMpesaPay(request, env) {
+  const auth = await needUser(request);
+  if (auth.res) return auth.res;
+  if (!env.LIMITER) return json({ ok: false, error: "Payments are not set up yet." });
+  if (!mpReady(env)) return json({ ok: false, error: "M-Pesa payments are not switched on yet. Please use an activation code for now." });
+  let b;
+  try { b = await request.json(); } catch (e) { return json({ ok: false, error: "Bad request." }, 400); }
+  const plan = String(b.plan || ""), period = String(b.period || "");
+  const amount = periodPrice(plan, period);
+  if (!amount) return json({ ok: false, error: "Choose a plan and period." }, 400);
+  const phone = normPhone(b.phone);
+  if (!phone) return json({ ok: false, error: "Type a Safaricom number like 0712345678." });
+  const uid = auth.user.$id;
+  const rate = await stub(env, "mprate|" + uid).hit(6, 60 * 60 * 1000);
+  if (!rate.ok) return json({ ok: false, error: "Too many payment tries. Please wait a while and try again." }, 429);
+  const origin = new URL(request.url).origin;
+  const stamp = nairobiStamp();
+  const till = String(env.MPESA_TYPE || "").toLowerCase() === "till";
+  const short = String(env.MPESA_SHORTCODE);
+  try {
+    const tok = await mpAuth(env);
+    const res = await fetch(mpBase(env) + "/mpesa/stkpush/v1/processrequest", {
+      method: "POST",
+      headers: { Authorization: "Bearer " + tok, "Content-Type": "application/json" },
+      body: JSON.stringify({
+        BusinessShortCode: short,
+        Password: btoa(short + env.MPESA_PASSKEY + stamp),
+        Timestamp: stamp,
+        TransactionType: till ? "CustomerBuyGoodsOnline" : "CustomerPayBillOnline",
+        Amount: amount,
+        PartyA: phone,
+        PartyB: till ? String(env.MPESA_TILL || short) : short,
+        PhoneNumber: phone,
+        CallBackURL: origin + "/api/mpesa/callback",
+        AccountReference: "Nesty",
+        TransactionDesc: (PLANS[plan] ? PLANS[plan].name : plan) + " " + period,
+      }),
+    });
+    const d = await res.json().catch(function () { return {}; });
+    if (!res.ok || String(d.ResponseCode) !== "0" || !d.CheckoutRequestID) {
+      await stub(env, "mprate|" + uid).refund();
+      return json({ ok: false, error: d.errorMessage || d.ResponseDescription || "M-Pesa could not start the payment. Please try again." });
+    }
+    await stub(env, "mpesa").mpPut(d.CheckoutRequestID, { uid: uid, plan: plan, period: period, amount: amount, phone: phone.slice(0, 6) + "***" + phone.slice(-2), status: "pending", at: Date.now() });
+    return json({ ok: true, id: d.CheckoutRequestID, message: d.CustomerMessage || "Check your phone and enter your M-Pesa PIN." });
+  } catch (e) {
+    await stub(env, "mprate|" + uid).refund();
+    return json({ ok: false, error: "Could not reach M-Pesa. Please try again in a moment." });
+  }
+}
+
+/* Gives the plan once, whichever of the callback or the status check sees the payment first. */
+async function mpComplete(env, id, ok, receipt, desc, paid) {
+  const ms = stub(env, "mpesa");
+  const cur = await ms.mpGet(id);
+  if (!cur || cur.status !== "pending") return cur;
+  if (ok && paid && paid < cur.amount) ok = false, desc = "Amount paid was too low.";
+  const f = await ms.mpFinish(id, ok ? "paid" : "failed", { receipt: receipt || "", desc: String(desc || "").slice(0, 120) });
+  if (f.ok && ok) {
+    await stub(env, "plan|" + cur.uid).activate(cur.plan, cur.period);
+    track(env, null, ["d:{d}:act:" + cur.plan, "d:{d}:mpesa"]);
+  }
+  return (f.rec || cur);
+}
+
+async function handleMpesaCallback(request, env) {
+  const accepted = json({ ResultCode: 0, ResultDesc: "Accepted" });
+  try {
+    const b = await request.json();
+    const cb = b && b.Body && b.Body.stkCallback;
+    if (!cb || !cb.CheckoutRequestID || !env.LIMITER) return accepted;
+    let receipt = "", paid = 0;
+    const items = (cb.CallbackMetadata && cb.CallbackMetadata.Item) || [];
+    items.forEach(function (it) {
+      if (it.Name === "MpesaReceiptNumber") receipt = String(it.Value || "");
+      if (it.Name === "Amount") paid = Number(it.Value) || 0;
+    });
+    await mpComplete(env, cb.CheckoutRequestID, Number(cb.ResultCode) === 0, receipt, cb.ResultDesc, paid);
+  } catch (e) {}
+  return accepted;
+}
+
+async function handleMpesaStatus(request, env) {
+  const auth = await needUser(request);
+  if (auth.res) return auth.res;
+  if (!env.LIMITER) return json({ status: "failed" });
+  let b = {};
+  try { b = await request.json(); } catch (e) {}
+  const id = String(b.id || "").slice(0, 80);
+  const ms = stub(env, "mpesa");
+  let rec = await ms.mpGet(id);
+  if (!rec || rec.uid !== auth.user.$id) return json({ status: "unknown" });
+  if (rec.status === "pending" && Date.now() - rec.at > 15000 && mpReady(env)) {
+    // The callback may be late or lost: ask Safaricom directly.
+    try {
+      const stamp = nairobiStamp(), short = String(env.MPESA_SHORTCODE);
+      const tok = await mpAuth(env);
+      const res = await fetch(mpBase(env) + "/mpesa/stkpushquery/v1/query", {
+        method: "POST",
+        headers: { Authorization: "Bearer " + tok, "Content-Type": "application/json" },
+        body: JSON.stringify({ BusinessShortCode: short, Password: btoa(short + env.MPESA_PASSKEY + stamp), Timestamp: stamp, CheckoutRequestID: id }),
+      });
+      const d = await res.json().catch(function () { return {}; });
+      if (d && d.ResultCode !== undefined && d.ResultCode !== null && String(d.ResultCode) !== "") {
+        rec = await mpComplete(env, id, String(d.ResultCode) === "0", "", d.ResultDesc, rec.amount);
+      }
+    } catch (e) {}
+  }
+  if (rec && rec.status === "pending" && Date.now() - rec.at > 180000) rec = await mpComplete(env, id, false, "", "Timed out", 0);
+  const out = { status: rec ? rec.status : "unknown", desc: rec && rec.desc ? rec.desc : "", receipt: rec && rec.receipt ? rec.receipt : "" };
+  if (rec && rec.status === "paid") {
+    const p = await stub(env, "plan|" + auth.user.$id).getPlan();
+    out.plan = rec.plan; out.expiresAt = ((p.active || []).filter(function (a) { return a.plan === rec.plan; })[0] || {}).expiresAt || 0;
+  }
+  return json(out);
+}
+
 export default {
   async fetch(request, env, ctx) {
     const url = new URL(request.url);
@@ -724,14 +1137,29 @@ export default {
     const postOnly = {
       "/api/chat": function () { return handleChat(request, env, ctx); },
       "/.netlify/functions/chat": function () { return handleChat(request, env, ctx); },
-      "/api/image": function () {
-        return handleImage(request, env, { needUser: needUser, stub: stub, json: json, PLANS: PLANS, WINDOW_MS: WINDOW_MS });
+      "/api/image": async function () {
+        const res = await handleImage(request, env, { needUser: needUser, stub: stub, json: json, PLANS: PLANS, WINDOW_MS: WINDOW_MS });
+        if (res.ok) track(env, ctx, ["d:{d}:img"]);
+        return res;
       },
       "/api/me": function () { return handleMe(request, env); },
       "/api/place": function () { return handlePlace(request, env); },
       "/api/help": function () { return handleHelp(request, env, ctx); },
-      "/api/tts": function () { return handleTts(request, env); },
+      "/api/referral": function () { return handleReferral(request, env); },
+      "/api/backup": function () { return handleBackup(request, env); },
+      "/api/share": function () { return handleShare(request, env); },
+      "/api/admin/stats": function () { return handleAdmin(request, env, "stats"); },
+      "/api/admin/announce": function () { return handleAdmin(request, env, "announce"); },
+      "/api/admin/announce-clear": function () { return handleAdmin(request, env, "announce_clear"); },
+      "/api/tts": async function () {
+        const res = await handleTts(request, env);
+        if (res.ok) track(env, ctx, ["d:{d}:tts"]);
+        return res;
+      },
       "/api/redeem": function () { return handleRedeem(request, env); },
+      "/api/mpesa/pay": function () { return handleMpesaPay(request, env); },
+      "/api/mpesa/status": function () { return handleMpesaStatus(request, env); },
+      "/api/mpesa/callback": function () { return handleMpesaCallback(request, env); },
       "/api/admin/generate": function () { return handleAdmin(request, env, "generate"); },
       "/api/admin/list": function () { return handleAdmin(request, env, "list"); },
       "/api/feedback": function () { return handleFeedback(request, env); },
@@ -743,6 +1171,10 @@ export default {
         return new Response("Method not allowed", { status: 405 });
       }
       return postOnly[path]();
+    }
+
+    if (request.method === "GET" && path.indexOf("/s/") === 0) {
+      return sharePage(request, env, path.slice(3));
     }
 
     if (ICONS[path]) {
