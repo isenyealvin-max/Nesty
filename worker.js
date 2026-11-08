@@ -1369,6 +1369,7 @@ async function pushDaily(env) {
   const eat = new Date(Date.now() + 3 * 3600 * 1000), hr = eat.getUTCHours();
   if (hr < 8 || hr > 19) return;
   const today = eat.toISOString().slice(0, 10), md = today.slice(5), now = Date.now();
+  const slot = today + (hr < 12 ? "a" : hr < 16 ? "b" : "c"); // up to 3 chances a day: morning, afternoon, evening
   const list = await stub(env, "push").pushIdx();
   let ann = null;
   try { const a = await stub(env, "stats").kvGet("announce"); if (a && a.until > now) ann = a; } catch (e) {}
@@ -1376,21 +1377,21 @@ async function pushDaily(env) {
   for (const it of list) {
     if (budget < 4) break;
     const uid = it[0], rec = it[1];
-    if (rec.chk === today || !rec.subs || !rec.subs.length) continue;
-    let msg = null; const patch = { chk: today };
+    if (rec.chk === slot || !rec.subs || !rec.subs.length) continue;
+    let msg = null; const patch = { chk: slot };
     if (rec.md === md && rec.bd !== today.slice(0, 4)) { msg = { title: "Happy birthday, " + (rec.n || "friend") + "! 🎂", body: "Everyone at Nesty wishes you a wonderful day. Come say hi! 🎉", tag: "nesty-bd" }; patch.bd = today.slice(0, 4); }
     else if (ann && rec.ann !== ann.id) { msg = { title: "Nesty AI 📣", body: ann.text, url: ann.link || "/", tag: "nesty-ann" }; patch.ann = ann.id; }
     else {
       budget--;
       try {
         const pl = await stub(env, "plan|" + uid).getPlan();
-        if (pl.plan !== "free" && pl.expiresAt) {
+        if (pl.plan !== "free" && pl.expiresAt && rec.exd !== today) {
           const days = Math.ceil((pl.expiresAt - now) / 864e5);
-          if (days >= 0 && days <= 3) msg = { title: "Your " + (PLANS[pl.plan] ? PLANS[pl.plan].name : "") + " plan ends " + (days <= 0 ? "today" : "in " + days + " day" + (days === 1 ? "" : "s")), body: "Renew so you keep your limits.", url: "/?plans=1", tag: "nesty-exp" };
+          if (days >= 0 && days <= 3) msg = { title: "Your " + (PLANS[pl.plan] ? PLANS[pl.plan].name : "") + " plan ends " + (days <= 0 ? "today" : "in " + days + " day" + (days === 1 ? "" : "s")), body: "Renew so you keep your limits.", url: "/?plans=1", tag: "nesty-exp" }; if (msg) patch.exd = today;
         }
       } catch (e) {}
-      if (!msg && now - (rec.seen || 0) > 20 * 3600 * 1000 && now - (rec.tipAt || 0) > 2 * 86400 * 1000) {
-        const i = Math.floor(now / 86400000) % PUSH_TIPS.length;
+      if (!msg && now - (rec.seen || 0) > 6 * 3600 * 1000 && now - (rec.tipAt || 0) > 20 * 3600 * 1000) {
+        const i = Math.floor(now / 3600000) % PUSH_TIPS.length;
         msg = { title: "Nesty AI", body: PUSH_TIPS[i].replace("{n}", rec.n || "friend"), tag: "nesty-tip" }; patch.tipAt = now;
       }
     }
