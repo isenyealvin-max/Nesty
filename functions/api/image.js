@@ -162,7 +162,7 @@ export async function handleImage(request, env, d) {
     const plan = await d.stub(env, "plan|" + user.$id).getPlan();
     limit = (plan.lim || d.PLANS.free).img;
     stb = d.stub(env, "img|" + user.$id);
-    const r = await stb.hit(limit, d.WINDOW_MS);
+    const r = await stb.hit(limit, ((plan.lim && plan.lim.win) || 60) * 60 * 1000);
     if (!r.ok) {
       return json({ reply: "limit", limited: true, kind: "img", resetAt: r.resetAt, plan: plan.plan }, 429);
     }
