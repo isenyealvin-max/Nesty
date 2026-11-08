@@ -73,6 +73,19 @@ td,th{padding:7px 6px;border-bottom:1px solid #ddd;text-align:left}
   <div id="costOut" style="margin-top:10px"></div>
 </div>
 <div class="card">
+  <b>M-Pesa STK push</b>
+  <div class="muted">Switch on only when your M-Pesa keys are real and live. When it is off, users see: "STK push is disabled right now, please use the codes or contact us through our email."</div>
+  <div id="mpState" style="margin:8px 0"><b>Checking...</b></div>
+  <button onclick="mpSet(true)">Turn ON</button> <button class="alt" onclick="mpSet(false)">Turn OFF</button>
+</div>
+<div class="card">
+  <b>Recent M-Pesa payments</b>
+  <div class="muted">Paid but no plan? Find the payment, tap Give plan, check the amount, then tap Give. The user ID is filled for you.</div>
+  <button onclick="loadPay()">Refresh</button>
+  <div id="payList" style="margin-top:8px;overflow-x:auto"></div>
+  <div style="margin-top:10px"><label>User ID</label><input id="gUid" placeholder="user ID"><div class="row"><select id="gPlan"><option value="diamond">Diamond</option><option value="premium">Premium</option><option value="go">Go</option><option value="pro">Pro</option><option value="learnover">Smart</option><option value="ultra">Ultra</option></select><select id="gPer"><option value="monthly">Monthly</option><option value="yearly">Yearly</option></select></div><button onclick="giveP()">Give plan</button> <span id="gOut" class="muted"></span></div>
+</div>
+<div class="card">
   <b>Announcement</b>
   <div class="muted">Shows as a banner to everyone who opens Nesty, until it expires.</div>
   <label for="annText">Message (200 letters)</label><input id="annText" maxlength="200" placeholder="e.g. New: Study Center stories now in Kiswahili!">
@@ -126,6 +139,7 @@ async function loadList(){
 function lastDays(n){ var o = []; for(var i = n - 1; i >= 0; i--) o.push(new Date(Date.now() - i * 864e5).toISOString().slice(0, 10)); return o; }
 var statsData = null;
 async function loadStats(){
+  mpGet();
   var d = await call("/api/admin/stats", {});
   if(!d) return;
   statsData = d.counters || {};
@@ -177,6 +191,28 @@ function calcCost(){
   });
   try{ localStorage.setItem("nestyCost", JSON.stringify(saved)); }catch(e){}
   var t = document.getElementById("ccTot"); if(t) t.innerHTML = "<b>KSh " + tot.toFixed(2) + "</b>";
+}
+async function mpGet(){
+  var d = await call("/api/admin/mpesa-get", {});
+  if(!d) return;
+  $("mpState").innerHTML = (d.on ? '<span class="ok">ON</span>' : '<span class="bad">OFF</span>') + ' &middot; keys in Cloudflare: ' + (d.ready ? 'found' : '<span class="bad">missing</span>') + ' &middot; mode: ' + d.mode;
+}
+async function mpSet(on){
+  var d = await call("/api/admin/mpesa-set", {on: on});
+  if(d){ if(on && !d.ready) alert("STK push is ON but the M-Pesa keys are missing in Cloudflare, so payments will fail."); mpGet(); }
+}
+async function loadPay(){
+  var d = await call("/api/admin/payments", {});
+  if(!d) return;
+  var rows = (d.payments || []).map(function(p){ return '<tr><td>' + esc(new Date(p.at).toLocaleString()) + '</td><td>' + esc(p.plan) + ' ' + esc(p.period) + '</td><td>KSh ' + esc(String(p.amount)) + '</td><td>' + esc(p.phone || "") + '</td><td>' + esc(p.status) + (p.receipt ? ' ' + esc(p.receipt) : '') + '</td><td><button class="alt" onclick="fillG(\'' + esc(p.uid) + '\',\'' + esc(p.plan) + '\',\'' + esc(p.period) + '\')">Give plan</button></td></tr>'; }).join("");
+  $("payList").innerHTML = rows ? '<table><tr><th>When</th><th>Plan</th><th>Paid</th><th>Phone</th><th>Status</th><th></th></tr>' + rows + '</table>' : '<div class="muted">No payments yet.</div>';
+}
+function fillG(u, p, per){ $("gUid").value = u; $("gPlan").value = p; $("gPer").value = per; $("gOut").textContent = "Check the details, then tap Give plan."; }
+async function giveP(){
+  var u = $("gUid").value.trim();
+  if(!u || !confirm("Give this plan to user " + u + "?")) return;
+  var d = await call("/api/admin/grant", {uid: u, plan: $("gPlan").value, period: $("gPer").value});
+  if(d) $("gOut").innerHTML = '<span class="ok">Done. Plan runs until ' + esc(new Date(d.expiresAt).toLocaleString()) + '.</span>';
 }
 async function sendAnn(){
   var d = await call("/api/admin/announce", {text: $("annText").value, link: $("annLink").value, days: parseInt($("annDays").value, 10) || 3});
