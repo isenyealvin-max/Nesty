@@ -9,10 +9,41 @@
     if (asked) return;
     asked = true;
     if ("Notification" in window && Notification.permission === "default") {
-      try { Notification.requestPermission(); } catch (e) {}
+      try { Notification.requestPermission().then(function () { subscribePush(); }); } catch (e) {}
     }
   }
   window.nestyAskNotify = ask;
+  /* ---------- real push: the server can reach this phone even when Nesty is closed ---------- */
+  var pushDone = false;
+  function keyBytes(k) { k = k.replace(/-/g, "+").replace(/_/g, "/"); while (k.length % 4) k += "="; var r = atob(k), o = new Uint8Array(r.length); for (var i = 0; i < r.length; i++) o[i] = r.charCodeAt(i); return o; }
+  async function subscribePush() {
+    try {
+      if (pushDone || !can() || !("PushManager" in window) || !navigator.serviceWorker) return;
+      if (typeof user === "undefined" || !user || typeof api !== "function") return;
+      var k = await api("/api/push/key", {});
+      if (!k || !k.key) return;
+      var reg = await Promise.race([navigator.serviceWorker.ready, new Promise(function (r) { setTimeout(function () { r(null); }, 6000); })]);
+      if (!reg) return;
+      var sub = await reg.pushManager.getSubscription();
+      if (!sub) sub = await reg.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: keyBytes(k.key) });
+      var p = user.prefs || {};
+      var d = await api("/api/push/subscribe", { sub: sub.toJSON(), n: p.firstName || "", md: p.dob ? String(p.dob).slice(5, 10) : "" });
+      if (d && d.ok) pushDone = true;
+    } catch (e) {}
+  }
+  window.nestySubscribePush = subscribePush;
+  setInterval(subscribePush, 20000);
+  setTimeout(subscribePush, 3000);
+  if (typeof logout === "function") {
+    var _lo = logout;
+    window.logout = logout = function () {
+      try {
+        navigator.serviceWorker.getRegistration().then(function (r) { return r && r.pushManager.getSubscription(); }).then(function (sb) { if (sb && typeof api === "function") api("/api/push/unsubscribe", { endpoint: sb.endpoint }); });
+      } catch (e) {}
+      pushDone = false;
+      return _lo.apply(this, arguments);
+    };
+  }
   document.addEventListener("click", function (e) {
     var t = e.target;
     if (t && t.closest && t.closest("#send, #mic")) ask();

@@ -243,6 +243,45 @@ export class Limiter extends DurableObject {
   async kvGet(k) { const v = await this.ctx.storage.get("k:" + k); return v === undefined ? null : v; }
   async kvSet(k, v) { await this.ctx.storage.put("k:" + k, v); return true; }
   async kvDel(k) { await this.ctx.storage.delete("k:" + k); return true; }
+
+  /* ----- web push: one record per user (their devices, birthday, name, last notice) ----- */
+  async pushSave(uid, sub, info) {
+    const old = await this.ctx.storage.get("pe:" + sub.endpoint);
+    if (old && old !== uid) {           // this phone now belongs to another account: take it off the old one
+      const o = await this.ctx.storage.get("pu:" + old);
+      if (o) { o.subs = (o.subs || []).filter(function (s) { return s.endpoint !== sub.endpoint; }); await this.ctx.storage.put("pu:" + old, o); }
+    }
+    const rec = (await this.ctx.storage.get("pu:" + uid)) || { subs: [] };
+    rec.subs = (rec.subs || []).filter(function (s) { return s.endpoint !== sub.endpoint; });
+    rec.subs.push(sub); rec.subs = rec.subs.slice(-5);
+    rec.n = info.n; rec.md = info.md; rec.seen = Date.now();
+    await this.ctx.storage.put("pu:" + uid, rec);
+    await this.ctx.storage.put("pe:" + sub.endpoint, uid);
+    return true;
+  }
+  async pushDrop(uid, endpoint) {
+    const rec = await this.ctx.storage.get("pu:" + uid);
+    if (rec) { rec.subs = (rec.subs || []).filter(function (s) { return s.endpoint !== endpoint; }); await this.ctx.storage.put("pu:" + uid, rec); }
+    await this.ctx.storage.delete("pe:" + endpoint);
+    return true;
+  }
+  async pushPatch(uid, patch, dead) {
+    const rec = await this.ctx.storage.get("pu:" + uid);
+    if (!rec) return false;
+    Object.assign(rec, patch || {});
+    if (dead && dead.length) {
+      rec.subs = (rec.subs || []).filter(function (s) { return dead.indexOf(s.endpoint) < 0; });
+      for (const e of dead) await this.ctx.storage.delete("pe:" + e);
+    }
+    await this.ctx.storage.put("pu:" + uid, rec);
+    return true;
+  }
+  async pushIdx() {
+    const m = await this.ctx.storage.list({ prefix: "pu:", limit: 5000 });
+    const out = [];
+    m.forEach(function (v, k) { out.push([k.slice(3), v]); });
+    return out;
+  }
   async incr(k, n) {
     const key = "n:" + k;
     const v = ((await this.ctx.storage.get(key)) || 0) + (n || 1);
@@ -709,6 +748,24 @@ async function handleAdmin(request, env, action) {
     list.push({ name: "Football data", keyFound: !!env.FOOTBALL_DATA_KEY, ok: !!env.FOOTBALL_DATA_KEY, status: 0, ms: 0, note: env.FOOTBALL_DATA_KEY ? "Key found (not test-called)" : "Key not found" });
     list.push({ name: "M-Pesa (Daraja)", keyFound: mpReady(env), ok: mpReady(env), status: 0, ms: 0, note: mpReady(env) ? "Keys found (" + (String(env.MPESA_ENV || "").toLowerCase() === "sandbox" ? "sandbox" : "live") + ")" : "Keys not found" });
     return json({ providers: list, checkedAt: Date.now() });
+  }
+  if (action === "pushall") {
+    let bp;
+    try { bp = await request.json(); } catch (e) { return json({ error: "Bad request." }, 400); }
+    if (!vapidReady(env)) return json({ error: "Push keys are not in Cloudflare yet (VAPID_PUBLIC and VAPID_PRIVATE)." }, 400);
+    const title = String(bp.title || "Nesty AI").slice(0, 60), text = String(bp.text || "").trim().slice(0, 200);
+    let link = String(bp.link || "").trim().slice(0, 300); if (link && !/^https?:\/\//i.test(link)) link = "";
+    const all = await stub(env, "push").pushIdx();
+    const off = Math.max(0, parseInt(bp.offset, 10) || 0);
+    if (bp.count) return json({ ok: true, total: all.length, devices: all.reduce(function (n, x) { return n + (x[1].subs || []).length; }, 0) });
+    if (!text) return json({ error: "Type the message first." }, 400);
+    let sent = 0, dead = 0, i = off, subs = 0;
+    for (; i < all.length && subs < 30; i++) {
+      const rec = all[i][1]; subs += (rec.subs || []).length + 1;
+      const r = await pushToUser(env, all[i][0], rec, { title: title, body: text, url: link || "/", tag: "nesty-ad" }, {});
+      sent += r.sent; dead += r.dead;
+    }
+    return json({ ok: true, sent: sent, dead: dead, total: all.length, next: i < all.length ? i : null });
   }
   if (action === "openai_get") {
     return json({ mode: await openaiMode(env), keyFound: !!env.OPENAI_API_KEY, models: env.OPENAI_MODELS || "gpt-4.1-mini,gpt-4o-mini" });
@@ -1228,6 +1285,121 @@ async function handleMpesaStatus(request, env) {
   return json(out);
 }
 
+/* ---------------- Web push (notifications that reach the phone even when Nesty is closed) ---------------- */
+function b64u(buf) { let s = ""; const a = new Uint8Array(buf); for (let i = 0; i < a.length; i++) s += String.fromCharCode(a[i]); return btoa(s).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, ""); }
+function ub64(s) { s = String(s).replace(/-/g, "+").replace(/_/g, "/"); while (s.length % 4) s += "="; const b = atob(s), a = new Uint8Array(b.length); for (let i = 0; i < b.length; i++) a[i] = b.charCodeAt(i); return a; }
+function cat() { let n = 0; for (const a of arguments) n += a.length; const o = new Uint8Array(n); let p = 0; for (const a of arguments) { o.set(a, p); p += a.length; } return o; }
+function vapidReady(env) { return !!(env.VAPID_PUBLIC && env.VAPID_PRIVATE); }
+const PUSH_HOSTS = ["googleapis.com", "google.com", "mozilla.com", "windows.com", "apple.com"];
+function pushEndpointOk(u) {
+  try { const x = new URL(u); return x.protocol === "https:" && PUSH_HOSTS.some(function (h) { return x.hostname === h || x.hostname.endsWith("." + h); }); } catch (e) { return false; }
+}
+async function vapidAuth(env, endpoint) {
+  const aud = new URL(endpoint).origin, pub = ub64(env.VAPID_PUBLIC);
+  const hdr = b64u(new TextEncoder().encode(JSON.stringify({ typ: "JWT", alg: "ES256" })));
+  const clm = b64u(new TextEncoder().encode(JSON.stringify({ aud: aud, exp: Math.floor(Date.now() / 1000) + 12 * 3600, sub: env.VAPID_SUBJECT || "mailto:isenyealvin@gmail.com" })));
+  const key = await crypto.subtle.importKey("jwk", { kty: "EC", crv: "P-256", d: env.VAPID_PRIVATE, x: b64u(pub.slice(1, 33)), y: b64u(pub.slice(33, 65)), ext: true }, { name: "ECDSA", namedCurve: "P-256" }, false, ["sign"]);
+  const sig = await crypto.subtle.sign({ name: "ECDSA", hash: "SHA-256" }, key, new TextEncoder().encode(hdr + "." + clm));
+  return "vapid t=" + hdr + "." + clm + "." + b64u(sig) + ", k=" + env.VAPID_PUBLIC;
+}
+async function hkdf(salt, ikm, info, len) {
+  const k = await crypto.subtle.importKey("raw", ikm, "HKDF", false, ["deriveBits"]);
+  return new Uint8Array(await crypto.subtle.deriveBits({ name: "HKDF", hash: "SHA-256", salt: salt, info: info }, k, len * 8));
+}
+/* RFC 8291 (aes128gcm) encryption of one message for one browser subscription */
+async function pushBody(sub, text) {
+  const ua = ub64(sub.keys.p256dh), auth = ub64(sub.keys.auth), salt = crypto.getRandomValues(new Uint8Array(16));
+  const eph = await crypto.subtle.generateKey({ name: "ECDH", namedCurve: "P-256" }, true, ["deriveBits"]);
+  const asPub = new Uint8Array(await crypto.subtle.exportKey("raw", eph.publicKey));
+  const uaKey = await crypto.subtle.importKey("raw", ua, { name: "ECDH", namedCurve: "P-256" }, false, []);
+  const secret = new Uint8Array(await crypto.subtle.deriveBits({ name: "ECDH", public: uaKey }, eph.privateKey, 256));
+  const enc = new TextEncoder();
+  const prk = await hkdf(auth, secret, cat(enc.encode("WebPush: info\0"), ua, asPub), 32);
+  const cek = await hkdf(salt, prk, enc.encode("Content-Encoding: aes128gcm\0"), 16);
+  const nonce = await hkdf(salt, prk, enc.encode("Content-Encoding: nonce\0"), 12);
+  const aes = await crypto.subtle.importKey("raw", cek, "AES-GCM", false, ["encrypt"]);
+  const ct = new Uint8Array(await crypto.subtle.encrypt({ name: "AES-GCM", iv: nonce }, aes, cat(enc.encode(text), new Uint8Array([2]))));
+  return cat(salt, new Uint8Array([0, 0, 16, 0]), new Uint8Array([65]), asPub, ct);
+}
+/* returns "ok", "dead" (phone removed the subscription) or "fail" */
+async function sendPush(env, sub, payload) {
+  try {
+    if (!pushEndpointOk(sub.endpoint)) return "dead";
+    const res = await fetch(sub.endpoint, { method: "POST", headers: { Authorization: await vapidAuth(env, sub.endpoint), "Content-Encoding": "aes128gcm", "Content-Type": "application/octet-stream", TTL: "86400", Urgency: "normal" }, body: await pushBody(sub, JSON.stringify(payload)) });
+    if (res.status === 404 || res.status === 410) return "dead";
+    return res.ok ? "ok" : "fail";
+  } catch (e) { return "fail"; }
+}
+async function pushToUser(env, uid, rec, payload, patch) {
+  const dead = []; let sent = 0;
+  for (const s of rec.subs || []) {
+    const r = await sendPush(env, s, payload);
+    if (r === "ok") sent++; else if (r === "dead") dead.push(s.endpoint);
+  }
+  await stub(env, "push").pushPatch(uid, patch || {}, dead);
+  return { sent: sent, dead: dead.length };
+}
+const PUSH_TIPS = [
+  "💬 {n}, ask Nesty anything today: homework, a business idea or a recipe.",
+  "🎨 {n}, have you asked Nesty to draw something? Try it today!",
+  "🎓 {n}, make a practice exam in Study Center and see where to improve.",
+  "💼 {n}, make an invoice or a cash book in Business tools in a minute.",
+  "🏃 {n}, ask Fenny for a simple 10 minute workout.",
+  "⚽ {n}, ask Lexy about last night's football.",
+  "🛒 {n}, ask Vilda to plan your family budget and shopping list.",
+  "🔎 {n}, big question? Switch on Deep search and get one cited report.",
+];
+async function handlePushKey(request, env) { return json({ key: vapidReady(env) ? env.VAPID_PUBLIC : "" }); }
+async function handlePushSub(request, env, drop) {
+  const auth = await needUser(request);
+  if (auth.res) return auth.res;
+  let b;
+  try { b = await request.json(); } catch (e) { return json({ error: "Bad request." }, 400); }
+  if (drop) { const ep = String((b && b.endpoint) || ""); if (ep) await stub(env, "push").pushDrop(auth.user.$id, ep); return json({ ok: true }); }
+  const s = b && b.sub;
+  if (!vapidReady(env)) return json({ ok: false, error: "Push is not set up yet." });
+  if (!s || !s.endpoint || !s.keys || !s.keys.p256dh || !s.keys.auth || !pushEndpointOk(s.endpoint)) return json({ error: "Bad subscription." }, 400);
+  const md = /^\d\d-\d\d$/.test(String(b.md || "")) ? b.md : "";
+  await stub(env, "push").pushSave(auth.user.$id, { endpoint: String(s.endpoint).slice(0, 1000), keys: { p256dh: String(s.keys.p256dh).slice(0, 200), auth: String(s.keys.auth).slice(0, 100) } }, { n: String(b.n || "").slice(0, 30), md: md });
+  return json({ ok: true });
+}
+/* once a day per person, spread across the day: birthday, announcement, plan ending, or a tip */
+async function pushDaily(env) {
+  if (!vapidReady(env) || !env.LIMITER) return;
+  const eat = new Date(Date.now() + 3 * 3600 * 1000), hr = eat.getUTCHours();
+  if (hr < 8 || hr > 19) return;
+  const today = eat.toISOString().slice(0, 10), md = today.slice(5), now = Date.now();
+  const list = await stub(env, "push").pushIdx();
+  let ann = null;
+  try { const a = await stub(env, "stats").kvGet("announce"); if (a && a.until > now) ann = a; } catch (e) {}
+  let budget = parseInt(env.PUSH_BATCH, 10) || 40;
+  for (const it of list) {
+    if (budget < 4) break;
+    const uid = it[0], rec = it[1];
+    if (rec.chk === today || !rec.subs || !rec.subs.length) continue;
+    let msg = null; const patch = { chk: today };
+    if (rec.md === md && rec.bd !== today.slice(0, 4)) { msg = { title: "Happy birthday, " + (rec.n || "friend") + "! 🎂", body: "Everyone at Nesty wishes you a wonderful day. Come say hi! 🎉", tag: "nesty-bd" }; patch.bd = today.slice(0, 4); }
+    else if (ann && rec.ann !== ann.id) { msg = { title: "Nesty AI 📣", body: ann.text, url: ann.link || "/", tag: "nesty-ann" }; patch.ann = ann.id; }
+    else {
+      budget--;
+      try {
+        const pl = await stub(env, "plan|" + uid).getPlan();
+        if (pl.plan !== "free" && pl.expiresAt) {
+          const days = Math.ceil((pl.expiresAt - now) / 864e5);
+          if (days >= 0 && days <= 3) msg = { title: "Your " + (PLANS[pl.plan] ? PLANS[pl.plan].name : "") + " plan ends " + (days <= 0 ? "today" : "in " + days + " day" + (days === 1 ? "" : "s")), body: "Renew so you keep your limits.", url: "/?plans=1", tag: "nesty-exp" };
+        }
+      } catch (e) {}
+      if (!msg && now - (rec.seen || 0) > 20 * 3600 * 1000 && now - (rec.tipAt || 0) > 2 * 86400 * 1000) {
+        const i = Math.floor(now / 86400000) % PUSH_TIPS.length;
+        msg = { title: "Nesty AI", body: PUSH_TIPS[i].replace("{n}", rec.n || "friend"), tag: "nesty-tip" }; patch.tipAt = now;
+      }
+    }
+    if (!msg) { await stub(env, "push").pushPatch(uid, patch, []); continue; }
+    budget -= (rec.subs || []).length + 1;
+    await pushToUser(env, uid, rec, msg, patch);
+  }
+}
+
 export default {
   async fetch(request, env, ctx) {
     const url = new URL(request.url);
@@ -1247,6 +1419,10 @@ export default {
       "/api/referral": function () { return handleReferral(request, env); },
       "/api/backup": function () { return handleBackup(request, env); },
       "/api/share": function () { return handleShare(request, env); },
+      "/api/push/key": function () { return handlePushKey(request, env); },
+      "/api/push/subscribe": function () { return handlePushSub(request, env, false); },
+      "/api/push/unsubscribe": function () { return handlePushSub(request, env, true); },
+      "/api/admin/pushall": function () { return handleAdmin(request, env, "pushall"); },
       "/api/admin/stats": function () { return handleAdmin(request, env, "stats"); },
       "/api/admin/announce": function () { return handleAdmin(request, env, "announce"); },
       "/api/admin/announce-clear": function () { return handleAdmin(request, env, "announce_clear"); },
@@ -1290,4 +1466,5 @@ export default {
 
     return env.ASSETS.fetch(request);
   },
+  async scheduled(event, env, ctx) { ctx.waitUntil(pushDaily(env)); },
 };

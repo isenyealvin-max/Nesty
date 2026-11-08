@@ -105,6 +105,15 @@ td,th{padding:7px 6px;border-bottom:1px solid #ddd;text-align:left}
   <button onclick="sendAnn()">Publish</button> <button class="alt" onclick="clearAnn()">Remove current</button>
   <div id="annNow" class="muted" style="margin-top:6px"></div>
 </div>
+<div class="card">
+  <b>Push notification to everyone</b>
+  <div class="muted">Reaches phones that allowed notifications, even when Nesty is closed. Use it for ads, news and offers. People also get one automatic push a day at most: birthday, announcement, plan ending or a tip.</div>
+  <label for="pnTitle">Title</label><input id="pnTitle" maxlength="60" value="Nesty AI">
+  <label for="pnText">Message (200 letters)</label><input id="pnText" maxlength="200" placeholder="e.g. Max plan is here: all 10 models!">
+  <label for="pnLink">Link (optional)</label><input id="pnLink" placeholder="https://...">
+  <button onclick="sendPush()">Send now</button> <button class="alt" onclick="pushCount()">How many phones?</button>
+  <div id="pnOut" class="muted" style="margin-top:6px"></div>
+</div>
 <div id="msg" class="muted"></div>
 </main>
 <script>
@@ -277,6 +286,22 @@ async function giveP(){
 async function sendAnn(){
   var d = await call("/api/admin/announce", {text: $("annText").value, link: $("annLink").value, days: parseInt($("annDays").value, 10) || 3});
   if(d){ $("annNow").textContent = "Showing now: " + d.announce.text; }
+}
+async function pushCount(){
+  var d = await call("/api/admin/pushall", {count: 1});
+  if(d) $("pnOut").textContent = d.total + " people, " + d.devices + " phones can get notifications.";
+}
+async function sendPush(){
+  if(!confirm("Send this notification to everyone?")) return;
+  var off = 0, sent = 0, dead = 0, total = 0;
+  $("pnOut").textContent = "Sending...";
+  while(off !== null){
+    var d = await call("/api/admin/pushall", {title: $("pnTitle").value, text: $("pnText").value, link: $("pnLink").value, offset: off});
+    if(!d){ $("pnOut").textContent = "Stopped. Sent so far: " + sent; return; }
+    sent += d.sent; dead += d.dead; total = d.total; off = d.next;
+    $("pnOut").textContent = "Sending... " + sent + " delivered";
+  }
+  $("pnOut").textContent = "Done. Delivered to " + sent + " phones" + (dead ? " (" + dead + " old phones removed)" : "") + ". People in list: " + total + ".";
 }
 async function clearAnn(){
   var d = await call("/api/admin/announce-clear", {});
