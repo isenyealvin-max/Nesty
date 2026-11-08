@@ -1,7 +1,7 @@
 /* Nesty Study Center (shown for the Omni smart model). Golden yellow + white, only inside this screen. */
 (function () {
   "use strict";
-  if (window.openStudyCenter) return;
+  if (window.openStudyCenter && !window.openStudyCenter.__stub) return;
 
   var CSS = "" +
     "#sc{display:none;position:fixed;inset:0;z-index:90;flex-direction:column;background:#ffe9a8;color:#3a2a00;font-family:inherit}" +
