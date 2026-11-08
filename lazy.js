@@ -6,7 +6,7 @@
     if (loading[src]) return loading[src];
     loading[src] = new Promise(function (res, rej) {
       var s = document.createElement("script");
-      s.src = src + "?v=27"; s.onload = res;
+      s.src = src + "?v=28"; s.onload = res;
       s.onerror = function () { delete loading[src]; rej(new Error("load")); };
       document.head.appendChild(s);
     });

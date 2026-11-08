@@ -12,19 +12,24 @@ const ICONS = {
 
 /* ---------- Plans (the server is the only place these limits are enforced) ---------- */
 const WINDOW_MS = 1 * 60 * 60 * 1000; // every usage window is 1 hour
-const MODELS = { neptune: "NEPTUNE 5.5", nova: "Nova 5.5", nuvida: "Nuvida 5.5", hiaru: "Hiaru 5.1", smart: "Omni smart", tyra: "Tyra", manuva: "Manuva" };
+const MODELS = { neptune: "NEPTUNE 5.5", nova: "Nova 5.5", nuvida: "Nuvida 5.5", hiaru: "Hiaru 5.1", smart: "Omni smart", tyra: "Tyra", manuva: "Manuva", lexy: "Lexy", fenny: "Fenny", vilda: "Vilda" };
 const PLANS = {
-  free: { name: "Free", msg: 40, file: 30, img: 6, tts: 12, models: ["neptune", "nova", "manuva"], deep: false, data: false, mvCap: 3, mvDaily: true },
+  free: { name: "Free", msg: 40, file: 30, img: 6, tts: 12, models: ["neptune", "nova", "manuva", "lexy"], deep: false, data: false, mvCap: 3, mvDaily: true },
   diamond: { name: "Diamond", addon: true, msg: 30, file: 20, img: 4, tts: 10, models: ["manuva"], deep: false, data: false, mvCap: 20 },
   go: { name: "Go", msg: 60, file: 50, img: 10, tts: 40, models: ["nuvida"], deep: false, data: false },
   premium: { name: "Premium", msg: 55, file: 45, img: 7, tts: 35, models: ["tyra"], deep: true, data: false },
   pro: { name: "Pro", msg: 75, file: 65, img: 15, tts: 40, models: ["hiaru"], deep: false, data: true },
   learnover: { name: "Smart", msg: 85, file: 75, img: 20, tts: 80, models: ["smart"], deep: false, data: false },
-  ultra: { name: "Ultra", msg: 90, file: 90, img: 30, tts: 70, models: ["neptune", "nova", "nuvida", "hiaru", "smart", "tyra", "manuva"], deep: true, data: true, mvCap: 25, dpCap: 8 },
+  ultra: { name: "Ultra", msg: 90, file: 90, img: 30, tts: 70, models: ["hiaru", "smart", "tyra"], deep: true, data: true, dpCap: 8 },
+  // win = minutes in one usage window (default 60). Shorter window = limits come back sooner.
+  gold: { name: "Gold", msg: 110, file: 100, img: 35, tts: 80, models: ["nuvida", "tyra", "lexy", "vilda"], deep: true, data: false, dpCap: 10, win: 40 },
+  platinum: { name: "Platinum", msg: 140, file: 130, img: 45, tts: 100, models: ["nuvida", "tyra", "smart", "fenny", "vilda"], deep: true, data: true, dpCap: 14, win: 25 },
+  max: { name: "Max", msg: 200, file: 180, img: 60, tts: 150, models: ["neptune", "nova", "nuvida", "hiaru", "smart", "tyra", "manuva", "lexy", "fenny", "vilda"], deep: true, data: true, mvCap: 40, dpCap: 20, win: 15 },
 };
+function winOf(lim) { return ((lim && lim.win) || 60) * 60 * 1000; }
 const TTS_LIMITS = {}; // natural voice clips per hour, taken from the plans above
 Object.keys(PLANS).forEach(function (k) { TTS_LIMITS[k] = PLANS[k].tts; });
-const RANK = { free: 0, diamond: 0.5, premium: 1, go: 2, pro: 3, learnover: 4, ultra: 5 }; // by price (only used to name the top plan)
+const RANK = { free: 0, diamond: 0.5, premium: 1, go: 2, pro: 3, learnover: 4, ultra: 5, gold: 6, platinum: 7, max: 8 }; // by price (only used to name the top plan)
 const PRICES = {
   diamond: { monthly: 30, yearly: 360 },
   premium: { monthly: 50, yearly: 600 },
@@ -32,6 +37,9 @@ const PRICES = {
   pro: { monthly: 120, yearly: 1440 },
   learnover: { monthly: 150, yearly: 1800 },
   ultra: { monthly: 599, yearly: 7188 },
+  gold: { monthly: 799, yearly: 9588 },
+  platinum: { monthly: 999, yearly: 11988 },
+  max: { monthly: 1599, yearly: 19188 },
 };
 
 /* Adds one calendar month or one year, keeping the day of the month when possible. */
@@ -103,13 +111,14 @@ export class Limiter extends DurableObject {
     }
     act.sort(function (a, b) { return RANK[b.plan] - RANK[a.plan]; });
     const base = act.filter(function (a) { return !PLANS[a.plan].addon; });
-    const lim = { name: "", msg: 0, file: 0, img: 0, tts: 0, models: [], deep: false, data: false, mvCap: 0, dpCap: 0 };
+    const lim = { name: "", msg: 0, file: 0, img: 0, tts: 0, models: [], deep: false, data: false, mvCap: 0, dpCap: 0, win: 60 };
     const src = (base.length ? base : [{ plan: "free" }]).concat(act.filter(function (a) { return PLANS[a.plan].addon; }));
     const names = [];
     src.forEach(function (a) {
       const p = PLANS[a.plan];
       lim.msg = Math.max(lim.msg, p.msg); lim.file = Math.max(lim.file, p.file); lim.img = Math.max(lim.img, p.img); lim.tts = Math.max(lim.tts, p.tts);
       p.models.forEach(function (x) { if (lim.models.indexOf(x) < 0) lim.models.push(x); });
+      lim.win = Math.min(lim.win, p.win || 60);
       if (p.deep) lim.deep = true;
       if (p.data) lim.data = true;
       lim.mvCap = Math.max(lim.mvCap, p.mvCap || 0);
@@ -452,13 +461,13 @@ async function handleChat(request, env, ctx) {
     plan = await stub(env, "plan|" + user.$id).getPlan();
     lim = plan.lim || PLANS.free;
     mstub = stub(env, user.$id);
-    r = await mstub.hit(lim.msg, WINDOW_MS);
+    r = await mstub.hit(lim.msg, winOf(lim));
     if (!r.ok) {
       return json({ reply: "limit", limited: true, kind: "msg", resetAt: r.resetAt, plan: plan.plan }, 429);
     }
     if (hasAttachment(body.messages)) {
       fstub = stub(env, "file|" + user.$id);
-      const fr = await fstub.hit(lim.file, WINDOW_MS);
+      const fr = await fstub.hit(lim.file, winOf(lim));
       if (!fr.ok) {
         await mstub.refund();
         return json({ reply: "limit", limited: true, kind: "file", resetAt: fr.resetAt, plan: plan.plan }, 429);
@@ -545,9 +554,9 @@ async function handleMe(request, env) {
   const plan = await stub(env, "plan|" + id).getPlan();
   const lim = plan.lim || PLANS.free;
   const u = await Promise.all([
-    stub(env, id).peek(WINDOW_MS),
-    stub(env, "file|" + id).peek(WINDOW_MS),
-    stub(env, "img|" + id).peek(WINDOW_MS),
+    stub(env, id).peek(winOf(lim)),
+    stub(env, "file|" + id).peek(winOf(lim)),
+    stub(env, "img|" + id).peek(winOf(lim)),
   ]);
   let announcement = null;
   try {
@@ -558,6 +567,7 @@ async function handleMe(request, env) {
     announcement: announcement,
     limiter: true,
     models: lim.models,
+    win: lim.win || 60,
     deep: !!lim.deep,
     data: !!lim.data,
     plan: plan.plan,
@@ -788,7 +798,7 @@ async function handleTts(request, env) {
   if (env.LIMITER) {
     const plan = await stub(env, "plan|" + auth.user.$id).getPlan();
     stb = stub(env, "tts|" + auth.user.$id);
-    const r = await stb.hit((plan.lim || PLANS.free).tts, WINDOW_MS);
+    const r = await stb.hit((plan.lim || PLANS.free).tts, winOf(plan.lim));
     if (!r.ok) return json({ error: "Voice limit reached for now." }, 429);
   }
   try {

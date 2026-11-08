@@ -2,7 +2,7 @@
    Everything here works on the phone with no AI messages used. Deep green and gold. */
 (function () {
   "use strict";
-  if (window.goBiz) return;
+  if (window.goBiz && !window.goBiz.__stub) return;
 
   function $(i) { return document.getElementById(i); }
   function E(s) { return esc(String(s == null ? "" : s)); }

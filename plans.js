@@ -5,19 +5,27 @@
   window.nestyPlansLoaded = true;
 
   /* ---------- plan data (Learnover is now called Smart; Diamond is new; Ultra has smaller limits) ---------- */
-  PLAN_ORDER = ["free", "diamond", "go", "premium", "pro", "learnover", "ultra"];
+  PLAN_ORDER = ["free", "diamond", "go", "premium", "pro", "learnover", "ultra", "gold", "platinum", "max"];
   PLAN_DATA.learnover.n = "Smart";
   PLAN_DATA.free.extras = ["Try Manuva: 3 free messages a day"];
   PLAN_DATA.diamond = { n: "Diamond", msg: 30, file: 20, img: 4, tts: 10, m: 30, y: 360, models: ["manuva"], extras: ["Adds the Manuva model to whatever plan you have", "Up to 20 Manuva messages per hour", "Other limits stay as on your main plan"] };
   PLAN_DATA.ultra.msg = 90; PLAN_DATA.ultra.file = 90; PLAN_DATA.ultra.img = 30; PLAN_DATA.ultra.tts = 70;
-  PLAN_DATA.ultra.models = ["neptune", "nova", "nuvida", "hiaru", "smart", "tyra", "manuva"];
-  PLAN_DATA.ultra.extras = ["All seven models, you choose", "Deep search (8 per hour) and data analysis with charts", "Manuva: up to 25 messages per hour", "The biggest limits"];
+  PLAN_DATA.ultra.models = ["hiaru", "smart", "tyra"];
+  PLAN_DATA.ultra.extras = ["3 models: Hiaru 5.1, Omni smart and Tyra", "Deep search (8 per hour) and data analysis with charts", "Big limits for work and study"];
+  PLAN_DATA.free.models = ["neptune", "nova", "lexy"];
+  PLAN_DATA.gold = { n: "Gold", msg: 110, file: 100, img: 35, tts: 80, win: 40, m: 799, y: 9588, models: ["nuvida", "tyra", "lexy", "vilda"], extras: ["Your limits come back every 40 minutes, not every hour", "Deep search: 10 per hour", "Four models: Nuvida, Tyra, Lexy and Vilda"] };
+  PLAN_DATA.platinum = { n: "Platinum", msg: 140, file: 130, img: 45, tts: 100, win: 25, m: 999, y: 11988, models: ["nuvida", "tyra", "smart", "fenny", "vilda"], extras: ["Your limits come back every 25 minutes", "Deep search: 14 per hour and data analysis with charts", "Five models: Nuvida, Tyra, Omni smart, Fenny and Vilda"] };
+  PLAN_DATA.max = { n: "Max", msg: 200, file: 180, img: 60, tts: 150, win: 15, m: 1599, y: 19188, models: ["neptune", "nova", "nuvida", "hiaru", "smart", "tyra", "manuva", "lexy", "fenny", "vilda"], extras: ["All ten models, you choose", "Your limits come back every 15 minutes", "Deep search: 20 per hour, Manuva: 40 per hour, data analysis", "The biggest limits of all"] };
+  function winTxt(p) { var w = p.win || 60; return w === 60 ? "per hour" : "every " + w + " minutes"; }
+  MODEL_INFO.lexy = { n: "Lexy", d: "For sports: football, athletics, rugby, basketball and more" };
+  MODEL_INFO.fenny = { n: "Fenny", d: "For fitness, exercises, body parts, organs and body care" };
+  MODEL_INFO.vilda = { n: "Vilda", d: "For career, business ideas and family life: budgets, shopping lists, plans, vacations and packing lists" };
   MODEL_INFO.hiaru = { n: "Hiaru 5.1", d: "For office work: documents, files, spreadsheets, PowerPoint, business papers and data analysis" };
   MODEL_INFO.manuva = { n: "Manuva", d: "For tough challenges: hard maths, logic, science, coding and multi-step problems" };
   modelLine = function (id) {
     var m = PLAN_DATA[id].models;
     if (id === "diamond") return "Unlocks model: <b>Manuva</b> – " + MODEL_INFO.manuva.d;
-    if (id === "ultra") return "Models: <b>all seven, you choose</b>";
+    if (id === "max") return "Models: <b>all ten, you choose</b>";
     if (m.length > 1) return "Models: <b>" + m.map(modelName).join(" or ") + "</b> (you choose)";
     return "Model: <b>" + modelName(m[0]) + "</b> – " + MODEL_INFO[m[0]].d;
   };
@@ -36,7 +44,10 @@
     premium: { c: "#d6246e", bg: "#ffe3ee", ic: "🔎", tag: "Research" },
     pro: { c: "#12805c", bg: "#ddf5ea", ic: "💼", tag: "Office work" },
     learnover: { c: "#e07b00", bg: "#ffecd0", ic: "🎓", tag: "For students" },
-    ultra: { c: "#7c3aed", bg: "#eee6ff", ic: "👑", tag: "Everything" }
+    ultra: { c: "#7c3aed", bg: "#eee6ff", ic: "👑", tag: "Work and study" },
+    gold: { c: "#c98a00", bg: "#fff1bf", ic: "🥇", tag: "More models, faster limits" },
+    platinum: { c: "#4a6a85", bg: "#e6eef5", ic: "🏆", tag: "Five models, 25 minute limits" },
+    max: { c: "#111827", bg: "#e9e9ee", ic: "🚀", tag: "Everything, 15 minute limits" }
   };
   var css = document.createElement("style");
   css.textContent = "" +
@@ -104,7 +115,7 @@
       var own = id === "free" ? cp === "free" : !!mine[id];
       h += '<div class="pz' + (own ? ' cur' : '') + (id === plansFocus ? ' focus' : '') + '" id="pc_' + id + '" style="--pc:' + lk.c + ';--pb:' + lk.bg + '">' +
         '<div class="ph"><div class="pi">' + lk.ic + '</div><div><div class="pn">' + p.n + '</div><div class="pt">' + lk.tag + '</div></div><div class="pp">' + (id === "free" ? "KSh 0" : money(p.m) + '<small>per month</small>') + '</div></div><div class="pbd">' +
-        '<ul><li>' + modelLine(id) + '</li><li>' + L("pl_msg", { n: p.msg }) + '</li><li>' + L("pl_file", { n: p.file }) + '</li><li>' + L("pl_img", { n: p.img }) + '</li><li>Natural voices: ' + p.tts + ' clips per hour</li>' + (p.extras || []).map(function (x) { return '<li>' + E(x) + '</li>'; }).join("") + '</ul>';
+        '<ul><li>' + modelLine(id) + '</li><li>' + p.msg + ' messages ' + winTxt(p) + '</li><li>' + p.file + ' file attachments ' + winTxt(p) + '</li><li>' + p.img + ' image creations ' + winTxt(p) + '</li><li>Natural voices: ' + p.tts + ' clips ' + winTxt(p) + '</li>' + (p.extras || []).map(function (x) { return '<li>' + E(x) + '</li>'; }).join("") + '</ul>';
       if (own && id !== "free") h += '<div class="own">✅ Active until ' + fullWhen(untilOf(id)) + '</div>';
       if (id !== "free") {
         h += '<div class="pbt"><button data-pay="' + id + '|monthly">' + money(p.m) + ' monthly</button><button class="alt" data-pay="' + id + '|yearly">' + money(p.y) + ' yearly</button></div>';

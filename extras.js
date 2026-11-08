@@ -435,7 +435,7 @@
       var now = Date.now(), PN = (window.PLAN_DATA && PLAN_DATA[me.plan] && PLAN_DATA[me.plan].n) || me.plan;
       if (me.plan !== "free" && me.expiresAt) {
         var days = Math.ceil((me.expiresAt - now) / 864e5), k = "nestyExp_" + me.expiresAt + "_" + new Date().toISOString().slice(0, 10);
-        if (days <= 3 && days >= 0 && !localStorage.getItem(k)) bar("⏳ Your " + E(PN) + " plan ends " + (days <= 0 ? "today" : "in " + days + " day" + (days === 1 ? "" : "s")) + ". Renew so you keep your limits.", k, function () { openPlans(me.plan); });
+        if (days <= 3 && days >= 0) bar("⏳ Your " + E(PN) + " plan ends " + (days <= 0 ? "today" : "in " + days + " day" + (days === 1 ? "" : "s")) + ". Renew so you keep your limits.", "nestyExpNever", function () { openPlans(me.plan); });
       } else if (me.expiredPlan && me.expiredAt && now - me.expiredAt < 7 * 864e5) {
         var k2 = "nestyExpd_" + me.expiredAt;
         if (!localStorage.getItem(k2)) bar("Your " + E((window.PLAN_DATA && PLAN_DATA[me.expiredPlan] && PLAN_DATA[me.expiredPlan].n) || me.expiredPlan) + " plan has ended. Renew to get your limits back.", k2, function () { openPlans(me.expiredPlan); });

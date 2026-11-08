@@ -78,6 +78,7 @@
     var a = (typeof me !== "undefined" && me && me.active) ? me.active.map(function (x) { return x.plan; }) : [];
     var base = a.filter(function (x) { return x !== "diamond"; });
     var ids = a.slice(); if (!base.length) ids.push("free");
+    if (ids.indexOf("gold") > -1 || ids.indexOf("platinum") > -1 || ids.indexOf("max") > -1) ids.push("ultra");
     return ids;
   }
   function ok(t) {

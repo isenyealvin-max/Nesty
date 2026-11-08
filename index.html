@@ -2386,6 +2386,7 @@ async function ask(){
     }
     reply = data.reply || "Sorry, something went wrong.";
     sources = data.sources || [];
+    try{ if(window.nestyNotifyReply) nestyNotifyReply(reply); }catch(e){}
     if(!wasStream && reply.length < 6000) await typeOut(reply);
     if(data.forget && data.forget.length) await removeFacts(data.forget);
     if(data.remember && data.remember.length) addFacts(data.remember);
@@ -3387,8 +3388,8 @@ var LP = [
 ];
 STR.en.lp7_t = "Meet Study Center"; STR.en.lp7_d = "Switch to Omni smart and a Study Center opens, made for learners.";
 STR.en.lp7_1 = "Exams that Nesty marks, with friendly feedback"; STR.en.lp7_2 = "Notes and flashcards on any topic"; STR.en.lp7_3 = "A study timetable, built by you or by Nesty from your results"; STR.en.lp7_4 = "Stories, novellas and novels for every age";
-STR.en.lp8_t = "Six models, six plans"; STR.en.lp8_d = "Pick the model that fits the job, and the plan that fits you.";
-STR.en.lp8_1 = "NEPTUNE 5.5 and Nova 5.5 are free"; STR.en.lp8_2 = "Nuvida 5.5 for everyday work, Hiaru 5.1 for office work"; STR.en.lp8_3 = "Omni smart for learning, Tyra for research"; STR.en.lp8_4 = "Ultra gives you every model";
+STR.en.lp8_t = "Ten models, ten plans"; STR.en.lp8_d = "Pick the model that fits the job, and the plan that fits you.";
+STR.en.lp8_1 = "NEPTUNE 5.5 and Nova 5.5 are free"; STR.en.lp8_2 = "Nuvida 5.5 for everyday work, Hiaru 5.1 for office work"; STR.en.lp8_3 = "Omni smart for learning, Tyra for research"; STR.en.lp8_4 = "Max gives you every model";
 var lpIdx = 0;
 LP.splice(5, 0, {icon: "\ud83c\udf93", n: 7, items: 4}, {icon: "\ud83e\udde0", n: 8, items: 4});
 function setThemeColor(c){
@@ -3595,7 +3596,7 @@ var TIPS = [
   {id: "student", only: ["free", "go", "premium", "pro"], cta: "See Smart", txt: "🎓 Are you a student using the {plan} plan? Mh, that's not good. Upgrade to Smart or Ultra and get sorted!", go: function(){ openPlans("learnover"); }},
   {id: "sc_teaser", only: ["free", "go", "premium", "pro"], cta: "Meet Omni smart", txt: "📚 Exams, notes, flashcards, a timetable and stories, all in one Study Center. Meet Omni smart on Smart!", go: function(){ openPlans("learnover"); }},
   {id: "weather", cta: "Ask now", txt: "⛅ What is tomorrow's weather, {name}? Don't be left behind. Ask Nesty today!", go: function(){ prefill("What is the weather like tomorrow?", true); }},
-  {id: "research", only: ["free", "go", "pro", "learnover"], cta: "See Premium", txt: "🔎 Need deep research with sources? Premium gives you Tyra, built for research. Ultra gives you every model!", go: function(){ openPlans("premium"); }},
+  {id: "research", only: ["free", "go", "pro", "learnover"], cta: "See Premium", txt: "🔎 Need deep research with sources? Premium gives you Tyra, built for research. Max gives you every model!", go: function(){ openPlans("premium"); }},
   {id: "office", only: ["free", "go", "premium", "learnover"], cta: "See Pro", txt: "📊 Need Excel tables with borders, or a Word file in Times New Roman? Pro gives you Hiaru 5.1 for office work.", go: function(){ openPlans("pro"); }},
   {id: "everyday", only: ["free"], cta: "See Go", txt: "⚡ Want smarter answers for everyday work? Go gives you Nuvida 5.5 for just KSh 70 a month.", go: function(){ openPlans("go"); }},
   {id: "models", only: ["free", "ultra"], cta: "Choose a model", txt: "🧠 You can switch models, {name}! Tap the glowing model name at the top to change how Nesty answers.", go: function(){ openModelMenu(); }},
@@ -3606,7 +3607,7 @@ var TIPS = [
   {id: "foot", cta: "Premier League table", txt: "⚽ Want live scores and tables? Nesty has them, ask about the Premier League.", go: function(){ prefill("Premier League table", true); }},
   {id: "help", cta: "Open Help Center", txt: "💬 Stuck, {name}? The Help Center has quick answers and a Help assistant for your own questions.", go: function(){ openHelp(); }},
   {id: "images50", only: UP, cta: "See Ultra", txt: "🖼️ Love making pictures? Ultra gives you up to 50 image creations every hour.", go: function(){ openPlans("ultra"); }},
-  {id: "ultra", only: UP, cta: "See Ultra", txt: "✨ Ultra unlocks every model, 100 messages an hour, 100 file attachments and 50 images. Get sorted!", go: function(){ openPlans("ultra"); }}
+  {id: "ultra", only: UP, cta: "See Ultra", txt: "✨ Ultra gives you Hiaru, Omni smart and Tyra with big limits. Want every model? Max unlocks all ten, and your limits come back every 15 minutes!", go: function(){ openPlans("ultra"); }}
 ];
 var tipCur = null, tipTimer = 0, tipSession = 0, tipOpenedAt = Date.now(), tipOn = false;
 function tipBusy(){
@@ -3807,7 +3808,7 @@ function openModelMenu(){
     h += '<button class="mrow' + (id === cur ? ' on' : '') + '" onclick="pickModel(\'' + id + '\')"><b>' + MODEL_INFO[id].n + (id === cur ? ' ✓' : '') + '</b><span>' + MODEL_INFO[id].d + '</span></button>';
   });
   $("modelList").innerHTML = h;
-  $("modelNote").textContent = curPlan() === "ultra" ? "Ultra can use every model." : "Your plan lets you choose between these models.";
+  $("modelNote").textContent = curPlan() === "max" ? "Max can use every model." : "Your plan lets you choose between these models.";
   $("modelSheet").style.display = "flex";
 }
 function closeModelMenu(){ $("modelSheet").style.display = "none"; }
