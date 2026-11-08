@@ -4,7 +4,7 @@
   "use strict";
   /* learner-safe mode: on for under-18 accounts, or when a parent turns it on in Study Center */
   window.nestySafe = function () {
-    try { var a = user && user.prefs && parseInt(user.prefs.age, 10); return (a > 0 && a < 18) || localStorage.getItem("nestySafe") === "1"; } catch (e) { return false; }
+    try { var a = user && user.prefs && (calcAge(user.prefs.dob) || parseInt(user.prefs.age, 10)); return (a > 0 && a < 18) || localStorage.getItem("nestySafe") === "1"; } catch (e) { return false; }
   };
   if (window.openHub) return;
 
@@ -169,14 +169,14 @@
   setInterval(checkDue, 20000);
 
   /* invites */
-  VIEWS.invite = function () { return '<div class="card"><b>🎁 Invite a friend</b><p class="m" id="invTxt">Loading your invite link...</p></div><div class="m">When a new friend joins with your link and opens Nesty, you both get one day of the Go plan (or one extra day on your paid plan). Invites work for accounts in their first 7 days.</div>'; };
+  VIEWS.invite = function () { return '<div class="card"><b>🎁 Invite a friend</b><p class="m" id="invTxt">Loading your invite link...</p></div><div class="m">When a new friend joins with your link and opens Nesty, you both get 3 days of the Go plan (or 3 extra days on your paid plan). Invites work for accounts in their first 7 days.</div>'; };
   VIEWS.inviteInit = async function () {
     try {
       var d = await api("/api/referral", { action: "info" });
       if (!d || !d.ok) { $("invTxt").textContent = (d && d.error) || "Could not load your invite link."; return; }
       var link = location.origin + "/?ref=" + d.code;
-      $("invTxt").innerHTML = 'Your link:<br><b style="word-break:break-all">' + E(link) + '</b><br>Friends who joined: <b>' + d.invited + '</b> of ' + d.cap + ' rewards.<br><button class="b" id="invShare">Share link</button><button class="b ghost" id="invCopy">Copy</button>';
-      $("invShare").onclick = function () { var msg = "Join me on Nesty AI, a smart assistant made for us: " + link; if (navigator.share) navigator.share({ text: msg }).catch(function () {}); else window.open("https://wa.me/?text=" + encodeURIComponent(msg), "_blank"); };
+      $("invTxt").innerHTML = 'Your link:<br><b style="word-break:break-all">' + E(link) + '</b><br>Friends who joined: <b>' + d.invited + '</b> of ' + d.cap + ' rewards (' + (d.days || 3) + ' free days each).<br><button class="b" id="invShare">Share link</button><button class="b ghost" id="invCopy">Copy</button>';
+      $("invShare").onclick = function () { var msg = "🎁 Join me on Nesty AI, a smart assistant made for us (homework, business, Kiswahili and more). Use my link and we both get 3 free days of the Go plan: " + link; if (navigator.share) navigator.share({ text: msg }).catch(function () {}); else window.open("https://wa.me/?text=" + encodeURIComponent(msg), "_blank"); };
       $("invCopy").onclick = function () { if (navigator.clipboard) navigator.clipboard.writeText(link).then(function () { toast("Copied"); }); };
     } catch (e) { $("invTxt").textContent = "Could not load your invite link."; }
   };
@@ -420,6 +420,7 @@
     b.innerHTML = '<span>' + html + '</span><button id="xGo">Open</button><button class="x" id="xCl">×</button>';
     b.style.display = "flex";
     $("xCl").onclick = function () { b.style.display = "none"; try { localStorage.setItem(key, "1"); } catch (e) {} };
+    clearTimeout(bar._t); bar._t = setTimeout(function () { b.style.display = "none"; }, 30000);
     $("xGo").style.display = onGo ? "" : "none";
     if (onGo) $("xGo").onclick = function () { b.style.display = "none"; try { localStorage.setItem(key, "1"); } catch (e) {} onGo(); };
   }
@@ -462,7 +463,7 @@
     try { localStorage.removeItem("nestyRef"); } catch (e) {}
     try {
       var d = await api("/api/referral", { action: "claim", code: r });
-      if (d && d.ok) { toast("🎁 Welcome! You and your friend each got " + d.days + " day of Go."); loadMe(); }
+      if (d && d.ok) { toast("🎁 Welcome! You and your friend each got " + d.days + " days of Go."); loadMe(); }
       else if (d && d.error) toast(d.error);
     } catch (e) {}
   }

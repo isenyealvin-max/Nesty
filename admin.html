@@ -77,6 +77,11 @@ td,th{padding:7px 6px;border-bottom:1px solid #ddd;text-align:left}
   <div class="muted">Tap Check now to test Groq, Gemini, OpenRouter and Tavily with a tiny message (it uses a very small amount of quota). "Answers served" shows which provider actually replied to users over the last 14 days, from the Dashboard numbers.</div>
   <button onclick="checkProv()">Check now</button>
   <div id="provOut" style="margin-top:8px;overflow-x:auto"></div>
+  <div style="margin-top:10px"><label>How to use OpenAI</label>
+    <select id="oaMode"><option value="off">Off (never use OpenAI)</option><option value="backup">Backup only (when Groq, Gemini and OpenRouter fail)</option><option value="first">First (before the others, costs the most)</option></select>
+    <button onclick="oaSave()">Save</button> <span id="oaNote" class="muted"></span>
+    <div class="muted">Add the key in Cloudflare as OPENAI_API_KEY. Models are not fixed: set OPENAI_MODELS in Cloudflare (comma separated, tried in order, e.g. gpt-4.1-mini,gpt-4o-mini).</div></div>
+  <div id="provNow" style="margin-top:10px;overflow-x:auto"></div>
   <div id="provUse" class="muted" style="margin-top:8px"></div>
 </div>
 <div class="card">
@@ -170,6 +175,8 @@ async function loadStats(){
   h += '<div class="muted" style="margin-top:10px"><b>Messages by Nesty model (14 days):</b> ' + (Object.keys(byModel).map(function(k){ return esc(k) + " " + byModel[k]; }).join(", ") || "none yet") + "</div>";
   $("statsOut").innerHTML = h;
   showProvUse(byVia);
+  showNow(C, days);
+  oaLoad();
   var items = {};
   Object.keys(byVia).forEach(function(k){ items["Chat: " + k] = byVia[k]; });
   var sums = {img: 0, tts: 0};
@@ -203,6 +210,7 @@ function calcCost(){
 function provOf(via){
   via = String(via || "").toLowerCase();
   if(via.indexOf("gemini") > -1) return "Gemini";
+  if(via.indexOf("gpt-") === 0 || via.indexOf("o1") === 0 || via.indexOf("o3") === 0 || via.indexOf("o4") === 0) return "OpenAI";
   if(via.indexOf(":free") > -1 || via.indexOf("openrouter") > -1) return "OpenRouter";
   if(via.indexOf("gpt-oss") > -1 || via.indexOf("llama") > -1 || via.indexOf("groq") > -1) return "Groq";
   if(via === "deep") return "Deep search (Tavily + AI)";
@@ -221,6 +229,28 @@ function showProvUse(byVia){
   Object.keys(byVia).forEach(function(k){ var p = provOf(k); u[p] = (u[p] || 0) + byVia[k]; });
   var keys = Object.keys(u).sort(function(a, b){ return u[b] - u[a]; });
   $("provUse").innerHTML = '<b>Answers served (14 days):</b> ' + (keys.map(function(k){ return esc(k) + " " + u[k]; }).join(", ") || "none yet");
+}
+async function oaLoad(){
+  var d = await call("/api/admin/openai-get", {});
+  if(!d) return;
+  $("oaMode").value = d.mode;
+  $("oaNote").textContent = d.keyFound ? "Key found. Models: " + d.models : "OPENAI_API_KEY not found in Cloudflare yet.";
+}
+async function oaSave(){
+  var d = await call("/api/admin/openai-set", {mode: $("oaMode").value});
+  if(d){ $("oaNote").textContent = "Saved (takes effect within a minute)."; }
+}
+function showNow(C, days){
+  var today = days.slice().sort().pop(), rows = {};
+  Object.keys(C).forEach(function(k){
+    var m = /^d:(\d{4}-\d\d-\d\d):via:(.*)$/.exec(k); if(!m) return;
+    var name = m[2].replace(/ \+web$/, ""), r = rows[name] = rows[name] || {t: 0, all: 0};
+    r.all += C[k]; if(m[1] === today) r.t += C[k];
+  });
+  var list = Object.keys(rows).sort(function(a, b){ return rows[b].t - rows[a].t || rows[b].all - rows[a].all; });
+  $("provNow").innerHTML = list.length ? '<b>Which AI is answering users</b><table><tr><th>Provider</th><th>Model</th><th>Today</th><th>14 days</th></tr>' + list.map(function(n, i){
+    return '<tr><td>' + esc(provOf(n)) + '</td><td>' + esc(n) + (i === 0 && rows[n].t ? ' <span class="ok">&#9679; main today</span>' : '') + '</td><td>' + rows[n].t + '</td><td>' + rows[n].all + '</td></tr>';
+  }).join("") + '</table>' : '<div class="muted">No answers counted yet. Numbers appear after users chat.</div>';
 }
 async function mpGet(){
   var d = await call("/api/admin/mpesa-get", {});

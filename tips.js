@@ -20,6 +20,7 @@
     if (typeof f !== "function" || f.__tw) return;
     var g = function () { mark(key); return f.apply(this, arguments); };
     g.__tw = 1;
+    if (f.__stub) g.__stub = true;
     try { window[name] = g; } catch (e) {}
   }
   WATCH.forEach(function (w) { wrap(w[0], w[1]); });
@@ -89,6 +90,7 @@
   }
   /* other signs a feature was used */
   function extraUsed() {
+    WATCH.forEach(function (w) { wrap(w[0], w[1]); });
     try {
       if (localStorage.getItem("nestyModelSeen") === "1") mark("model");
       var uid = (user && user.$id) || "guest";
@@ -134,7 +136,7 @@
     $("tipGo").textContent = t.cta;
     $("tip").classList.add("show");
     clearTimeout(tipTimer);
-    tipTimer = setTimeout(function () { tipClose(false); }, 12000);
+    tipTimer = setTimeout(function () { tipClose(false); }, 30000);
   };
   window.tipClose = tipClose = function (byUser) {
     $("tip").classList.remove("show");
@@ -172,6 +174,8 @@
   }
   var cache = null;
   window.nestyGreeting = function (name) {
+    var bd = false; try { bd = !!(user && user.prefs && isBirthday(user.prefs.dob)); } catch (e) {}
+    if (bd && name) return { title: "Happy birthday, " + esc(name) + "! 🎂🎉", sub: "Wishing you a wonderful day. How can I help?", sugs: ["Write a birthday message", "Plan a birthday party", "Give me a fun fact about my birthday", "Tell me a joke"] };
     var p = period();
     if (!cache || cache.p !== p || Date.now() - cache.t > 600000) {
       var pool = (SUG[p] || []).concat(SUG.all), picked = [];

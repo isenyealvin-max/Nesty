@@ -8,6 +8,11 @@
 <title>Nesty AI</title>
 <link rel="manifest" href="/manifest.json">
 <meta name="theme-color" content="#ffffff">
+<meta name="description" content="Nesty AI: a smart assistant for homework, business, Kiswahili and everyday life.">
+<meta property="og:title" content="Nesty AI">
+<meta property="og:description" content="A smart assistant made for us: homework, business, Kiswahili and more. Free to start.">
+<meta property="og:image" content="/icon-512-1.png">
+<meta property="og:type" content="website">
 <link rel="icon" href="/icon-192.png">
 <link rel="apple-touch-icon" href="/icon-192.png">
 <script src="https://cdn.jsdelivr.net/npm/appwrite@17.0.0"></script>
@@ -22,6 +27,10 @@ button{font-family:inherit;cursor:pointer}
 #authLogo{display:block;width:84px;height:84px;border-radius:20px;margin:0 auto 12px;object-fit:cover}
 #authCard h1{text-align:center;font-size:28px;margin:0 0 4px}
 #authCard p.sub{text-align:center;color:var(--muted);margin:0 0 22px}
+#authCard select{width:100%;padding:13px 14px;border:1px solid var(--border);border-radius:10px;font-size:16px;margin-bottom:10px;font-family:inherit;background:var(--card);color:var(--text)}
+#authCard label.xl{display:block;font-size:13px;font-weight:700;color:var(--muted);margin:2px 0 4px;text-align:left}
+#authCard label.xk{display:flex;gap:9px;align-items:flex-start;font-size:13.5px;line-height:1.4;margin:4px 0 12px;text-align:left}
+#authCard label.xk input{width:20px;height:20px;margin:1px 0 0;flex:none}
 #authCard input{width:100%;padding:13px 14px;border:1px solid var(--border);border-radius:10px;font-size:16px;margin-bottom:10px;font-family:inherit;background:var(--card);color:var(--text)}
 #aCode{text-align:center;letter-spacing:6px;font-size:22px}
 .pbtn{width:100%;padding:13px;border:0;border-radius:10px;background:var(--btn);color:var(--btnText);font-size:16px}
@@ -281,6 +290,7 @@ header .hbtn{margin:0;padding:7px 10px;font-size:13px;white-space:nowrap}
 .lpBack{flex:0 0 auto;background:rgba(255,255,255,.6);color:#3a2a00;border:2px solid #3a2a00;border-radius:16px;padding:14px 20px;font-size:16px;font-weight:800}
 .lpNext{flex:1;background:linear-gradient(180deg,#4a3500,#241800);color:#ffd84d;border:0;border-radius:16px;padding:15px 20px;font-size:18px;font-weight:800;box-shadow:0 8px 18px rgba(60,40,0,.35)}
 </style>
+<link rel="stylesheet" href="/skin.css">
 </head>
 <body>
 
@@ -370,7 +380,13 @@ document.getElementById("bootLogo").innerHTML = window.NESTY_LOGO("b", true);</s
     <div id="stepForm">
       <input id="aFirst" data-ph="a_first" style="display:none" autocomplete="given-name">
       <input id="aLast" data-ph="a_last" style="display:none" autocomplete="family-name">
-      <input id="aAge" type="number" inputmode="numeric" min="13" max="120" data-ph="a_age" style="display:none">
+      <div id="aExtra" style="display:none">
+      <label class="xl">Date of birth</label>
+      <input id="aDob" type="date" autocomplete="bday">
+      <label class="xl">Gender</label>
+      <select id="aGender"><option value="">Choose...</option><option value="female">Female</option><option value="male">Male</option><option value="other">Other / prefer not to say</option></select>
+      <label class="xk"><input type="checkbox" id="aTerms"> <span>I agree to the <a href="/terms.html" target="_blank">Terms of Use</a> and the <a href="/privacy.html" target="_blank">Privacy Policy</a></span></label>
+      </div>
       <input id="aEmail" type="email" data-ph="a_email" autocomplete="email">
       <input id="aPass" type="password" data-ph="a_pass" autocomplete="current-password">
       <button class="pbtn" id="sendBtn" onclick="submitAuth()"></button>
@@ -387,6 +403,17 @@ document.getElementById("bootLogo").innerHTML = window.NESTY_LOGO("b", true);</s
       <button class="pbtn" id="verifyBtn" onclick="verifyCode()" data-i="a_verify"></button>
       <button class="lbtn" id="resendBtn" onclick="resendCode()"></button>
       <button class="lbtn" onclick="backToForm()" data-i="a_change"></button>
+    </div>
+
+    <div id="stepProf" style="display:none">
+      <p style="text-align:center;color:var(--muted);font-size:14px;margin:0 0 14px">Nesty needs these details to give you the right answers, keep younger users safe and wish you a happy birthday.</p>
+      <label class="xl">Date of birth</label>
+      <input id="pDob" type="date" autocomplete="bday">
+      <label class="xl">Gender</label>
+      <select id="pGender"><option value="">Choose...</option><option value="female">Female</option><option value="male">Male</option><option value="other">Other / prefer not to say</option></select>
+      <label class="xk"><input type="checkbox" id="pTerms"> <span>I agree to the <a href="/terms.html" target="_blank">Terms of Use</a> and the <a href="/privacy.html" target="_blank">Privacy Policy</a></span></label>
+      <button class="pbtn" id="profBtn" onclick="saveProfile()">Continue</button>
+      <button class="lbtn" onclick="logout()" data-i="logout"></button>
     </div>
 
     <div id="stepPw" style="display:none">
@@ -944,6 +971,7 @@ function applyBg(hex){
   curBg = hex;
   var c = hex2rgb(hex);
   var dark = (0.299 * c[0] + 0.587 * c[1] + 0.114 * c[2]) / 255 < 0.5;
+  document.documentElement.setAttribute("data-dark", dark ? "1" : "0");
   var st = document.documentElement.style;
   function set(k, v){ st.setProperty("--" + k, v); }
   set("bg", hex);
@@ -1121,7 +1149,7 @@ if("serviceWorker" in navigator){
 }
 
 /* ---------- Account (email code, no password) ---------- */
-var pendAge = 0, resetUid = "", resetSec = "";
+var pendDob = "", pendGender = "", pendAge = 0, resetUid = "", resetSec = "";
 function pwProblem(p){
   p = String(p || "");
   if(p.length < 8 || !/[A-Z]/.test(p) || !/[a-z]/.test(p) || !/[0-9]/.test(p) || !/[^A-Za-z0-9]/.test(p)) return "e_rules";
@@ -1162,7 +1190,7 @@ function drawAuth(){
   var su = authMode === "signup";
   $("aFirst").style.display = su ? "block" : "none";
   $("aLast").style.display = su ? "block" : "none";
-  $("aAge").style.display = su ? "block" : "none";
+  $("aExtra").style.display = su ? "block" : "none";
   $("aPass").style.display = su ? "none" : "block";
   $("forgotBtn").style.display = su ? "none" : "block";
   drawAuthText();
@@ -1191,7 +1219,53 @@ function showAuth(){
   $("auth").style.display = "flex";
   drawAuth();
 }
+/* ---------- date of birth, gender and agreeing to the terms (everyone, including Google sign-ins and older accounts) ---------- */
+function calcAge(dob){
+  var m = /^(\d{4})-(\d\d)-(\d\d)$/.exec(dob || ""); if(!m) return 0;
+  var n = new Date(), a = n.getFullYear() - parseInt(m[1], 10), mo = n.getMonth() + 1 - parseInt(m[2], 10), d = n.getDate() - parseInt(m[3], 10);
+  if(mo < 0 || (mo === 0 && d < 0)) a--;
+  return a;
+}
+function isBirthday(dob){
+  var m = /^(\d{4})-(\d\d)-(\d\d)$/.exec(dob || ""); if(!m) return false;
+  var n = new Date(); return n.getMonth() + 1 === parseInt(m[2], 10) && n.getDate() === parseInt(m[3], 10);
+}
+function profileProblem(dob, gender, terms){
+  var a = calcAge(dob);
+  if(!dob) return "Please choose your date of birth.";
+  if(new Date(dob) > new Date() || a > 120) return "That date of birth does not look right.";
+  if(a < 13) return "Nesty is for people aged 13 and older.";
+  if(!gender) return "Please choose your gender.";
+  if(!terms) return "Please tick the box to agree to the Terms and Privacy Policy.";
+  return "";
+}
+function needProfile(){
+  var pf = (user && user.prefs) || {};
+  return !(pf.dob && pf.gender && pf.termsAt && calcAge(pf.dob) >= 13);
+}
+function showProfile(){
+  var pf = (user && user.prefs) || {};
+  showOnlyAuth("prof");
+  $("authSub").textContent = "Almost there";
+  $("pDob").max = new Date().toISOString().slice(0, 10);
+  $("pDob").value = pf.dob || pendDob || "";
+  $("pGender").value = pf.gender || pendGender || "";
+  $("pTerms").checked = false;
+}
+async function saveProfile(){
+  var dob = $("pDob").value, g = $("pGender").value, t = $("pTerms").checked;
+  var pe = profileProblem(dob, g, t);
+  if(pe){ $("authErr").textContent = pe; return; }
+  $("profBtn").disabled = true; $("authErr").textContent = "";
+  try{
+    await savePrefs({dob: dob, gender: g, age: calcAge(dob), termsAt: Date.now()});
+    showApp();
+  }catch(e){ $("authErr").textContent = (e && e.message) || L("e_send"); }
+  $("profBtn").disabled = false;
+}
 function showApp(){
+  if(user && needProfile()){ showProfile(); return; }
+  try{ var pf0 = user.prefs || {}, a0 = calcAge(pf0.dob); if(a0 && pf0.age !== a0) savePrefs({age: a0}).catch(function(){}); }catch(e){}
   $("boot").style.display = "none";
   $("landing").style.display = "none";
   setThemeColor(curBg);
@@ -1231,9 +1305,11 @@ async function submitAuth(){
   if(authMode === "signup"){
     pendFirst = $("aFirst").value.trim().replace(/\s+/g, " ");
     pendLast = $("aLast").value.trim().replace(/\s+/g, " ");
-    pendAge = parseInt($("aAge").value, 10);
+    pendDob = $("aDob").value; pendGender = $("aGender").value;
+    pendAge = calcAge(pendDob);
     if(!pendFirst || !pendLast){ $("authErr").textContent = L("e_names"); return; }
-    if(!(pendAge >= 13 && pendAge <= 120)){ $("authErr").textContent = L("e_age"); return; }
+    var pe = profileProblem(pendDob, pendGender, $("aTerms").checked);
+    if(pe){ $("authErr").textContent = pe; return; }
     $("sendBtn").disabled = true;
     $("authErr").textContent = "";
     try{
@@ -1296,6 +1372,7 @@ function showOnlyAuth(step){
   $("stepForm").style.display = step === "form" ? "block" : "none";
   $("stepCode").style.display = step === "code" ? "block" : "none";
   $("stepPw").style.display = step === "pw" ? "block" : "none";
+  $("stepProf").style.display = step === "prof" ? "block" : "none";
   $("stepReset").style.display = step === "reset" ? "block" : "none";
   $("authErr").textContent = "";
   $("authOk").textContent = "";
@@ -1335,7 +1412,7 @@ function afterLogin(){
 function showSetPassword(){
   var pf = (user && user.prefs) || {};
   var needName = !(user && user.name) && !(pendFirst && pendLast);
-  var needAge = !pf.age && !(pendAge >= 13);
+  var needAge = false;
   showOnlyAuth("pw");
   $("pwFirst").style.display = needName ? "block" : "none";
   $("pwLast").style.display = needName ? "block" : "none";
@@ -1349,7 +1426,7 @@ async function savePassword(){
   var a = $("pwA").value, b = $("pwB").value;
   var pf = (user && user.prefs) || {};
   var needName = !(user && user.name) && !(pendFirst && pendLast);
-  var needAge = !pf.age && !(pendAge >= 13);
+  var needAge = false;
   var first = pendFirst || pf.firstName || "", last = pendLast || pf.lastName || "", age = pendAge || pf.age || 0;
   if(needName){
     first = $("pwFirst").value.trim(); last = $("pwLast").value.trim();
@@ -1368,9 +1445,10 @@ async function savePassword(){
     if(!user.name && first){ await account.updateName((first + " " + last).trim()); }
     var ch = {pwSet: true};
     if(first){ ch.firstName = first; ch.lastName = last; }
-    if(age){ ch.age = age; }
+    if(pendDob && pendGender){ ch.dob = pendDob; ch.gender = pendGender; ch.age = calcAge(pendDob); ch.termsAt = Date.now(); }
+    else if(age){ ch.age = age; }
     await savePrefs(ch);
-    pendFirst = ""; pendLast = ""; pendAge = 0;
+    pendFirst = ""; pendLast = ""; pendAge = 0; pendDob = ""; pendGender = "";
     showApp();
   }catch(e){
     $("authErr").textContent = (e && e.message) || L("e_send");
@@ -2235,6 +2313,8 @@ async function ask(){
       body: JSON.stringify({
         userName: firstName(),
         safe: (window.nestySafe && nestySafe()) || undefined,
+        gender: (user.prefs && user.prefs.gender) || undefined,
+        birthday: (user.prefs && isBirthday(user.prefs.dob)) || undefined,
         today: todayText(),
         instructions: (user.prefs && user.prefs.instructions) || "",
         memory: getMem(),
@@ -4216,12 +4296,10 @@ applyLang();
 init();
 </script>
 <script src="/notify.js"></script>
-<script src="/study.js"></script>
-<script src="/help.js"></script>
-<script src="/extras.js"></script>
-<script src="/business.js"></script>
-<script src="/plans.js"></script>
-<script src="/tips.js"></script>
-<script src="/sw-ui.js"></script>
+<script src="/lazy.js"></script>
+<script defer src="/extras.js"></script>
+<script defer src="/plans.js"></script>
+<script defer src="/tips.js"></script>
+<script defer src="/sw-ui.js"></script>
 </body>
 </html>

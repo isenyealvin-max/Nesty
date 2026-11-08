@@ -495,6 +495,7 @@ async function handleChat(request, env, ctx) {
       msgUsed: r.used,
       msgLimit: lim.msg,
       msgResetAt: r.resetAt,
+      openai: await openaiMode(env),
     };
     body.usageInfo = { left: Math.max(0, lim.msg - r.used), used: r.used, resetAt: r.resetAt, plan: plan.plan };
     track(env, ctx, ["d:{d}:msg", "d:{d}:msg:plan:" + plan.plan, "d:{d}:model:" + chosen].concat(body.sc ? ["d:{d}:sc"] : []).concat(body.deep ? ["d:{d}:deep"] : []), user.$id);
@@ -512,7 +513,11 @@ async function handleChat(request, env, ctx) {
   });
   const res = await onRequestPost({ request: req2, env: env, ctx: ctx });
   if (!mstub) return res;
-  if ((res.headers.get("Content-Type") || "").indexOf("text/event-stream") === 0) return res;
+  if ((res.headers.get("Content-Type") || "").indexOf("text/event-stream") === 0) {
+    const sv = res.headers.get("X-Nesty-Via");
+    if (sv) track(env, ctx, ["d:{d}:via:" + sv]);
+    return res;
+  }
   try {
     const d = await res.clone().json();
     if (!d.via) {
@@ -686,6 +691,7 @@ async function handleAdmin(request, env, action) {
     const list = await Promise.all([
       ping("Groq", env.GROQ_API_KEY, "https://api.groq.com/openai/v1/chat/completions", { method: "POST", headers: hdr(env.GROQ_API_KEY), body: JSON.stringify({ model: "openai/gpt-oss-20b", messages: [{ role: "user", content: "Say OK" }], max_completion_tokens: 32, reasoning_effort: "low" }) }),
       ping("Gemini", env.GEMINI_API_KEY, "https://generativelanguage.googleapis.com/v1beta/openai/chat/completions", { method: "POST", headers: { "Content-Type": "application/json", "x-goog-api-key": env.GEMINI_API_KEY || "" }, body: chatBody("gemini-2.5-flash-lite") }),
+      ping("OpenAI", env.OPENAI_API_KEY, "https://api.openai.com/v1/chat/completions", { method: "POST", headers: hdr(env.OPENAI_API_KEY), body: JSON.stringify({ model: String(env.OPENAI_MODELS || "gpt-4.1-mini").split(",")[0].trim(), messages: [{ role: "user", content: "Say OK" }], max_completion_tokens: 16 }) }),
       ping("OpenRouter", env.OPENROUTER_API_KEY, "https://openrouter.ai/api/v1/chat/completions", { method: "POST", headers: hdr(env.OPENROUTER_API_KEY), body: chatBody("openrouter/free") }),
       ping("Tavily (web search)", env.TAVILY_API_KEY, "https://api.tavily.com/search", { method: "POST", headers: hdr(env.TAVILY_API_KEY), body: JSON.stringify({ query: "test", max_results: 1 }) }),
     ]);
@@ -693,6 +699,17 @@ async function handleAdmin(request, env, action) {
     list.push({ name: "Football data", keyFound: !!env.FOOTBALL_DATA_KEY, ok: !!env.FOOTBALL_DATA_KEY, status: 0, ms: 0, note: env.FOOTBALL_DATA_KEY ? "Key found (not test-called)" : "Key not found" });
     list.push({ name: "M-Pesa (Daraja)", keyFound: mpReady(env), ok: mpReady(env), status: 0, ms: 0, note: mpReady(env) ? "Keys found (" + (String(env.MPESA_ENV || "").toLowerCase() === "sandbox" ? "sandbox" : "live") + ")" : "Keys not found" });
     return json({ providers: list, checkedAt: Date.now() });
+  }
+  if (action === "openai_get") {
+    return json({ mode: await openaiMode(env), keyFound: !!env.OPENAI_API_KEY, models: env.OPENAI_MODELS || "gpt-4.1-mini,gpt-4o-mini" });
+  }
+  if (action === "openai_set") {
+    let b6;
+    try { b6 = await request.json(); } catch (e) { return json({ error: "Bad request." }, 400); }
+    const mv6 = ["off", "backup", "first"].indexOf(b6.mode) > -1 ? b6.mode : "backup";
+    await stub(env, "stats").kvSet("openaiMode", mv6);
+    oaCache = { v: mv6, t: Date.now() };
+    return json({ ok: true, mode: mv6 });
   }
   if (action === "mpesa_get") {
     return json({ on: await mpOn(env), ready: mpReady(env), mode: String(env.MPESA_ENV || "").toLowerCase() === "sandbox" ? "sandbox" : "live" });
@@ -865,9 +882,9 @@ async function handleHelp(request, env, ctx) {
   }
 }
 
-/* ---------- Invites: both people get a day of Go (the owner can change REF_DAYS) ---------- */
-const REF_DAYS = 1;
-const REF_CAP = 10;
+/* ---------- Invites: both people get 3 days of Go (the owner can change REF_DAYS) ---------- */
+const REF_DAYS = 3;
+const REF_CAP = 15;
 async function handleReferral(request, env) {
   const auth = await needUser(request);
   if (auth.res) return auth.res;
@@ -960,7 +977,7 @@ async function sharePage(request, env, id) {
   let rec = null;
   if (env.LIMITER && /^[a-z0-9]{8,14}$/.test(id)) rec = await stub(env, "shares").kvGet("sh:" + id);
   const ok = rec && Date.now() - rec.t < 30 * 86400000;
-  const html = '<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="robots" content="noindex,nofollow"><title>Shared from Nesty AI</title>' +
+  const html = '<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="robots" content="noindex,nofollow"><title>Shared from Nesty AI</title><meta property="og:title" content="An answer from Nesty AI"><meta property="og:description" content="Someone shared this with you. Open it, and try Nesty AI free."><meta property="og:image" content="/icon-512-1.png"><meta property="og:type" content="website">' +
     '<style>body{margin:0;font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif;background:#fff8e1;color:#2a2200}main{max-width:680px;margin:0 auto;padding:18px 16px 50px}h1{font-size:19px;margin:0 0 12px}.q{background:#ffe9a8;border-radius:14px;padding:11px 14px;font-weight:600;margin-bottom:12px}.a{background:#fff;border:1.5px solid #ffd566;border-radius:14px;padding:14px;line-height:1.6;white-space:pre-wrap;word-wrap:break-word}small{display:block;color:#6b5a1a;margin-top:12px}a.b{display:inline-block;margin-top:16px;background:#ffc933;color:#2a2200;padding:11px 16px;border-radius:12px;font-weight:700;text-decoration:none}</style></head><body><main><h1>✨ Shared from Nesty AI</h1>' +
     (ok ? (rec.q ? '<div class="q">' + escHtml(rec.q) + '</div>' : '') + '<div class="a">' + escHtml(rec.a) + '</div><small>A person shared this answer. Nesty is an AI and can make mistakes.</small>' : '<div class="a">This link has expired or does not exist.</div>') +
     '<a class="b" href="/">Try Nesty AI</a></main></body></html>';
@@ -1048,6 +1065,15 @@ let mpToken = { v: "", exp: 0 };
 function mpBase(env) { return String(env.MPESA_ENV || "").toLowerCase() === "sandbox" ? "https://sandbox.safaricom.co.ke" : "https://api.safaricom.co.ke"; }
 async function mpOn(env) {
   try { return (await stub(env, "stats").kvGet("mpesaOn")) === true; } catch (e) { return false; }
+}
+let oaCache = { v: "backup", t: 0 };
+async function openaiMode(env) {
+  if (Date.now() - oaCache.t < 60000) return oaCache.v;
+  try {
+    const v = await stub(env, "stats").kvGet("openaiMode");
+    oaCache = { v: ["off", "backup", "first"].indexOf(v) > -1 ? v : "backup", t: Date.now() };
+  } catch (e) {}
+  return oaCache.v;
 }
 function mpReady(env) { return !!(env.MPESA_CONSUMER_KEY && env.MPESA_CONSUMER_SECRET && env.MPESA_SHORTCODE && env.MPESA_PASSKEY); }
 function nairobiStamp() {
@@ -1214,6 +1240,8 @@ export default {
       "/api/admin/stats": function () { return handleAdmin(request, env, "stats"); },
       "/api/admin/announce": function () { return handleAdmin(request, env, "announce"); },
       "/api/admin/announce-clear": function () { return handleAdmin(request, env, "announce_clear"); },
+      "/api/admin/openai-get": function () { return handleAdmin(request, env, "openai_get"); },
+      "/api/admin/openai-set": function () { return handleAdmin(request, env, "openai_set"); },
       "/api/admin/providers": function () { return handleAdmin(request, env, "providers"); },
       "/api/admin/mpesa-get": function () { return handleAdmin(request, env, "mpesa_get"); },
       "/api/admin/mpesa-set": function () { return handleAdmin(request, env, "mpesa_set"); },

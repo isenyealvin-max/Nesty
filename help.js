@@ -1,7 +1,7 @@
 /* Nesty Help Center: quick answers + a limited Help assistant. Gold, white and sky blue. */
 (function () {
   "use strict";
-  if (window.openHelp) return;
+  if (window.openHelp && !window.openHelp.__stub) return;
   var MAIL = "isenyealvin@gmail.com";
   var CSS = "" +
     "#hc{display:none;position:fixed;inset:0;z-index:91;flex-direction:column;background:#fffdf3;color:#2b2600}" +
@@ -59,11 +59,13 @@
     document.body.appendChild(root);
     $("hcX").onclick = closeHelp;
     var h = '<h3 style="margin-top:2px">How can we help?</h3><input id="hcSearch" placeholder="Search questions, e.g. password, payment, model" autocomplete="off"><div id="hcList"></div>' +
+      '<div class="card"><b>📍 App guide</b><div class="hm">New here? See where every button and feature is, and what it does.</div><button class="hb blue" id="hcGuide">Open the guide</button></div>' +
       '<div class="card gold"><b>🤖 Ask the Help assistant</b><div class="hm">Type your own question about Nesty. You can ask up to 20 Help questions each hour.</div>' +
       '<div id="hcChat"></div><textarea id="hcQ" rows="2" maxlength="400" placeholder="Type your question here" style="margin-top:8px"></textarea><button class="hb" id="hcSend">Ask</button><span class="hm" id="hcLeft"></span></div>' +
       '<div class="card"><b>📩 Still stuck?</b><div class="hm">If you could not get the right answer, contact the Nesty team. Tell us what you tried.</div><a class="hb blue" id="hcMail" href="mailto:' + MAIL + '">Email us</a></div>';
     $("hcMain").innerHTML = h;
     $("hcSearch").oninput = drawList;
+    $("hcGuide").onclick = openGuide;
     $("hcSend").onclick = askHelp;
     $("hcQ").onkeydown = function (e) { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); askHelp(); } };
     $("hcMail").href = "mailto:" + MAIL + "?subject=" + encodeURIComponent("Nesty help");
@@ -106,6 +108,72 @@
     } catch (e) { hist.push({ role: "assistant", content: "Network problem. Please try again." }); }
     b.disabled = false; drawChat();
     var m = $("hcMain"); m.scrollTop = m.scrollHeight;
+  }
+
+  var GUIDE = [
+    ["Top of the screen", [
+      ["☰ Menu (top left)", "Opens your chat list, search, Plans, Settings, Install and Log out.", "#app header .hbtn"],
+      ["Plan button (next to ☰)", "Shows your plan. Tap it to see plans, pay and see how much you have used.", "#planBtn"],
+      ["Model name (top middle)", "Shows which Nesty model is answering. Tap it to switch model.", "#mtag"],
+      ["Speaker (top right)", "Turns reading answers aloud on or off.", "#spk"],
+      ["New chat (top right)", "Starts a fresh chat.", "#app header .hbtn:last-child"]]],
+    ["Above the message box", [
+      ["Study", "Study Center: notes, quizzes, past papers, flashcards, Scan and solve and more.", "#studyBtn"],
+      ["Deep search", "Searches the web and writes a longer answer with sources (Premium and above).", "#deepBtn"],
+      ["Business", "Invoices, receipts, quotations, cash book, budget and price list.", "#bzBtn"],
+      ["💬 Help", "This Help Center.", "#xHelp"],
+      ["✨ More", "Templates, to-do and reminders, daily briefing, invite friends, backup and display options.", "#xMore"]]],
+    ["The message box", [
+      ["+ (left)", "Attach a photo, PDF or document.", "#bar .ibtn"],
+      ["Type here", "Write your question. Press the arrow to send.", "#box"],
+      ["Microphone", "Speak instead of typing.", "#mic"],
+      ["Voice mode", "Talk with Nesty out loud, like a phone call.", "#vm"],
+      ["Arrow (right)", "Sends your message.", "#send"]]],
+    ["Inside ☰ Menu", [
+      ["Your chats", "Tap a chat to open it. Press and hold a chat to rename, pin, put in a folder or delete.", "#list"],
+      ["Search", "Find any old chat.", "#q"],
+      ["Plans", "Upgrade, pay by M-Pesa, or enter a code.", "#side .foot button"],
+      ["Settings", "Name, birthday, language, voice, theme, parent controls and your data.", "#side .prof"],
+      ["Log out", "Leaves your account on this phone.", "#side .foot button:last-child"]]],
+    ["On every answer", [
+      ["Press and hold your message", "Edit it, copy it or delete it.", "#chat"],
+      ["Under an answer", "Copy, listen, share, report a bad answer, or make a PowerPoint when the answer is slides.", "#chat"]]]
+  ];
+  function openGuide() {
+    var o = $("hcGuide2");
+    if (o) o.remove();
+    o = document.createElement("div"); o.id = "hcGuide2";
+    o.style.cssText = "position:fixed;inset:0;z-index:100001;background:#fffdf5;overflow:auto;padding:14px 14px 40px;color:#222;font-family:inherit";
+    var h = '<div style="display:flex;justify-content:space-between;align-items:center"><b style="font-size:18px">📍 App guide</b><button id="hgX" style="border:0;background:#eee;border-radius:50%;width:36px;height:36px;font-size:18px">✕</button></div><div style="color:#666;margin:6px 0 10px;font-size:14px">Tap <b>Show me</b> to see where something is on your screen.</div>';
+    GUIDE.forEach(function (g, gi) {
+      h += '<h3 style="margin:14px 0 6px;color:#8a6d00">' + E(g[0]) + '</h3>';
+      g[1].forEach(function (it, ii) {
+        h += '<div style="background:#fff;border:1px solid #eadfb8;border-radius:12px;padding:10px;margin-bottom:8px"><b>' + E(it[0]) + '</b><div style="font-size:14px;margin:3px 0 6px;color:#444">' + E(it[1]) + '</div><button class="hb blue" data-g="' + gi + "-" + ii + '" style="padding:6px 12px">Show me</button></div>';
+      });
+    });
+    o.innerHTML = h; document.body.appendChild(o);
+    $("hgX").onclick = function () { o.remove(); };
+    Array.prototype.forEach.call(o.querySelectorAll("[data-g]"), function (b) {
+      b.onclick = function () {
+        var k = b.getAttribute("data-g").split("-"), it = GUIDE[k[0]][1][k[1]], el = document.querySelector(it[2]);
+        o.style.display = "none"; if (root) root.style.display = "none";
+        var side = document.getElementById("side");
+        if (k[0] === "3") { if (window.openSide) openSide(); } else if (window.closeSide) closeSide();
+        setTimeout(function () { pulse(el, it[0], function () { if (root) root.style.display = "flex"; o.style.display = "block"; if (window.closeSide) closeSide(); }); }, 350);
+      };
+    });
+  }
+  function pulse(el, label, done) {
+    var d = document.createElement("div");
+    d.style.cssText = "position:fixed;inset:0;z-index:100002;background:rgba(0,0,0,.45)";
+    var r = el ? el.getBoundingClientRect() : null;
+    var ring = '';
+    if (r && r.width) ring = '<div style="position:fixed;left:' + (r.left - 6) + 'px;top:' + (r.top - 6) + 'px;width:' + (r.width + 12) + 'px;height:' + (r.height + 12) + 'px;border:3px solid #ffd54f;border-radius:14px;box-shadow:0 0 0 9999px rgba(0,0,0,.45),0 0 18px #ffd54f;pointer-events:none"></div>';
+    var ty = r && r.top > 200 ? Math.max(10, r.top - 90) : (r ? r.bottom + 20 : 120);
+    d.innerHTML = ring + '<div style="position:fixed;left:12px;right:12px;top:' + ty + 'px;background:#fff;color:#222;border-radius:12px;padding:12px;text-align:center"><b>' + E(label) + '</b>' + (r && r.width ? '' : '<div style="font-size:13px;color:#666">Open a chat first to see this.</div>') + '<div><button id="hgOk" style="margin-top:8px;border:0;background:#1e88e5;color:#fff;border-radius:10px;padding:8px 18px">Got it</button></div></div>';
+    d.style.background = "transparent";
+    document.body.appendChild(d);
+    d.querySelector("#hgOk").onclick = function () { d.remove(); done(); };
   }
   window.openHelp = function () { build(); drawChat(); root.style.display = "flex"; };
   window.closeHelp = function () { if (root) root.style.display = "none"; };
