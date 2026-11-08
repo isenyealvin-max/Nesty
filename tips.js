@@ -98,6 +98,14 @@
       if (user && user.prefs && (user.prefs.custom || user.prefs.instructions || (user.prefs.memory && user.prefs.memory.length))) mark("memory");
     } catch (e) {}
   }
+  /* one pop-up at a time: no tip while a banner or a full-screen panel is showing */
+  var _tb = tipBusy;
+  window.tipBusy = tipBusy = function () {
+    if (_tb()) return true;
+    var ids = ["xBar", "xOff", "hc", "xh", "bz", "sc", "xs"];
+    for (var i = 0; i < ids.length; i++) { var d = document.getElementById(ids[i]); if (d && d.style.display && d.style.display !== "none") return true; }
+    return false;
+  };
   window.tipNext = tipNext = function () {
     extraUsed();
     var seen = {};

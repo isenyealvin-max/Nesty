@@ -7,6 +7,7 @@
   /* ---------- plan data (Learnover is now called Smart; Diamond is new; Ultra has smaller limits) ---------- */
   PLAN_ORDER = ["free", "diamond", "go", "premium", "pro", "learnover", "ultra"];
   PLAN_DATA.learnover.n = "Smart";
+  PLAN_DATA.free.extras = ["Try Manuva: 3 free messages a day"];
   PLAN_DATA.diamond = { n: "Diamond", msg: 30, file: 20, img: 4, tts: 10, m: 30, y: 360, models: ["manuva"], extras: ["Adds the Manuva model to whatever plan you have", "Up to 20 Manuva messages per hour", "Other limits stay as on your main plan"] };
   PLAN_DATA.ultra.msg = 90; PLAN_DATA.ultra.file = 90; PLAN_DATA.ultra.img = 30; PLAN_DATA.ultra.tts = 70;
   PLAN_DATA.ultra.models = ["neptune", "nova", "nuvida", "hiaru", "smart", "tyra", "manuva"];
@@ -86,7 +87,7 @@
     if (!body) return;
     var cp = curPlan();
     $("curPlan").textContent = curPlanText();
-    var h = '<div class="pzTop"><b>💳 Pay with M-Pesa</b><br>Pick a plan, tap Monthly or Yearly, type your Safaricom number, and enter your M-Pesa PIN on your phone. Your plan starts by itself in a few seconds. <b>Plans add together</b>, so you can have Diamond and Go at the same time.</div>';
+    var on = !!(me && me.mpesa); var h = '<div class="pzTop"><b>💳 ' + (on ? 'Pay with M-Pesa' : 'How to get a plan') + '</b><br>' + (on ? 'Pick a plan, tap Monthly or Yearly, type your Safaricom number, and enter your M-Pesa PIN on your phone. Your plan starts by itself in a few seconds.' : 'Pick a plan, pay by M-Pesa, and email us the proof to get your activation code.') + ' <b>Plans add together</b>, so you can have Diamond and Go at the same time.</div>';
     if (me && me.usage) {
       h += '<div class="pcard"><h3>' + L("use_title") + '</h3><ul>';
       [["msg", "k_msg"], ["file", "k_file"], ["img", "k_img"]].forEach(function (k) {
@@ -113,13 +114,20 @@
     });
     h += '<div class="muted2">' + L("pl_win") + '</div>';
     body.innerHTML = h;
-    $("howList").innerHTML = '<li>Tap Monthly or Yearly on a plan.</li><li>Type your Safaricom number and tap Send M-Pesa request.</li><li>Enter your M-Pesa PIN when your phone asks.</li><li>Your plan starts automatically. Having a code from the owner (school or family plan)? Type it below.</li>';
+    if (!(me && me.mpesa)) $("howList").innerHTML = '<li>Tap Monthly or Yearly on a plan and follow the steps.</li><li>Pay by M-Pesa to 0701244268.</li><li>Email your payment proof with the button.</li><li>Type the activation code you receive below.</li>'; else $("howList").innerHTML = '<li>Tap Monthly or Yearly on a plan.</li><li>Type your Safaricom number and tap Send M-Pesa request.</li><li>Enter your M-Pesa PIN when your phone asks.</li><li>Your plan starts automatically. Having a code from the owner (school or family plan)? Type it below.</li>';
     if (payFor && $("pay_" + payFor.plan)) showPay(payFor.plan, payFor.period, true);
   };
 
   function showPay(id, period, keep) {
     var box = $("pay_" + id); if (!box) return;
     var price = PLAN_DATA[id][period === "yearly" ? "y" : "m"];
+    if (!(me && me.mpesa)) {
+      if (!keep) payFor = { plan: id, period: period };
+      Array.prototype.forEach.call(document.querySelectorAll(".pz .pay.on"), function (x) { if (x !== box) x.classList.remove("on"); });
+      box.classList.add("on");
+      box.innerHTML = '<b>' + PLAN_DATA[id].n + ' · ' + (period === "yearly" ? "yearly" : "monthly") + ' · ' + money(price) + '</b><div class="st">1. Send <b>' + money(price) + '</b> by M-Pesa to <b>0701244268</b>.<br>2. Tap the button below to email us your M-Pesa message.<br>3. You will get an activation code. Type it at the bottom of this screen and your plan starts.</div><button class="go" onclick="sendProof()">Email my payment proof</button>';
+      return;
+    }
     if (!keep) payFor = { plan: id, period: period };
     var ph = ""; try { ph = localStorage.getItem("nestyPhone") || ""; } catch (e) {}
     var old = $("pm_" + id), st = $("pst_" + id), stHtml = st ? st.outerHTML : '<div class="st" id="pst_' + id + '"></div>';

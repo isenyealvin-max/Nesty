@@ -14,7 +14,7 @@ const ICONS = {
 const WINDOW_MS = 1 * 60 * 60 * 1000; // every usage window is 1 hour
 const MODELS = { neptune: "NEPTUNE 5.5", nova: "Nova 5.5", nuvida: "Nuvida 5.5", hiaru: "Hiaru 5.1", smart: "Omni smart", tyra: "Tyra", manuva: "Manuva" };
 const PLANS = {
-  free: { name: "Free", msg: 40, file: 30, img: 6, tts: 12, models: ["neptune", "nova"], deep: false, data: false },
+  free: { name: "Free", msg: 40, file: 30, img: 6, tts: 12, models: ["neptune", "nova", "manuva"], deep: false, data: false, mvCap: 3, mvDaily: true },
   diamond: { name: "Diamond", addon: true, msg: 30, file: 20, img: 4, tts: 10, models: ["manuva"], deep: false, data: false, mvCap: 20 },
   go: { name: "Go", msg: 60, file: 50, img: 10, tts: 40, models: ["nuvida"], deep: false, data: false },
   premium: { name: "Premium", msg: 55, file: 45, img: 7, tts: 35, models: ["tyra"], deep: true, data: false },
@@ -116,6 +116,7 @@ export class Limiter extends DurableObject {
       if (p.dpCap) lim.dpCap = lim.dpCap ? Math.max(lim.dpCap, p.dpCap) : p.dpCap;
     });
     act.forEach(function (a) { names.push(PLANS[a.plan].name); });
+    lim.mvDaily = lim.mvCap > 0 && lim.mvCap <= 3;
     lim.name = names.join(" + ");
     const top = act[0];
     return { plan: top.plan, period: top.period, expiresAt: top.expiresAt, activatedAt: top.activatedAt, active: act, lim: lim };
@@ -212,6 +213,13 @@ export class Limiter extends DurableObject {
   /* ----- M-Pesa payments: one record per STK push, finished exactly once ----- */
   async mpPut(id, rec) { await this.ctx.storage.put("mp:" + id, rec); return true; }
   async mpGet(id) { return (await this.ctx.storage.get("mp:" + id)) || null; }
+  async mpList(n) {
+    const m = await this.ctx.storage.list({ prefix: "mp:" });
+    const out = [];
+    m.forEach(function (v, k) { out.push(Object.assign({ id: k.slice(3) }, v)); });
+    out.sort(function (a, b) { return (b.at || 0) - (a.at || 0); });
+    return out.slice(0, n || 50);
+  }
   async mpFinish(id, status, extra) {
     const r = await this.ctx.storage.get("mp:" + id);
     if (!r) return { ok: false };
@@ -459,7 +467,7 @@ async function handleChat(request, env, ctx) {
     const wantM = String(body.model || "");
     const chosen = lim.models.indexOf(wantM) > -1 ? wantM : lim.models[0];
     if (chosen === "manuva" && lim.mvCap) {
-      const mv = await stub(env, "mv|" + user.$id).hit(lim.mvCap, WINDOW_MS);
+      const mv = await stub(env, "mv|" + user.$id).hit(lim.mvCap, (lim.mvDaily || (plan.lim === undefined)) ? 24 * 3600 * 1000 : WINDOW_MS);
       if (!mv.ok) {
         await mstub.refund();
         if (fstub) await fstub.refund();
@@ -552,6 +560,7 @@ async function handleMe(request, env) {
     expiresAt: plan.expiresAt || 0,
     expiredPlan: plan.expiredPlan || "",
     expiredAt: plan.expiredAt || 0,
+    mpesa: mpReady(env) && (await mpOn(env)),
     active: (plan.active || []).map(function (a) { return { plan: a.plan, expiresAt: a.expiresAt }; }),
     usage: {
       msg: { used: u[0].count, limit: lim.msg, resetAt: u[0].resetAt },
@@ -655,6 +664,56 @@ async function handleAdmin(request, env, action) {
     const a = { id: Date.now().toString(36), text: text, link: link, until: Date.now() + days * 86400000 };
     await stub(env, "stats").kvSet("announce", a);
     return json({ ok: true, announce: a });
+  }
+  if (action === "providers") {
+    async function ping(name, key, url, init) {
+      const out = { name: name, keyFound: !!key, ok: false, status: 0, ms: 0, note: "" };
+      if (!key) { out.note = "Key not found in Cloudflare"; return out; }
+      const t0 = Date.now();
+      try {
+        const ctrl = new AbortController();
+        const tm = setTimeout(function () { ctrl.abort(); }, 9000);
+        const res = await fetch(url, Object.assign({ signal: ctrl.signal }, init));
+        clearTimeout(tm);
+        out.status = res.status; out.ok = res.ok; out.ms = Date.now() - t0;
+        if (!res.ok) out.note = res.status === 429 ? "Busy or out of free quota (429)" : res.status === 401 || res.status === 403 ? "Key rejected (" + res.status + ")" : "Error " + res.status;
+        else out.note = "Working";
+      } catch (e) { out.ms = Date.now() - t0; out.note = "No answer (timeout or network)"; }
+      return out;
+    }
+    const chatBody = function (model, extra) { return JSON.stringify(Object.assign({ model: model, messages: [{ role: "user", content: "Say OK" }], max_tokens: 8 }, extra || {})); };
+    const hdr = function (k) { return { "Content-Type": "application/json", Authorization: "Bearer " + k }; };
+    const list = await Promise.all([
+      ping("Groq", env.GROQ_API_KEY, "https://api.groq.com/openai/v1/chat/completions", { method: "POST", headers: hdr(env.GROQ_API_KEY), body: JSON.stringify({ model: "openai/gpt-oss-20b", messages: [{ role: "user", content: "Say OK" }], max_completion_tokens: 32, reasoning_effort: "low" }) }),
+      ping("Gemini", env.GEMINI_API_KEY, "https://generativelanguage.googleapis.com/v1beta/openai/chat/completions", { method: "POST", headers: { "Content-Type": "application/json", "x-goog-api-key": env.GEMINI_API_KEY || "" }, body: chatBody("gemini-2.5-flash-lite") }),
+      ping("OpenRouter", env.OPENROUTER_API_KEY, "https://openrouter.ai/api/v1/chat/completions", { method: "POST", headers: hdr(env.OPENROUTER_API_KEY), body: chatBody("openrouter/free") }),
+      ping("Tavily (web search)", env.TAVILY_API_KEY, "https://api.tavily.com/search", { method: "POST", headers: hdr(env.TAVILY_API_KEY), body: JSON.stringify({ query: "test", max_results: 1 }) }),
+    ]);
+    list.push({ name: "Workers AI (pictures fallback)", keyFound: !!env.AI, ok: !!env.AI, status: 0, ms: 0, note: env.AI ? "Connected (not test-called to save quota)" : "Not connected" });
+    list.push({ name: "Football data", keyFound: !!env.FOOTBALL_DATA_KEY, ok: !!env.FOOTBALL_DATA_KEY, status: 0, ms: 0, note: env.FOOTBALL_DATA_KEY ? "Key found (not test-called)" : "Key not found" });
+    list.push({ name: "M-Pesa (Daraja)", keyFound: mpReady(env), ok: mpReady(env), status: 0, ms: 0, note: mpReady(env) ? "Keys found (" + (String(env.MPESA_ENV || "").toLowerCase() === "sandbox" ? "sandbox" : "live") + ")" : "Keys not found" });
+    return json({ providers: list, checkedAt: Date.now() });
+  }
+  if (action === "mpesa_get") {
+    return json({ on: await mpOn(env), ready: mpReady(env), mode: String(env.MPESA_ENV || "").toLowerCase() === "sandbox" ? "sandbox" : "live" });
+  }
+  if (action === "mpesa_set") {
+    let b4;
+    try { b4 = await request.json(); } catch (e) { return json({ error: "Bad request." }, 400); }
+    await stub(env, "stats").kvSet("mpesaOn", b4.on === true);
+    return json({ ok: true, on: b4.on === true, ready: mpReady(env) });
+  }
+  if (action === "payments") {
+    return json({ payments: await stub(env, "mpesa").mpList(60) });
+  }
+  if (action === "grant") {
+    let b5;
+    try { b5 = await request.json(); } catch (e) { return json({ error: "Bad request." }, 400); }
+    const gp = String(b5.plan || ""), gper = String(b5.period || ""), gu = String(b5.uid || "").trim().slice(0, 64);
+    if (!gu || !PLANS[gp] || gp === "free" || !PRICES[gp] || !PRICES[gp][gper]) return json({ error: "Type the user ID and choose a plan and period." }, 400);
+    const r = await stub(env, "plan|" + gu).activate(gp, gper);
+    track(env, null, ["d:{d}:act:" + gp]);
+    return json({ ok: true, expiresAt: r.expiresAt });
   }
   if (action === "announce_clear") {
     await stub(env, "stats").kvDel("announce");
@@ -987,6 +1046,9 @@ async function handlePlace(request, env) {
    Optional: MPESA_ENV ("sandbox" for testing, anything else = live), MPESA_TYPE ("till" for a Buy Goods till, otherwise Paybill), MPESA_TILL (till number if different from the shortcode). ---------- */
 let mpToken = { v: "", exp: 0 };
 function mpBase(env) { return String(env.MPESA_ENV || "").toLowerCase() === "sandbox" ? "https://sandbox.safaricom.co.ke" : "https://api.safaricom.co.ke"; }
+async function mpOn(env) {
+  try { return (await stub(env, "stats").kvGet("mpesaOn")) === true; } catch (e) { return false; }
+}
 function mpReady(env) { return !!(env.MPESA_CONSUMER_KEY && env.MPESA_CONSUMER_SECRET && env.MPESA_SHORTCODE && env.MPESA_PASSKEY); }
 function nairobiStamp() {
   const d = new Date(Date.now() + 3 * 3600 * 1000);
@@ -1016,6 +1078,7 @@ async function handleMpesaPay(request, env) {
   const auth = await needUser(request);
   if (auth.res) return auth.res;
   if (!env.LIMITER) return json({ ok: false, error: "Payments are not set up yet." });
+  if (!(await mpOn(env))) return json({ ok: false, disabled: true, error: "STK push is disabled right now, please use the codes or contact us through our email." });
   if (!mpReady(env)) return json({ ok: false, error: "M-Pesa payments are not switched on yet. Please use an activation code for now." });
   let b;
   try { b = await request.json(); } catch (e) { return json({ ok: false, error: "Bad request." }, 400); }
@@ -1151,6 +1214,11 @@ export default {
       "/api/admin/stats": function () { return handleAdmin(request, env, "stats"); },
       "/api/admin/announce": function () { return handleAdmin(request, env, "announce"); },
       "/api/admin/announce-clear": function () { return handleAdmin(request, env, "announce_clear"); },
+      "/api/admin/providers": function () { return handleAdmin(request, env, "providers"); },
+      "/api/admin/mpesa-get": function () { return handleAdmin(request, env, "mpesa_get"); },
+      "/api/admin/mpesa-set": function () { return handleAdmin(request, env, "mpesa_set"); },
+      "/api/admin/payments": function () { return handleAdmin(request, env, "payments"); },
+      "/api/admin/grant": function () { return handleAdmin(request, env, "grant"); },
       "/api/tts": async function () {
         const res = await handleTts(request, env);
         if (res.ok) track(env, ctx, ["d:{d}:tts"]);

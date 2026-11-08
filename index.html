@@ -2234,6 +2234,7 @@ async function ask(){
       signal: aborter.signal,
       body: JSON.stringify({
         userName: firstName(),
+        safe: (window.nestySafe && nestySafe()) || undefined,
         today: todayText(),
         instructions: (user.prefs && user.prefs.instructions) || "",
         memory: getMem(),
@@ -2272,6 +2273,7 @@ async function ask(){
           $("chip").style.display = "flex";
         }
       }
+      if(data.kind === "manuva" || data.kind === "deep"){ toast((data.kind === "deep" ? "Deep search" : "Manuva") + " limit reached for this hour. Try again at " + whenText(data.resetAt || (Date.now() + 3600000)) + " or switch model."); renderAll(); return; }
       var kd = data.kind === "file" ? "file" : "msg";
       setLimit(kd, data.resetAt || (Date.now() + 1 * 3600 * 1000));
       showLimit(kd);

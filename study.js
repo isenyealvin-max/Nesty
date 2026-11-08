@@ -82,17 +82,67 @@
     s.streak.n = s.streak.last === y ? s.streak.n + 1 : 1; s.streak.last = t; save();
   }
   function streakN() { var s = load(), t = dkey(), y = dkey(new Date(Date.now() - 864e5)); return (s.streak.last === t || s.streak.last === y) ? s.streak.n : 0; }
+  CSS += "#sc .top{border-bottom:4px solid #38b6f2}#sc .scb.blue{background:#38b6f2;color:#06283d}#sc .scb.ghost{border-color:#38b6f2;color:#0b5f8f}" +
+    "#scNav{border-top-color:#38b6f2}#scNav button.on{color:#0b5f8f;background:#e3f4fd}#sc .tile:nth-child(even){background:#e1f3ff;border-color:#9ed8f5}" +
+    "#sc .lgb{display:inline-block;margin:6px 6px 0 0;padding:7px 13px;border-radius:20px;border:2px solid #38b6f2;background:#fff;color:#0b5f8f;font-weight:700;font-family:inherit}#sc .lgb.on{background:#38b6f2;color:#06283d}";
+  /* ---------- parent controls: PIN, quiet hours, safe mode, story age limit ---------- */
+  var PCV = {}, PCA = {};
+  var pcUnlock = 0, pcFails = 0, pcLockUntil = 0, pcOpen = false;
+  function pcKey() { return "nestyParent_" + uidNow(); }
+  function pcGet() { try { return JSON.parse(localStorage.getItem(pcKey())) || {}; } catch (e) { return {}; } }
+  function pcSave(o) { try { localStorage.setItem(pcKey(), JSON.stringify(o)); localStorage.setItem("nestySafe", o.safe ? "1" : "0"); } catch (e) { toast("Phone storage is full."); } }
+  async function pinHash(p) {
+    var b = await crypto.subtle.digest("SHA-256", new TextEncoder().encode("nestypin|" + uidNow() + "|" + p));
+    return Array.prototype.map.call(new Uint8Array(b), function (x) { return ("0" + x.toString(16)).slice(-2); }).join("");
+  }
+  function mins(t) { var m = /^(\d\d):(\d\d)$/.exec(t || ""); return m ? parseInt(m[1], 10) * 60 + parseInt(m[2], 10) : 0; }
+  function quietNow() {
+    var pc = pcGet(); if (!pc.pin || !pc.q) return false;
+    var n = new Date(), m = n.getHours() * 60 + n.getMinutes(), a = mins(pc.from || "21:00"), b = mins(pc.to || "06:00");
+    return a <= b ? (m >= a && m < b) : (m >= a || m < b);
+  }
+  function quietLocked() { return quietNow() && Date.now() > pcUnlock; }
+  function pinCheck(p) {
+    if (Date.now() < pcLockUntil) { toast("Too many wrong tries. Wait a few minutes."); return Promise.resolve(false); }
+    return pinHash(p).then(function (h) {
+      if (h === pcGet().pin) { pcFails = 0; return true; }
+      if (++pcFails >= 5) { pcLockUntil = Date.now() + 300000; pcFails = 0; }
+      toast("Wrong PIN."); return false;
+    });
+  }
+  PCV.locked = function () {
+    var pc = pcGet();
+    return '<div class="card gold" style="text-align:center"><div style="font-size:44px">🌙</div><b>Quiet time</b><div class="scm">Study Center is resting until ' + E(pc.to || "06:00") + '. A parent can unlock it with the PIN.</div><input id="pcPinIn" type="password" inputmode="numeric" maxlength="4" placeholder="Parent PIN" style="max-width:180px;text-align:center;margin-top:8px"><div><button class="scb" data-a="pcUnlock">Unlock for 30 minutes</button><button class="scb ghost" data-a="close">Close</button></div></div>';
+  };
+  PCA.pcUnlock = async function () { if (await pinCheck(val("pcPinIn"))) { pcUnlock = Date.now() + 1800000; TAB = "home"; render(); } };
+  function pcCard() {
+    var pc = pcGet();
+    if (!pc.pin) return '<div class="card"><b>👪 Parent controls</b><div class="scm">Set a 4-digit PIN to choose quiet hours, turn on safe mode and limit story ages.</div><input id="pcNew" type="password" inputmode="numeric" maxlength="4" placeholder="New 4-digit PIN" style="max-width:200px"><button class="scb sm" data-a="pcSetPin">Set PIN</button></div>';
+    if (!pcOpen) return '<div class="card"><b>👪 Parent controls</b> <span class="scm">(PIN is set)</span><div class="scm">Type the PIN to change settings.</div><input id="pcPin" type="password" inputmode="numeric" maxlength="4" placeholder="Parent PIN" style="max-width:200px"><button class="scb sm" data-a="pcOpen">Open</button></div>';
+    return '<div class="card gold"><b>👪 Parent controls</b>' +
+      '<label><input type="checkbox" id="pcQ" ' + (pc.q ? "checked" : "") + '> Quiet hours (Study Center locks)</label><div class="g2"><div><label>From</label><input id="pcFrom" type="time" value="' + E(pc.from || "21:00") + '"></div><div><label>Until</label><input id="pcTo" type="time" value="' + E(pc.to || "06:00") + '"></div></div>' +
+      '<label><input type="checkbox" id="pcSafe" ' + (pc.safe ? "checked" : "") + '> Safe mode in all Nesty chats (age-appropriate answers)</label>' +
+      '<label>Highest story age allowed</label><select id="pcCap">' + [["0", "No limit"], ["8", "Up to age 8"], ["12", "Up to age 12"], ["15", "Up to age 15"]].map(function (o) { return '<option value="' + o[0] + '"' + (String(pc.cap || 0) === o[0] ? " selected" : "") + '>' + o[1] + '</option>'; }).join("") + '</select>' +
+      '<button class="scb sm" data-a="pcSave">Save</button><button class="scb sm ghost" data-a="pcLock">Lock</button><button class="scb sm ghost" data-a="pcRemove">Remove PIN</button></div>';
+  }
+  PCA.pcSetPin = async function () { var p = val("pcNew"); if (!/^\d{4}$/.test(p)) { toast("Type exactly 4 numbers."); return; } var pc = pcGet(); pc.pin = await pinHash(p); pcSave(pc); pcOpen = true; render(true); toast("PIN saved. Remember it."); };
+  PCA.pcOpen = async function () { if (await pinCheck(val("pcPin"))) { pcOpen = true; render(true); } };
+  PCA.pcSave = function () { var pc = pcGet(); pc.q = $("pcQ").checked; pc.from = val("pcFrom") || "21:00"; pc.to = val("pcTo") || "06:00"; pc.safe = $("pcSafe").checked; pc.cap = parseInt(val("pcCap"), 10) || 0; pcSave(pc); toast("Saved."); };
+  PCA.pcLock = function () { pcOpen = false; render(true); };
+  PCA.pcRemove = function () { if (!confirm("Remove the parent PIN and all parent settings?")) return; try { localStorage.removeItem(pcKey()); localStorage.setItem("nestySafe", "0"); } catch (e) {} pcOpen = false; render(true); };
+  function U(k) { try { markUsed(k); } catch (e) {} }
+  function lg() { return (S && S.lang === "sw") ? "\n\nWrite ALL learner-facing content (questions, options, notes, stories, words, feedback) in Kiswahili. Keep any JSON keys in English." : ""; }
   function nid() { return "i" + Date.now().toString(36) + Math.random().toString(36).slice(2, 6); }
   function clamp(n, a, b) { n = parseInt(n, 10); if (isNaN(n)) n = a; return Math.max(a, Math.min(b, n)); }
   function val(id) { var e = $(id); return e ? String(e.value || "").trim() : ""; }
   function fmtDate(t) { try { return new Date(t).toLocaleDateString([], { day: "numeric", month: "short" }); } catch (e) { return ""; } }
 
   /* ---------- talking to Nesty ---------- */
-  async function ask(prompt) {
+  async function ask(prompt, img) {
     var jwt = await getJwt();
     var res = await fetch("/.netlify/functions/chat", {
       method: "POST", headers: { "Content-Type": "application/json", "X-Nesty-Token": jwt },
-      body: JSON.stringify({ sc: true, model: "smart", stream: false, userName: firstName(), today: todayText(), messages: [{ role: "user", content: prompt }] })
+      body: JSON.stringify({ sc: true, model: "smart", stream: false, userName: firstName(), today: todayText(), messages: [{ role: "user", content: img ? [{ type: "text", text: prompt + lg() }, { type: "image_url", image_url: { url: img } }] : prompt + lg() }] })
     });
     var d;
     try { d = await res.json(); } catch (e) { throw { msg: "Network problem. Please try again." }; }
@@ -126,7 +176,7 @@
     busy("");
     if (e && e.limited) {
       var t = e.resetAt ? new Date(e.resetAt).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }) : "soon";
-      sheet("<h3>You have used all your " + (e.kind === "file" ? "file attachments" : "messages") + " for now</h3><p>Your limit resets at <b>" + E(t) + "</b>. Want more? Learnover gives 85 messages an hour and Ultra gives 100.</p><button class='scb' data-a='plans'>See plans</button><button class='scb ghost' data-a='sheetx'>OK</button>");
+      sheet("<h3>You have used all your " + (e.kind === "file" ? "file attachments" : "messages") + " for now</h3><p>Your limit resets at <b>" + E(t) + "</b>. Want more? Smart gives 85 messages an hour and Ultra gives 100.</p><button class='scb' data-a='plans'>See plans</button><button class='scb ghost' data-a='sheetx'>OK</button>");
     } else toast((e && e.msg) || "Something went wrong. Please try again.");
   }
 
@@ -158,7 +208,7 @@
   function totalMarks(ex) { return ex.items.reduce(function (a, q) { return a + (q.marks || 1); }, 0); }
 
   /* ---------- helpers for views ---------- */
-  var GRADES = ["Grade 1", "Grade 2", "Grade 3", "Grade 4", "Grade 5", "Grade 6", "Grade 7", "Grade 8", "Grade 9", "Grade 10", "Grade 11", "Grade 12", "College / University"];
+  var GRADES = ["Grade 1", "Grade 2", "Grade 3", "Grade 4", "Grade 5", "Grade 6 (KPSEA)", "Grade 7", "Grade 8", "Grade 9 (KJSEA)", "Grade 10", "Grade 11", "Grade 12", "Class 7", "Class 8 (KCPE)", "Form 1", "Form 2", "Form 3", "Form 4 (KCSE)", "College / University"];
   function gradeSel(id, def) { return '<select id="' + id + '">' + GRADES.map(function (g) { return '<option' + (g === (def || "Grade 8") ? " selected" : "") + '>' + g + '</option>'; }).join("") + '</select>'; }
   function letter(p) { return p >= 80 ? "A" : p >= 70 ? "B" : p >= 60 ? "C" : p >= 50 ? "D" : "E"; }
   function lvl(p) { return p >= 75 ? ["Strong", "g"] : p >= 50 ? ["Getting there", "y"] : ["Needs love", "r"]; }
@@ -192,6 +242,7 @@
 
   /* ---------- views ---------- */
   var V = {};
+  Object.assign(V, PCV);
   var TIPS = ["Short, regular study beats one long night. Try 25 minutes, then a 5 minute break.", "Explain a topic out loud as if you were the teacher. If you get stuck, that is what to revise.", "Test yourself before you feel ready. It is the fastest way to remember.", "Sleep helps your brain save what you learned. Revise, then rest well.", "Mistakes are useful: every wrong answer shows exactly what to practise next."];
   V.home = function () {
     var s = load(), g = s.goal, done = g.log[dkey()] || 0, pct = Math.min(100, Math.round(100 * done / g.target)), st = stats(), last = s.exams[s.exams.length - 1];
@@ -199,6 +250,7 @@
       '<div class="card gold"><div class="row"><b>🔥 ' + streakN() + '-day streak</b><span class="sp"></span><span class="scm">Study today to keep it going</span></div>' +
       '<div class="scm" style="margin:8px 0 4px">Daily focus goal: ' + done + ' / ' + g.target + ' min</div><div class="bar"><i style="width:' + pct + '%"></i></div>' +
       '<button class="scb sm blue" data-a="tab" data-v="tools">Start a focus timer</button></div>' +
+      '<div class="card"><b>🌍 Language of exams, notes and stories</b><div><button class="lgb ' + (s.lang === "sw" ? "" : "on") + '" data-a="lang" data-v="en">English</button><button class="lgb ' + (s.lang === "sw" ? "on" : "") + '" data-a="lang" data-v="sw">Kiswahili</button></div></div>' +
       '<div class="tiles">' +
       '<button class="tile" data-a="tab" data-v="exams"><i>📝</i>Exams<small>Practice and get marked</small></button>' +
       '<button class="tile" data-a="tab" data-v="notes"><i>📒</i>Notes &amp; Flashcards<small>Learn any topic</small></button>' +
@@ -216,6 +268,7 @@
       '<label>Topic</label><input id="exTopic" placeholder="e.g. Fractions, Photosynthesis, The French Revolution" maxlength="80">' +
       '<div class="g2"><div><label>Grade / level</label>' + gradeSel("exGrade") + '</div><div><label>Questions (max 20)</label><input id="exN" type="number" min="1" max="20" value="10"></div></div>' +
       '<div class="g2"><div><label>Answer style</label><select id="exType"><option value="mcq">Choose A, B, C or D</option><option value="written">Write the answers</option><option value="mixed">Mixed</option></select></div><div><label>Difficulty</label><select id="exDiff"><option>Easy</option><option selected>Medium</option><option>Hard</option></select></div></div>' +
+      '<label>Exam style</label><select id="exStyle"><option value="">Normal</option><option value="KCPE">Past-paper style: KCPE</option><option value="KPSEA">Past-paper style: KPSEA</option><option value="KJSEA">Past-paper style: KJSEA</option><option value="KCSE">Past-paper style: KCSE</option></select>' +
       '<label>Pictures in the exam (each picture uses 1 picture from your limit)</label><select id="exPics"><option value="0">No pictures</option><option value="1">1 picture</option><option value="2">2 pictures</option><option value="3">3 pictures</option></select>' +
       '<div class="scm" style="margin-top:8px">Making an exam uses 1 message. If you write answers, marking them uses 1 more. Written exams can have up to 10 questions.</div>' +
       '<button class="scb" data-a="makeExam">Create my exam</button></div>';
@@ -251,7 +304,7 @@
       if (q.explain) h += '<p class="scm">' + E(q.explain) + '</p>';
       h += '</div>';
     });
-    return h + '<button class="scb" data-a="resFlash">Flashcards for what I missed</button><button class="scb blue" data-a="tab" data-v="progress">See my progress</button><button class="scb ghost" data-a="dlPaper" data-v="1">Download exam + answers</button><button class="scb ghost" data-a="tab" data-v="exams">Back to exams</button>';
+    return h + '<button class="scb" data-a="resFlash">Flashcards for what I missed</button><button class="scb blue" data-a="tab" data-v="progress">See my progress</button><button class="scb ghost" data-a="dlPaper" data-v="1">Download exam + answers</button><button class="scb blue" data-a="challenge">🏆 Challenge a friend</button><button class="scb ghost" data-a="tab" data-v="exams">Back to exams</button>';
   };
 
   V.notes = function () {
@@ -259,14 +312,16 @@
     var h = '<h2>📒 Notes &amp; Flashcards</h2><div class="row"><button class="scb sm ' + (sub === "notes" ? "" : "ghost") + '" data-a="nsub" data-v="notes">Notes</button><button class="scb sm ' + (sub === "cards" ? "" : "ghost") + '" data-a="nsub" data-v="cards">Flashcards</button></div>';
     if (sub === "notes") {
       h += '<div class="card"><label>Topic</label><input id="ntTopic" placeholder="e.g. The water cycle" maxlength="80"><div class="g2"><div><label>Level</label>' + gradeSel("ntGrade") + '</div><div><label>Style</label><select id="ntStyle"><option>Study notes</option><option>Short summary</option><option>Bullet revision sheet</option><option>Exam-focused notes</option></select></div></div><div class="scm" style="margin-top:6px">Uses 1 message.</div><button class="scb" data-a="makeNote">Write my notes</button></div>';
-      if (cur.note) { var n = s.notes.filter(function (x) { return x.id === cur.note; })[0]; if (n) h += '<div class="row"><h3 style="flex:1">' + E(n.topic) + '</h3></div><div class="note">' + md(n.text) + '</div><button class="scb sm" data-a="noteCards" data-v="' + n.id + '">Make flashcards</button><button class="scb sm ghost" data-a="noteDl" data-v="' + n.id + '">Download</button><button class="scb sm ghost" data-a="noteCopy" data-v="' + n.id + '">Copy</button><button class="scb sm ghost" data-a="noteDel" data-v="' + n.id + '">Delete</button>'; }
+      if (cur.note) { var n = s.notes.filter(function (x) { return x.id === cur.note; })[0]; if (n) h += '<div class="row"><h3 style="flex:1">' + E(n.topic) + '</h3></div><div class="note">' + md(n.text) + '</div><button class="scb sm blue" data-a="readNote" data-v="' + n.id + '">🔊 Read aloud</button><button class="scb sm ghost" data-a="readStop">Stop</button><button class="scb sm" data-a="noteCards" data-v="' + n.id + '">Make flashcards</button><button class="scb sm ghost" data-a="noteDl" data-v="' + n.id + '">Download</button><button class="scb sm ghost" data-a="noteCopy" data-v="' + n.id + '">Copy</button><button class="scb sm ghost" data-a="noteDel" data-v="' + n.id + '">Delete</button>'; }
       if (s.notes.length) { h += '<h3>My notes</h3><div class="card">'; s.notes.slice().reverse().forEach(function (n) { h += '<div class="li"><div class="t"><b>' + E(n.topic) + '</b><span class="scm">' + E(n.grade) + ' · ' + fmtDate(n.at) + '</span></div><button class="scb sm ghost" data-a="noteOpen" data-v="' + n.id + '">Open</button></div>'; }); h += '</div>'; }
     } else if (cur.deck) {
       var d = s.decks.filter(function (x) { return x.id === cur.deck; })[0];
       if (!d) { cur.deck = null; return V.notes(); }
-      var c = d.cards[cur.card % d.cards.length];
-      h += '<div class="row"><h3 style="flex:1">' + E(d.topic) + '</h3><span class="scm">' + (cur.card % d.cards.length + 1) + ' / ' + d.cards.length + '</span></div><button class="flash ' + (cur.flip ? "back" : "") + '" data-a="flip">' + E(cur.flip ? c.a : c.q) + '</button><div class="scm" style="text-align:center;margin-top:6px">Tap the card to flip it</div>' +
-        '<div class="row" style="justify-content:center"><button class="scb sm ghost" data-a="cardGo" data-v="-1">← Back</button><button class="scb sm" data-a="cardGo" data-v="1">Next →</button><button class="scb sm blue" data-a="shuffle">Shuffle</button></div><button class="scb sm ghost" data-a="deckClose">Close deck</button>';
+      var arr = cur.due ? dueCards(d) : d.cards; if (!arr.length) { cur.due = false; arr = d.cards; toast("All caught up! 🎉"); } var c = arr[cur.card % arr.length];
+      h += '<div class="row"><h3 style="flex:1">' + E(d.topic) + '</h3><span class="scm">' + (cur.card % arr.length + 1) + ' / ' + arr.length + (cur.due ? ' due' : '') + '</span></div><button class="flash ' + (cur.flip ? "back" : "") + '" data-a="flip">' + E(cur.flip ? c.a : c.q) + '</button><div class="scm" style="text-align:center;margin-top:6px">Tap the card to flip it</div>' +
+        '<div class="row" style="justify-content:center"><button class="scb sm ghost" data-a="cardGo" data-v="-1">← Back</button><button class="scb sm" data-a="cardGo" data-v="1">Next →</button><button class="scb sm blue" data-a="shuffle">Shuffle</button></div>' +
+        (cur.flip ? '<div class="row" style="justify-content:center"><button class="scb sm ghost" data-a="srs" data-v="0">Again</button><button class="scb sm" data-a="srs" data-v="1">Got it ✓</button></div>' : '<div class="scm" style="text-align:center">Flip the card, then tell Nesty if you knew it.</div>') +
+        '<button class="scb sm blue" data-a="dueToggle">' + (cur.due ? 'Study all cards' : 'Review due cards (' + dueCards(d).length + ')') + '</button><button class="scb sm ghost" data-a="deckClose">Close deck</button>';
     } else {
       h += '<div class="card"><label>Make flashcards on a topic</label><input id="fcTopic" placeholder="e.g. Cell parts" maxlength="80"><div class="g2"><div><label>Level</label>' + gradeSel("fcGrade") + '</div><div><label>Cards (6 to 20)</label><input id="fcN" type="number" min="6" max="20" value="12"></div></div><div class="scm" style="margin-top:6px">Uses 1 message.</div><button class="scb" data-a="makeDeck">Make flashcards</button></div>';
       if (s.decks.length) { h += '<h3>My decks</h3><div class="card">'; s.decks.slice().reverse().forEach(function (d) { h += '<div class="li"><div class="t"><b>' + E(d.topic) + '</b><span class="scm">' + d.cards.length + ' cards · ' + fmtDate(d.at) + '</span></div><button class="scb sm" data-a="deckOpen" data-v="' + d.id + '">Study</button><button class="scb sm ghost" data-a="deckDel" data-v="' + d.id + '">✕</button></div>'; }); h += '</div>'; }
@@ -306,7 +361,7 @@
       if (b) {
         var c = b.chs[cur.ch] || b.chs[0];
         h += '<div class="row"><h3 style="flex:1">' + E(b.title) + '</h3><span class="pill y">' + E(b.kind) + '</span></div><div class="scm">Age ' + b.age + ' · ' + E(b.genre) + (b.total > 1 ? ' · Chapter ' + (cur.ch + 1) + ' of ' + b.total : '') + '</div>' +
-          '<div class="card story">' + c.text.split(/\n{2,}|\n/).filter(function (p) { return p.trim(); }).map(function (p) { return '<p>' + E(p) + '</p>'; }).join("") + '</div>' +
+          '<div class="row"><button class="scb sm blue" data-a="readStory">🔊 Read aloud</button><button class="scb sm ghost" data-a="readStop">Stop</button></div><div class="card story">' + c.text.split(/\n{2,}|\n/).filter(function (p) { return p.trim(); }).map(function (p) { return '<p>' + E(p) + '</p>'; }).join("") + '</div>' +
           (c.words.length ? '<div class="card gold"><b>📚 New words</b>' + c.words.map(function (w) { return '<div style="margin-top:6px"><b>' + E(w.w) + ':</b> ' + E(w.m) + '</div>'; }).join("") + '</div>' : '') +
           (c.qs.length ? '<div class="card"><b>❓ Questions</b>' + c.qs.map(function (q, i) { return '<div style="margin-top:8px">' + (i + 1) + '. ' + E(q) + '<textarea data-sq="' + i + '" style="min-height:52px;margin-top:4px" placeholder="Your answer"></textarea></div>'; }).join("") + '<button class="scb sm" data-a="checkStory">Check my answers (1 message)</button><div id="stFb"></div></div>' : '') +
           '<div class="row" style="flex-wrap:wrap">' + (cur.ch > 0 ? '<button class="scb sm ghost" data-a="chGo" data-v="-1">← Previous</button>' : '') + (cur.ch < b.chs.length - 1 ? '<button class="scb sm" data-a="chGo" data-v="1">Next →</button>' : (b.chs.length < b.total ? '<button class="scb sm" data-a="nextCh">Write chapter ' + (b.chs.length + 1) + '</button>' : '<span class="pill g">The End</span>')) + '<button class="scb sm ghost" data-a="storyDl">Download</button></div>';
@@ -330,6 +385,7 @@
     if (weak.length) h += '<p>A little more practice will lift <b>' + weak.map(function (x) { return E(x.sub); }).join("</b>, <b>") + '</b>. Read notes or flashcards on it, then try a short exam again. You can do this!</p>';
     if (!weak.length) h += '<p>No weak spots right now. Try a harder exam to keep growing!</p>';
     h += '</div>';
+ h += '<div class="card"><b>📄 Report for a parent or teacher</b><div class="scm">Share your scores in one tap.</div><button class="scb sm" data-a="repShare">Share report</button><button class="scb sm ghost" data-a="repDl">Download</button></div>';
     if (weak.length) h += '<button class="scb" data-a="practise" data-v="' + E(weak[0].sub) + '">Practise ' + E(weak[0].sub) + '</button><button class="scb blue" data-a="tab" data-v="plan">Auto timetable</button>';
     return h;
   };
@@ -341,6 +397,9 @@
       '<button class="scb sm" data-a="tStart">' + (cur.trun ? "Pause" : "Start") + '</button><button class="scb sm ghost" data-a="tReset">Reset</button><button class="scb sm blue" data-a="tMode">' + (cur.tmode === "focus" ? "Switch to 5 min break" : "Back to focus") + '</button><div class="scm" style="margin-top:6px">Finished focus sessions count towards your daily goal.</div></div>' +
       '<div class="card"><b>Daily goal</b><div class="row"><input id="gTarget" type="number" min="5" max="600" value="' + load().goal.target + '" style="max-width:110px"><span class="scm">minutes a day</span><button class="scb sm" data-a="setGoal">Save</button></div></div>' +
       '<div class="card"><b>Quick helpers</b> <span class="scm">(1 message each)</span><label>Choose a helper</label><select id="qtSel">' + Object.keys(QT).map(function (k) { return '<option value="' + k + '">' + QT[k][0] + '</option>'; }).join("") + '</select><label>Your text</label><textarea id="qtText" placeholder="Paste or type here" maxlength="3000"></textarea><button class="scb" data-a="qtGo">Go</button><div id="qtOut"></div></div>' +
+      pcCard() +
+      '<div class="card"><b>📷 Scan and solve</b> <span class="scm">(1 message)</span><div class="scm">Take a photo of a homework question. Nesty explains the answer step by step.</div><input id="scanFile" type="file" accept="image/*" capture="environment" style="margin-top:6px"><button class="scb sm" data-a="scan">Solve it</button></div>' +
+      '<div class="card"><b>☁️ Backup</b><div class="scm">Save your exams, notes and flashcards so you can restore them on another phone.</div><button class="scb sm blue" data-a="backup">Back up now</button></div>' +
       '<div class="card"><b>Need a normal chat?</b><div class="scm">Ask Omni smart anything in the main chat.</div><button class="scb sm blue" data-a="toChat">Back to chat</button></div>';
   };
 
@@ -379,6 +438,7 @@
     $("scNav").innerHTML = NAV.map(function (n) { return '<button class="' + (n[0] === act ? "on" : "") + '" data-a="tab" data-v="' + n[0] + '"><i>' + n[1] + '</i>' + n[2] + '</button>'; }).join("");
   }
   function render(keepScroll) {
+    if (TAB === "plan") U("sc_tt");
     var m = $("scMain"), y = m.scrollTop;
     m.innerHTML = V[TAB]();
     m.scrollTop = keepScroll ? y : 0;
@@ -390,6 +450,7 @@
   window.openStudyCenter = function () {
     S = null; load(); build(); root.style.display = "flex"; document.body.style.overflow = "hidden"; touch();
     if (!V[TAB] || TAB === "take" || TAB === "result") TAB = "home";
+    if (quietLocked()) TAB = "locked";
     render();
     try { if (!localStorage.getItem("nestySCwelcome")) { localStorage.setItem("nestySCwelcome", "1"); toast("Welcome to Study Center 🎓"); } } catch (e) {}
   };
@@ -405,6 +466,75 @@
 
   /* ---------- actions ---------- */
   var A = {};
+  Object.assign(A, PCA);
+  function say(text) {
+    try {
+      var ss = window.speechSynthesis; if (!ss) { toast("Reading aloud is not available on this phone."); return; }
+      ss.cancel();
+      var parts = String(text).replace(/[#*_`>|-]+/g, " ").split(/(?<=[.!?])\s+/).filter(function (x) { return x.trim(); });
+      var lang = (load().lang === "sw") ? "sw-KE" : "en-GB";
+      parts.forEach(function (p) { var u = new SpeechSynthesisUtterance(p.slice(0, 220)); u.lang = lang; u.rate = 0.95; ss.speak(u); });
+    } catch (e) { toast("Could not read aloud."); }
+  }
+  A.readStop = function () { try { speechSynthesis.cancel(); } catch (e) {} };
+  A.readStory = function () { var b = load().stories.filter(function (x) { return x.id === cur.story; })[0]; if (b) say((b.chs[cur.ch] || b.chs[0]).text); };
+  A.readNote = function (t) { var n = load().notes.filter(function (x) { return x.id === t.getAttribute("data-v"); })[0]; if (n) say(n.text); };
+  A.lang = function (t) { load().lang = t.getAttribute("data-v"); if (S.lang === "sw") U("sc_swa"); save(); render(true); toast(S.lang === "sw" ? "Kiswahili is on. New exams, notes and stories will be in Kiswahili." : "English is on."); };
+  A.backup = function () { if (window.nestyBackupNow) nestyBackupNow(); else toast("Open More, then Backup and restore."); };
+  A.scan = async function () {
+    var f = $("scanFile") && $("scanFile").files[0]; if (!f) { toast("Choose or take a photo first."); return; }
+    busy("Nesty is reading your homework...");
+    try {
+      U("sc_scan");
+      var img = await fitImage(f, 1280, false, 0.8);
+      var out = await ask("This is a photo of a student's homework or question. Read it carefully, then solve it step by step in simple words suitable for a school student, and finish with 'Final answer:'. If the picture is unclear or has no question, say so kindly and tell the student how to take a better photo.", img);
+      busy(""); sheet('<h3>📷 Scan and solve</h3><div class="note">' + md(out) + '</div><button class="scb" data-a="sheetx">Close</button>');
+    } catch (e) { fail(e); }
+  };
+  /* parent or teacher report */
+  function repText() {
+    var s = load(), st = stats(), nm = firstName() || "The learner";
+    var strong = st.list.filter(function (x) { return x.pct >= 75; }).slice(-3).map(function (x) { return x.sub; }), weak = st.list.filter(function (x) { return x.pct < 70; }).slice(0, 4).map(function (x) { return x.sub + " (" + x.pct + "%)"; });
+    return "Nesty Study Center report for " + nm + "\nDate: " + new Date().toLocaleDateString() + "\nExams taken: " + s.exams.length + "\nAverage score: " + st.avg + "%\nStudy streak: " + streakN() + " days\nStrong topics: " + (strong.join(", ") || "not enough data yet") + "\nTopics to improve: " + (weak.join(", ") || "none right now") + "\nRecent scores: " + st.scores.join("%, ") + (st.scores.length ? "%" : "") + "\n\nNesty is an AI and can make mistakes. This report only shows exams taken inside Nesty.";
+  }
+  A.repShare = function () { var t = repText(); if (navigator.share) navigator.share({ title: "Study report", text: t }).catch(function () {}); else window.open("https://wa.me/?text=" + encodeURIComponent(t), "_blank"); };
+  A.repDl = function () { dl("Study report", "<h1>Study report</h1>" + repText().split("\n").map(function (l) { return "<p>" + E(l) + "</p>"; }).join("")); };
+  /* challenge a friend (multiple choice only, marked on the friend's phone, no messages used) */
+  function b64(o) { var j = unescape(encodeURIComponent(JSON.stringify(o))); return btoa(j).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, ""); }
+  function unb64(t) { t = String(t).replace(/-/g, "+").replace(/_/g, "/"); while (t.length % 4) t += "="; return JSON.parse(decodeURIComponent(escape(atob(t)))); }
+  A.challenge = function () {
+    var ex = cur.res; if (!ex) return;
+    var mc = ex.items.filter(function (q) { return q.type === "mcq"; }).slice(0, 10);
+    if (mc.length < 3) { toast("Challenges need at least 3 multiple-choice questions."); return; }
+    var link = "", n = mc.length;
+    while (n >= 3) { link = location.origin + "/?quiz=" + b64({ t: ex.topic, g: ex.grade, q: mc.slice(0, n).map(function (q) { return [q.q, q.options, q.answer]; }) }); if (link.length < 7000) break; n--; }
+    var txt = "I challenge you! Can you beat my score on " + ex.topic + " (" + ex.pct + "%)? Try it on Nesty AI: " + link;
+    if (navigator.share) navigator.share({ title: "Nesty challenge", text: txt }).catch(function () {}); else window.open("https://wa.me/?text=" + encodeURIComponent(txt), "_blank");
+  };
+  V.shared = function () {
+    var q = cur.sq, h = '<div class="card gold"><b>🏆 Challenge from a friend</b><div class="scm">' + E(q.t) + ' · ' + E(q.g) + ' · ' + q.q.length + ' questions. Marked on your phone, free.</div></div>';
+    q.q.forEach(function (it, i) {
+      h += '<div class="card"><b>' + (i + 1) + '. ' + E(it[0]) + '</b>' + (it[1] || []).map(function (o, j) { return '<button class="opt ' + ((cur.sa || {})[i] === "ABCD".charAt(j) ? "on" : "") + '" data-a="spick" data-q="' + i + '" data-o="' + "ABCD".charAt(j) + '"><b>' + "ABCD".charAt(j) + '.</b> ' + E(o) + '</button>'; }).join("") + '</div>';
+    });
+    return h + '<button class="scb" data-a="sdone">Finish and see my score</button><button class="scb ghost" data-a="tab" data-v="home">Leave</button>';
+  };
+  V.sres = function () {
+    var q = cur.sq, ok = 0, h = "";
+    q.q.forEach(function (it, i) { var a = (cur.sa || {})[i]; if (a === it[2]) ok++; h += '<div class="card"><b>' + (i + 1) + '. ' + E(it[0]) + '</b>' + (it[1] || []).map(function (o, j) { var L2 = "ABCD".charAt(j); return '<div class="opt ' + (L2 === it[2] ? 'ok' : (L2 === a ? 'bad' : '')) + '"><b>' + L2 + '.</b> ' + E(o) + (L2 === a ? ' ← you' : '') + '</div>'; }).join("") + '</div>'; });
+    var pc = Math.round(100 * ok / q.q.length);
+    return '<div class="card gold" style="text-align:center"><div class="scm">' + E(q.t) + '</div><div style="font-size:46px;font-weight:900;color:#b36b00">' + ok + ' / ' + q.q.length + '</div><div>' + (pc >= 80 ? "Brilliant! 🌟" : pc >= 50 ? "Good try! 💪" : "Keep practising! 📚") + '</div></div>' + h + '<button class="scb" data-a="tab" data-v="exams">Make my own exam</button><button class="scb ghost" data-a="tab" data-v="home">Study Center home</button>';
+  };
+  A.spick = function (t) { var q = t.getAttribute("data-q"), o = t.getAttribute("data-o"); cur.sa = cur.sa || {}; cur.sa[q] = o; Array.prototype.forEach.call(root.querySelectorAll('[data-a="spick"][data-q="' + q + '"]'), function (b) { b.classList.toggle("on", b.getAttribute("data-o") === o); }); };
+  A.sdone = function () { TAB = "sres"; render(); };
+  window.openSharedQuiz = function (code) {
+    try {
+      var q = unb64(code);
+      if (!q || !Array.isArray(q.q) || q.q.length < 1 || q.q.length > 20) return;
+      q.q = q.q.map(function (x) { return [String(x[0] || "").slice(0, 400), (x[1] || []).slice(0, 4).map(function (o) { return String(o).slice(0, 200); }), String(x[2] || "A").charAt(0).toUpperCase()]; });
+      q.t = String(q.t || "Quiz").slice(0, 80); q.g = String(q.g || "").slice(0, 40);
+      S = null; load(); build(); cur.sq = q; cur.sa = {}; TAB = "shared"; root.style.display = "flex"; document.body.style.overflow = "hidden"; render();
+    } catch (e) { toast("That challenge link is not valid."); }
+  };
   A.close = function () { closeStudyCenter(); };
   A.help = function () { if (window.openHelp) openHelp(); };
   A.sheetx = function () { $("scSheet").style.display = "none"; };
@@ -420,7 +550,8 @@
     busy("Nesty is writing your exam...");
     try {
       var style = type === "mcq" ? "ALL multiple choice with 4 options" : type === "written" ? "ALL written answers (short answers or short problems)" : "about 60% multiple choice and 40% written";
-      var p = "Make an exam as JSON only (no extra words, no code fence).\nTopic: " + topic + ". Level: " + grade + ". Questions: exactly " + n + ". Style: " + style + ". Difficulty: " + diff + ".\n" +
+      var pst = val("exStyle"); if (pst) U("sc_past"); U("sc_exam"); if (S.lang === "sw") U("sc_swa");
+      var p = "Make an exam as JSON only (no extra words, no code fence).\n" + (pst ? "Write it like a Kenyan " + pst + " past paper: the same tone, layout, wording and mark style as real " + pst + " papers, with Kenyan names, places, shillings and examples. Do not copy real papers; write new questions in that style.\n" : "") + "Topic: " + topic + ". Level: " + grade + ". Questions: exactly " + n + ". Style: " + style + ". Difficulty: " + diff + ".\n" +
         "Rules: accurate, clear questions that suit the level. Every question has \"sub\" (a 1 to 3 word sub-topic). Multiple choice: exactly 4 options WITHOUT letters, \"answer\" is one letter A, B, C or D, spread the right answers across A to D. Written: \"answer\" is a short model answer and \"marks\" is 1 to 5. \"explain\" is one friendly sentence. " +
         (pics ? "For exactly " + pics + " questions that really need a picture, set \"img\" to a short description of a simple clear educational illustration (diagram, map, chart or object, never a real person); all other questions have \"img\":\"\"." : "Set \"img\" to \"\" for every question.") + "\n" +
         'Format: {"title":"...","questions":[{"type":"mcq","q":"...","options":["...","...","...","..."],"answer":"B","marks":1,"sub":"...","explain":"...","img":""},{"type":"written","q":"...","answer":"...","marks":2,"sub":"...","explain":"...","img":""}]}';
@@ -500,6 +631,7 @@
       var p = (custom || "Make " + n + " flashcards on the topic: " + topic + " for " + grade + ".") + '\nReply with JSON only: {"cards":[{"q":"short question or term","a":"short clear answer"}]}. Keep answers under 25 words.';
       var j = parseJson(await ask(p));
       if (!j || !Array.isArray(j.cards) || !j.cards.length) throw { msg: "Could not make flashcards. Please try again." };
+      U("sc_srs");
       var d = { id: nid(), topic: topic, at: Date.now(), cards: j.cards.slice(0, 24).map(function (c) { return { q: String(c.q || ""), a: String(c.a || "") }; }).filter(function (c) { return c.q && c.a; }) };
       load().decks.push(d); save(); touch(); cur.nsub = "cards"; cur.deck = d.id; cur.card = 0; cur.flip = false; busy(""); TAB = "notes"; render();
     } catch (e) { fail(e); }
@@ -507,6 +639,16 @@
   A.makeDeck = function () { var t = val("fcTopic"); if (!t) { toast("Type a topic first."); return; } makeDeckFrom(t, val("fcGrade"), clamp(val("fcN"), 6, 20)); };
   A.nsub = function (t) { cur.nsub = t.getAttribute("data-v"); cur.deck = null; render(); };
   A.deckOpen = function (t) { cur.deck = t.getAttribute("data-v"); cur.card = 0; cur.flip = false; render(); };
+  var DAYS = [0, 1, 2, 4, 8, 16];
+  function dueCards(d) { var n = Date.now(); return d.cards.filter(function (c) { return !c.due || c.due <= n; }); }
+  A.dueToggle = function () { cur.due = !cur.due; cur.card = 0; cur.flip = false; render(); };
+  A.srs = function (t) {
+    var d = load().decks.filter(function (x) { return x.id === cur.deck; })[0]; if (!d) return;
+    var arr = cur.due ? dueCards(d) : d.cards, c = arr[cur.card % arr.length]; if (!c) return;
+    if (t.getAttribute("data-v") === "1") { c.box = Math.min(5, (c.box || 0) + 1); c.due = Date.now() + DAYS[c.box] * 86400000; }
+    else { c.box = 0; c.due = Date.now() + 600000; }
+    save(); U("sc_srs"); cur.flip = false; if (!cur.due) cur.card++; render(true);
+  };
   A.deckClose = function () { cur.deck = null; render(); };
   A.deckDel = function (t) { if (!confirm("Delete this deck?")) return; S.decks = S.decks.filter(function (d) { return d.id !== t.getAttribute("data-v"); }); save(); render(true); };
   A.flip = function () { cur.flip = !cur.flip; render(true); };
@@ -578,7 +720,9 @@
       "Length: " + len + ". Style: " + style + " Keep everything suitable for learners: no sexual content, no drug abuse, no glorifying violence or bad behaviour (show consequences and good values instead). Then add 4 to 6 new words from the text with simple meanings, and 3 questions about the text (include one about values or lessons).\nUse EXACTLY this format:\nTITLE: <title>\n===STORY===\n<the story, plain paragraphs>\n===WORDS===\nword: meaning\n===QUESTIONS===\n1. question\n===END===";
   }
   A.makeStory = async function () {
+    U("sc_story");
     var age = clamp(val("stAge"), 3, 99);
+    var capA = pcGet().cap || 0; if (capA && age > capA) { age = capA; toast("A parent limited stories to age " + capA + " or younger."); }
     var b = { id: nid(), age: age, kind: storyKind(age), genre: val("stGenre").replace(/&amp;/g, "&"), idea: val("stIdea"), total: age >= 16 ? 12 : age >= 13 ? 6 : 1, title: "", chs: [], at: Date.now() };
     busy("Nesty is writing your " + b.kind.toLowerCase() + "...");
     try {

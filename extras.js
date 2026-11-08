@@ -2,6 +2,10 @@
    pinned chats and folders, sharing, announcement and plan reminders, offline help. */
 (function () {
   "use strict";
+  /* learner-safe mode: on for under-18 accounts, or when a parent turns it on in Study Center */
+  window.nestySafe = function () {
+    try { var a = user && user.prefs && parseInt(user.prefs.age, 10); return (a > 0 && a < 18) || localStorage.getItem("nestySafe") === "1"; } catch (e) { return false; }
+  };
   if (window.openHub) return;
 
   function $(i) { return document.getElementById(i); }
@@ -252,7 +256,7 @@
       var p = document.createElement("button"); p.className = "cpbtn xb"; p.id = "xPrompts"; p.textContent = "📝 Prompts"; p.onclick = function () { openHub("templates"); };
       var m = document.createElement("button"); m.className = "cpbtn xb"; m.id = "xMore"; m.textContent = "✨ More"; m.onclick = function () { openHub("menu"); };
       var hb = document.createElement("button"); hb.className = "cpbtn xb"; hb.id = "xHelp"; hb.textContent = "💬 Help"; hb.onclick = function () { if (window.openHelp) openHelp(); };
-      row.appendChild(hb); row.appendChild(p); row.appendChild(m);
+      row.appendChild(hb); row.appendChild(m);
     }
     row.style.display = "";
     if (typeof syncModes === "function") syncModes();

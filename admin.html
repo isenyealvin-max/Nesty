@@ -73,6 +73,13 @@ td,th{padding:7px 6px;border-bottom:1px solid #ddd;text-align:left}
   <div id="costOut" style="margin-top:10px"></div>
 </div>
 <div class="card">
+  <b>AI and service status</b>
+  <div class="muted">Tap Check now to test Groq, Gemini, OpenRouter and Tavily with a tiny message (it uses a very small amount of quota). "Answers served" shows which provider actually replied to users over the last 14 days, from the Dashboard numbers.</div>
+  <button onclick="checkProv()">Check now</button>
+  <div id="provOut" style="margin-top:8px;overflow-x:auto"></div>
+  <div id="provUse" class="muted" style="margin-top:8px"></div>
+</div>
+<div class="card">
   <b>M-Pesa STK push</b>
   <div class="muted">Switch on only when your M-Pesa keys are real and live. When it is off, users see: "STK push is disabled right now, please use the codes or contact us through our email."</div>
   <div id="mpState" style="margin:8px 0"><b>Checking...</b></div>
@@ -162,6 +169,7 @@ async function loadStats(){
   });
   h += '<div class="muted" style="margin-top:10px"><b>Messages by Nesty model (14 days):</b> ' + (Object.keys(byModel).map(function(k){ return esc(k) + " " + byModel[k]; }).join(", ") || "none yet") + "</div>";
   $("statsOut").innerHTML = h;
+  showProvUse(byVia);
   var items = {};
   Object.keys(byVia).forEach(function(k){ items["Chat: " + k] = byVia[k]; });
   var sums = {img: 0, tts: 0};
@@ -191,6 +199,28 @@ function calcCost(){
   });
   try{ localStorage.setItem("nestyCost", JSON.stringify(saved)); }catch(e){}
   var t = document.getElementById("ccTot"); if(t) t.innerHTML = "<b>KSh " + tot.toFixed(2) + "</b>";
+}
+function provOf(via){
+  via = String(via || "").toLowerCase();
+  if(via.indexOf("gemini") > -1) return "Gemini";
+  if(via.indexOf(":free") > -1 || via.indexOf("openrouter") > -1) return "OpenRouter";
+  if(via.indexOf("gpt-oss") > -1 || via.indexOf("llama") > -1 || via.indexOf("groq") > -1) return "Groq";
+  if(via === "deep") return "Deep search (Tavily + AI)";
+  return via || "Unknown";
+}
+async function checkProv(){
+  $("provOut").innerHTML = "Testing, please wait...";
+  var d = await call("/api/admin/providers", {});
+  if(!d){ $("provOut").textContent = ""; return; }
+  $("provOut").innerHTML = '<table><tr><th>Service</th><th>Key</th><th>Status</th><th>Speed</th></tr>' + d.providers.map(function(p){
+    return '<tr><td>' + esc(p.name) + '</td><td>' + (p.keyFound ? '<span class="ok">found</span>' : '<span class="bad">missing</span>') + '</td><td>' + (p.ok ? '<span class="ok">&#9679; ' : '<span class="bad">&#9679; ') + esc(p.note) + '</span></td><td>' + (p.ms ? p.ms + ' ms' : '') + '</td></tr>';
+  }).join("") + '</table><div class="muted">Checked ' + esc(new Date(d.checkedAt).toLocaleTimeString()) + '</div>';
+}
+function showProvUse(byVia){
+  var u = {};
+  Object.keys(byVia).forEach(function(k){ var p = provOf(k); u[p] = (u[p] || 0) + byVia[k]; });
+  var keys = Object.keys(u).sort(function(a, b){ return u[b] - u[a]; });
+  $("provUse").innerHTML = '<b>Answers served (14 days):</b> ' + (keys.map(function(k){ return esc(k) + " " + u[k]; }).join(", ") || "none yet");
 }
 async function mpGet(){
   var d = await call("/api/admin/mpesa-get", {});
