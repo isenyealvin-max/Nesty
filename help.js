@@ -55,7 +55,7 @@
     if (root) return;
     var st = document.createElement("style"); st.textContent = CSS; document.head.appendChild(st);
     root = document.createElement("div"); root.id = "hc";
-    root.innerHTML = '<div class="top"><b>💬 Help Center</b><button class="ib" id="hcX" title="Close">✕</button></div><div id="hcMain"></div>';
+    root.innerHTML = '<div class="top"><b>💬 Help Center</b><button class="hb blue" id="hcGtop" style="padding:6px 10px;margin-right:8px">📍 Guide</button><button class="ib" id="hcX" title="Close">✕</button></div><div id="hcMain"></div>';
     document.body.appendChild(root);
     $("hcX").onclick = closeHelp;
     var h = '<h3 style="margin-top:2px">How can we help?</h3><input id="hcSearch" placeholder="Search questions, e.g. password, payment, model" autocomplete="off"><div id="hcList"></div>' +
@@ -65,7 +65,8 @@
       '<div class="card"><b>📩 Still stuck?</b><div class="hm">If you could not get the right answer, contact the Nesty team. Tell us what you tried.</div><a class="hb blue" id="hcMail" href="mailto:' + MAIL + '">Email us</a></div>';
     $("hcMain").innerHTML = h;
     $("hcSearch").oninput = drawList;
-    $("hcGuide").onclick = openGuide;
+    $("hcGuide").onclick = function () { openGuide(false); };
+    $("hcGtop").onclick = function () { openGuide(false); };
     $("hcSend").onclick = askHelp;
     $("hcQ").onkeydown = function (e) { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); askHelp(); } };
     $("hcMail").href = "mailto:" + MAIL + "?subject=" + encodeURIComponent("Nesty help");
@@ -111,44 +112,87 @@
   }
 
   var GUIDE = [
-    ["Top of the screen", [
-      ["☰ Menu (top left)", "Opens your chat list, search, Plans, Settings, Install and Log out.", "#app header .hbtn"],
-      ["Plan button (next to ☰)", "Shows your plan. Tap it to see plans, pay and see how much you have used.", "#planBtn"],
-      ["Model name (top middle)", "Shows which Nesty model is answering. Tap it to switch model.", "#mtag"],
+    ["1. Getting started", [
+      ["Create an account", "Type your full name, your date of birth (Nesty works out your age and can wish you happy birthday), your gender, a password, and tap to agree to the Terms. Google sign-in asks for the same things once. Nesty is for ages 5 and up.", null],
+      ["Safe mode and parents", "Anyone under 18 is in safe mode automatically. A parent can add a PIN, quiet hours and an age limit for stories in Study Center, Parent controls.", null]]],
+    ["2. Top of the screen", [
+      ["☰ Menu (top left)", "Opens your chats, search, Plans, Settings, Install and Log out.", "#app header .hbtn"],
+      ["Plan button (next to ☰)", "Shows your plan. Tap it to see plans, pay, and see what you have used.", "#planBtn"],
+      ["Model name (top middle)", "Shows which Nesty model is answering. Tap it to switch.", "#mtag"],
       ["Speaker (top right)", "Turns reading answers aloud on or off.", "#spk"],
       ["New chat (top right)", "Starts a fresh chat.", "#app header .hbtn:last-child"]]],
-    ["Above the message box", [
-      ["Study", "Study Center: notes, quizzes, past papers, flashcards, Scan and solve and more.", "#studyBtn"],
-      ["Deep search", "Searches the web and writes a longer answer with sources (Premium and above).", "#deepBtn"],
-      ["Business", "Invoices, receipts, quotations, cash book, budget and price list.", "#bzBtn"],
+    ["3. The models (tap the model name)", [
+      ["NEPTUNE 5.5 and Nova 5.5", "Free everyday helpers for questions, writing and homework.", null],
+      ["Nuvida 5.5 (Go)", "Smarter answers with more room to think.", null],
+      ["Hiaru 5.1 (Pro)", "The office model: Business tools, Office Center, Excel and PowerPoint.", null],
+      ["Omni smart", "The study model: opens Study Center.", null],
+      ["Tyra (Premium)", "Deep search with sources, and Research Center.", null],
+      ["Manuva (Diamond)", "For tough challenges: hard maths, logic and coding.", null],
+      ["Lexy (free)", "Sports: football, athletics, rugby and more. Free plan only.", null],
+      ["Fenny", "Fitness, exercises, body parts, organs and body care.", null],
+      ["Vilda", "Career, business ideas and family life: budgets, shopping lists, plans, vacations, packing lists and family stories.", null]]],
+    ["4. Buttons above the message box", [
+      ["🎓 Study Center", "Shows with Omni smart: exams, flashcards, past papers, stories, scan and solve, progress.", "#scBtn"],
+      ["🔎 Deep search", "Shows with Tyra: searches many websites and writes one cited report.", "#deepBtn"],
+      ["💼 Business tools", "Shows with Hiaru: Brand Studio (logo, ads, banner, payment sign, cards), invoices, cash book, budget, price list.", "#bzBtn"],
+      ["🏢 Office Center", "Shows with Hiaru: letters, CV, minutes, reports, agreements and more.", "#ofBtn"],
+      ["🔬 Research Center", "Shows with Tyra: proposals, questionnaires, citations, notebook.", "#rsBtn"],
       ["💬 Help", "This Help Center.", "#xHelp"],
-      ["✨ More", "Templates, to-do and reminders, daily briefing, invite friends, backup and display options.", "#xMore"]]],
-    ["The message box", [
+      ["✨ More", "Templates, to-do and reminders, daily briefing, invite friends, backup, display options.", "#xMore"]]],
+    ["5. The message box", [
       ["+ (left)", "Attach a photo, PDF or document.", "#bar .ibtn"],
-      ["Type here", "Write your question. Press the arrow to send.", "#box"],
+      ["Type here", "Write your question.", "#box"],
       ["Microphone", "Speak instead of typing.", "#mic"],
       ["Voice mode", "Talk with Nesty out loud, like a phone call.", "#vm"],
-      ["Arrow (right)", "Sends your message.", "#send"]]],
-    ["Inside ☰ Menu", [
-      ["Your chats", "Tap a chat to open it. Press and hold a chat to rename, pin, put in a folder or delete.", "#list"],
-      ["Search", "Find any old chat.", "#q"],
-      ["Plans", "Upgrade, pay by M-Pesa, or enter a code.", "#side .foot button"],
-      ["Settings", "Name, birthday, language, voice, theme, parent controls and your data.", "#side .prof"],
-      ["Log out", "Leaves your account on this phone.", "#side .foot button:last-child"]]],
-    ["On every answer", [
+      ["Arrow (right)", "Sends your message. Nesty can notify you when the answer is ready if you allow notifications.", "#send"]]],
+    ["6. On chats and answers", [
       ["Press and hold your message", "Edit it, copy it or delete it.", "#chat"],
-      ["Under an answer", "Copy, listen, share, report a bad answer, or make a PowerPoint when the answer is slides.", "#chat"]]]
+      ["Under an answer", "Copy, listen, share, report a bad answer, pin it, or make a PowerPoint when the answer is slides.", "#chat"],
+      ["Chat list (☰)", "Press and hold a chat to rename, pin, put in a folder or delete.", null]]],
+    ["7. Inside ☰ Menu", [
+      ["Search", "Find any old chat.", "#q"],
+      ["Plans", "Upgrade, pay by M-Pesa or by code, see when your plan ends.", null],
+      ["Settings", "Name, birthday, gender, language, voice, dark theme, notifications, parent controls, your data, version history and this guide.", null],
+      ["Log out", "Leaves your account on this phone.", null]]],
+    ["8. ✨ More hub", [
+      ["Templates", "Ready-made prompts for school, work and life.", null],
+      ["To-do and reminders", "Make a list and get a reminder, even as a phone notification.", null],
+      ["Daily briefing", "Your day in a few lines.", null],
+      ["Invite friends", "You and your friend each get 3 free days of Go.", null],
+      ["Backup", "Save or restore your chats.", null],
+      ["Display and data saver", "Text size, light and dark, and less data.", null]]],
+    ["9. Study Center", [
+      ["Exams", "Make an exam of up to 30 questions as A, B, C, D or written, in a Kenyan school paper layout. Print it with the marking scheme.", null],
+      ["Flashcards, past papers, stories", "Practice cards, KCPE, KPSEA, KJSEA and KCSE style papers, and stories for every age.", null],
+      ["Scan and solve", "Take a photo of a question and get steps.", null],
+      ["Progress and parent report", "See strong and weak topics and share a report with a parent.", null],
+      ["Challenge a friend", "Send a quiz link. It is marked on your friend's phone.", null]]],
+    ["10. Business tools", [
+      ["Brand Studio", "Logo maker, ad poster (Nesty writes the words), shop banner, payment sign, business card and loyalty card. All can be printed or saved as pictures.", null],
+      ["Invoice, receipt, quotation", "Professional papers with your logo, to print, Word or WhatsApp.", null],
+      ["Cash book, budget, price list", "Keep your money simple. Download to Excel.", null]]],
+    ["11. Office and Research centers", [
+      ["Office Center", "Formal letter, job application, CV, minutes, agenda, memo, report, email, agreement, job advert, LPO, speech, task planner, proofreading.", null],
+      ["Research Center", "Topic overview with sources, proposal, research questions, literature review, questionnaire, methodology, summary, abstract, data analysis plan, source checker, citation maker and notebook.", null]]],
+    ["12. Plans and limits", [
+      ["Free to Max", "Go, Premium, Pro, Smart, Ultra, Gold, Platinum, Max and the Diamond add-on. Gold, Platinum and Max give your limits back every 40, 25 and 15 minutes.", null],
+      ["Paying", "Pay with M-Pesa on your phone when it is switched on, or send to the Nesty number and tap Send proof. You can also enter a code.", null],
+      ["Plan ending", "In the last 3 days Nesty reminds you every time you open the app and sends a notification.", null]]],
+    ["13. Notifications and help", [
+      ["Allow notifications", "Tap Allow when asked. If you missed it, open your browser's site settings and allow Notifications. Then Nesty can tell you about answers, birthdays, offers and your plan.", null],
+      ["Help Center", "Quick answers, ask the Help assistant (20 questions an hour) or email the team.", null]]]
   ];
-  function openGuide() {
+  function openGuide(signup) {
+    signup = signup === true;
     var o = $("hcGuide2");
     if (o) o.remove();
     o = document.createElement("div"); o.id = "hcGuide2";
     o.style.cssText = "position:fixed;inset:0;z-index:100001;background:#fffdf5;overflow:auto;padding:14px 14px 40px;color:#222;font-family:inherit";
-    var h = '<div style="display:flex;justify-content:space-between;align-items:center"><b style="font-size:18px">📍 App guide</b><button id="hgX" style="border:0;background:#eee;border-radius:50%;width:36px;height:36px;font-size:18px">✕</button></div><div style="color:#666;margin:6px 0 10px;font-size:14px">Tap <b>Show me</b> to see where something is on your screen.</div>';
+    var h = '<div style="display:flex;justify-content:space-between;align-items:center"><b style="font-size:18px">📍 App guide</b><button id="hgX" style="border:0;background:#eee;border-radius:50%;width:36px;height:36px;font-size:18px">✕</button></div><div style="color:#666;margin:6px 0 10px;font-size:14px">' + (signup ? "Here is every place, button and feature in Nesty." : "Tap <b>Show me</b> to see where something is on your screen.") + '</div>';
     GUIDE.forEach(function (g, gi) {
       h += '<h3 style="margin:14px 0 6px;color:#8a6d00">' + E(g[0]) + '</h3>';
       g[1].forEach(function (it, ii) {
-        h += '<div style="background:#fff;border:1px solid #eadfb8;border-radius:12px;padding:10px;margin-bottom:8px"><b>' + E(it[0]) + '</b><div style="font-size:14px;margin:3px 0 6px;color:#444">' + E(it[1]) + '</div><button class="hb blue" data-g="' + gi + "-" + ii + '" style="padding:6px 12px">Show me</button></div>';
+        h += '<div style="background:#fff;border:1px solid #eadfb8;border-radius:12px;padding:10px;margin-bottom:8px"><b>' + E(it[0]) + '</b><div style="font-size:14px;margin:3px 0 4px;color:#444">' + E(it[1]) + '</div>' + (!signup && it[2] ? '<button class="hb blue" data-g="' + gi + "-" + ii + '" style="padding:6px 12px">Show me</button>' : '') + '</div>';
       });
     });
     o.innerHTML = h; document.body.appendChild(o);
@@ -157,21 +201,19 @@
       b.onclick = function () {
         var k = b.getAttribute("data-g").split("-"), it = GUIDE[k[0]][1][k[1]], el = document.querySelector(it[2]);
         o.style.display = "none"; if (root) root.style.display = "none";
-        var side = document.getElementById("side");
-        if (k[0] === "3") { if (window.openSide) openSide(); } else if (window.closeSide) closeSide();
+        if (k[0] === "6" && window.openSide) openSide(); else if (window.closeSide) closeSide();
         setTimeout(function () { pulse(el, it[0], function () { if (root) root.style.display = "flex"; o.style.display = "block"; if (window.closeSide) closeSide(); }); }, 350);
       };
     });
   }
+  window.nestyGuide = function (signup) { openGuide(signup === true); };
   function pulse(el, label, done) {
     var d = document.createElement("div");
-    d.style.cssText = "position:fixed;inset:0;z-index:100002;background:rgba(0,0,0,.45)";
-    var r = el ? el.getBoundingClientRect() : null;
-    var ring = '';
-    if (r && r.width) ring = '<div style="position:fixed;left:' + (r.left - 6) + 'px;top:' + (r.top - 6) + 'px;width:' + (r.width + 12) + 'px;height:' + (r.height + 12) + 'px;border:3px solid #ffd54f;border-radius:14px;box-shadow:0 0 0 9999px rgba(0,0,0,.45),0 0 18px #ffd54f;pointer-events:none"></div>';
-    var ty = r && r.top > 200 ? Math.max(10, r.top - 90) : (r ? r.bottom + 20 : 120);
-    d.innerHTML = ring + '<div style="position:fixed;left:12px;right:12px;top:' + ty + 'px;background:#fff;color:#222;border-radius:12px;padding:12px;text-align:center"><b>' + E(label) + '</b>' + (r && r.width ? '' : '<div style="font-size:13px;color:#666">Open a chat first to see this.</div>') + '<div><button id="hgOk" style="margin-top:8px;border:0;background:#1e88e5;color:#fff;border-radius:10px;padding:8px 18px">Got it</button></div></div>';
-    d.style.background = "transparent";
+    d.style.cssText = "position:fixed;inset:0;z-index:100002";
+    var r = el ? el.getBoundingClientRect() : null, vis = r && r.width && r.height;
+    var ring = vis ? '<div style="position:fixed;left:' + (r.left - 6) + 'px;top:' + (r.top - 6) + 'px;width:' + (r.width + 12) + 'px;height:' + (r.height + 12) + 'px;border:3px solid #ffd54f;border-radius:14px;box-shadow:0 0 0 9999px rgba(0,0,0,.5),0 0 18px #ffd54f;pointer-events:none"></div>' : '<div style="position:fixed;inset:0;background:rgba(0,0,0,.5)"></div>';
+    var ty = vis && r.top > 200 ? Math.max(10, r.top - 100) : (vis ? r.bottom + 20 : 120);
+    d.innerHTML = ring + '<div style="position:fixed;left:12px;right:12px;top:' + ty + 'px;background:#fff;color:#222;border-radius:12px;padding:12px;text-align:center"><b>' + E(label) + '</b>' + (vis ? '' : '<div style="font-size:13px;color:#666">This shows up when you pick the right model or open the right screen.</div>') + '<div><button id="hgOk" style="margin-top:8px;border:0;background:#1e88e5;color:#fff;border-radius:10px;padding:8px 18px">Got it</button></div></div>';
     document.body.appendChild(d);
     d.querySelector("#hgOk").onclick = function () { d.remove(); done(); };
   }

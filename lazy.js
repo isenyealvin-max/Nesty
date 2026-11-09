@@ -6,7 +6,7 @@
     if (loading[src]) return loading[src];
     loading[src] = new Promise(function (res, rej) {
       var s = document.createElement("script");
-      s.src = src + "?v=28"; s.onload = res;
+      s.src = src + "?v=29"; s.onload = res;
       s.onerror = function () { delete loading[src]; rej(new Error("load")); };
       document.head.appendChild(s);
     });
@@ -31,4 +31,8 @@
   stub("goBiz", "/business.js");
   stub("closeStudyCenter", "/study.js");
   stub("closeHelp", "/help.js");
+  stub("nestyGuide", "/help.js");
+  stub("goBrand", "/studio.js");
+  stub("goOffice", "/centers.js");
+  stub("goResearch", "/centers.js");
 })();

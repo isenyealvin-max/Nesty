@@ -420,7 +420,7 @@ document.getElementById("bootLogo").innerHTML = window.NESTY_LOGO("b", true);</s
       <p id="pwInfo" style="text-align:center;color:var(--muted);font-size:14px;margin:0 0 14px"></p>
       <input id="pwFirst" data-ph="a_first" style="display:none" autocomplete="given-name">
       <input id="pwLast" data-ph="a_last" style="display:none" autocomplete="family-name">
-      <input id="pwAge" type="number" inputmode="numeric" min="13" max="120" data-ph="a_age" style="display:none">
+      <input id="pwAge" type="number" inputmode="numeric" min="5" max="120" data-ph="a_age" style="display:none">
       <input id="pwA" type="password" data-ph="pw_new" autocomplete="new-password">
       <input id="pwB" type="password" data-ph="pw_new2" autocomplete="new-password">
       <div class="muted2" data-i="pw_rules"></div>
@@ -438,6 +438,7 @@ document.getElementById("bootLogo").innerHTML = window.NESTY_LOGO("b", true);</s
 
     <div id="authOk"></div>
     <div id="authErr"></div>
+    <div style="text-align:center;margin-top:10px"><a href="#" onclick="nestyGuide(true);return false" style="font-weight:700">&#128205; New here? See how Nesty works (App guide)</a></div>
     <select id="aLang" class="sel" onchange="setUiLang(this.value)"></select>
     <div class="legal"><a href="#" onclick="showLanding();return false" data-i="lp_what"></a></div>
     <div class="legal" id="legal"></div>
@@ -619,6 +620,8 @@ document.getElementById("bootLogo").innerHTML = window.NESTY_LOGO("b", true);</s
     <div class="sec">
       <h3 data-i="s_about"></h3>
       <div class="muted2" id="aboutTxt"></div>
+      <button class="sbtn" onclick="showVersions()" style="margin-top:8px">&#128221; Version history</button>
+      <button class="sbtn" onclick="nestyGuide()" style="margin-top:8px">&#128205; App guide</button>
     </div>
 
     <div class="sec">
@@ -646,7 +649,26 @@ document.getElementById("bootLogo").innerHTML = window.NESTY_LOGO("b", true);</s
 <div id="updateBar"></div>
 
 <script>
-var VERSION = "V21";
+var VERSION = "V29";
+var VERSIONS = [
+  ["V29", "Brand Studio (logo, ads, banner, payment sign, cards), Office Center, Research Center, 30 question exams that look like Kenyan school papers, Nesty now for ages 5 and up, version history."],
+  ["V28", "New models Lexy (sports, free), Fenny (fitness and body care) and Vilda (career and family). New plans Gold, Platinum and Max with faster limits. Ultra now has 3 models."],
+  ["V27", "Real push notifications even when Nesty is closed, birthday and plan messages, invite reward of 3 free days each, link previews on WhatsApp."],
+  ["V26", "Sign up with date of birth, gender and terms (for everyone), birthday wishes, OpenAI as an extra AI, App guide in Help, notices stay 30 seconds."],
+  ["V25", "Study Center upgrades (past papers, Kiswahili, spaced revision, parent report), Business tools, PowerPoint with charts, More hub, pins and folders, share and report, parent controls and safe mode."],
+  ["V24", "M-Pesa pay by phone with an admin switch, admin payments list and AI status, Help assistant, smart tips and greetings by time of day."],
+  ["V23", "Seven models (Neptune, Nova, Nuvida, Hiaru, Omni smart, Tyra, Manuva), stackable plans, Diamond add-on and Ultra."],
+  ["V22", "Animated logo and icons, much better location (village, ward, county), nicer buttons and legal pages."],
+  ["V21", "The first version of the new Nesty AI."]
+];
+function showVersions(){
+  var o = document.getElementById("verSheet"); if(o) o.remove();
+  o = document.createElement("div"); o.id = "verSheet";
+  o.style.cssText = "position:fixed;inset:0;z-index:100003;background:rgba(0,0,0,.5);display:flex;align-items:flex-end;justify-content:center";
+  o.innerHTML = '<div style="background:var(--bg,#fff);color:var(--fg,#222);width:100%;max-width:560px;max-height:82vh;overflow:auto;border-radius:18px 18px 0 0;padding:16px"><div style="display:flex;justify-content:space-between;align-items:center"><b style="font-size:18px">What is new in Nesty</b><button id="verX" style="border:0;background:#eee;border-radius:50%;width:34px;height:34px;font-size:16px">&times;</button></div>' + VERSIONS.map(function(v, i){ return '<div style="padding:10px 0;border-bottom:1px solid #8883"><b>' + v[0] + (i === 0 ? ' (this one)' : '') + '</b><div style="font-size:14px;opacity:.85;margin-top:2px">' + esc(v[1]) + '</div></div>'; }).join("") + '</div>';
+  document.body.appendChild(o);
+  o.onclick = function(e){ if(e.target === o || e.target.id === "verX") o.remove(); };
+}
 
 /* ---------- Interface languages ---------- */
 var STR = {
@@ -899,7 +921,7 @@ conf_mem:"Nesty को आपके बारे में जो याद ह�
 };
 Object.assign(STR.en, {
 a_name:"Full name",a_age:"Age",a_pass:"Password",a_pass2:"Confirm password",a_codelogin:"Email me a sign-in code instead",
-e_fullname:"Enter your full name (first and second name).",e_age:"Enter a valid age (13 or older).",e_pass:"Password must be at least 8 characters.",e_match:"The passwords do not match.",
+e_fullname:"Enter your full name (first and second name).",e_age:"Enter a valid age (5 or older).",e_pass:"Password must be at least 8 characters.",e_match:"The passwords do not match.",
 e_exists:"An account with this email already exists. Please sign in.",e_pwreq:"Enter your email and password.",
 e_login:"Wrong email or password. If you forgot your password, tap Forgot password.",
 needverify:"Please verify your email to continue.",
@@ -1234,14 +1256,14 @@ function profileProblem(dob, gender, terms){
   var a = calcAge(dob);
   if(!dob) return "Please choose your date of birth.";
   if(new Date(dob) > new Date() || a > 120) return "That date of birth does not look right.";
-  if(a < 13) return "Nesty is for people aged 13 and older.";
+  if(a < 5) return "Nesty is for people aged 5 and older.";
   if(!gender) return "Please choose your gender.";
   if(!terms) return "Please tick the box to agree to the Terms and Privacy Policy.";
   return "";
 }
 function needProfile(){
   var pf = (user && user.prefs) || {};
-  return !(pf.dob && pf.gender && pf.termsAt && calcAge(pf.dob) >= 13);
+  return !(pf.dob && pf.gender && pf.termsAt && calcAge(pf.dob) >= 5);
 }
 function showProfile(){
   var pf = (user && user.prefs) || {};
@@ -1434,7 +1456,7 @@ async function savePassword(){
   }
   if(needAge){
     age = parseInt($("pwAge").value, 10);
-    if(!(age >= 13 && age <= 120)){ $("authErr").textContent = L("e_age"); return; }
+    if(!(age >= 5 && age <= 120)){ $("authErr").textContent = L("e_age"); return; }
   }
   if(pwProblem(a)){ $("authErr").textContent = L(pwProblem(a)); return; }
   if(a !== b){ $("authErr").textContent = L("e_match"); return; }
@@ -3144,6 +3166,14 @@ function syncModes(){
   }
   bz.textContent = "\ud83d\udcbc Business tools";
   bz.style.display = (m === "hiaru") ? "" : "none";
+  var of = $("ofBtn");
+  if(!of){ of = document.createElement("button"); of.className = "cpbtn"; of.id = "ofBtn"; of.onclick = function(){ if(window.goOffice) goOffice(); }; row.appendChild(of); }
+  of.textContent = "\ud83c\udfe2 Office Center";
+  of.style.display = (m === "hiaru") ? "" : "none";
+  var rs = $("rsBtn");
+  if(!rs){ rs = document.createElement("button"); rs.className = "cpbtn"; rs.id = "rsBtn"; rs.onclick = function(){ if(window.goResearch) goResearch(); }; row.appendChild(rs); }
+  rs.textContent = "\ud83d\udd2c Research Center";
+  rs.style.display = (m === "tyra") ? "" : "none";
   row.style.display = "";
 }
 function toggleStudy(){

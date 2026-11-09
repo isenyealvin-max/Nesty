@@ -22,9 +22,9 @@ const PLANS = {
   learnover: { name: "Smart", msg: 85, file: 75, img: 20, tts: 80, models: ["smart"], deep: false, data: false },
   ultra: { name: "Ultra", msg: 90, file: 90, img: 30, tts: 70, models: ["hiaru", "smart", "tyra"], deep: true, data: true, dpCap: 8 },
   // win = minutes in one usage window (default 60). Shorter window = limits come back sooner.
-  gold: { name: "Gold", msg: 110, file: 100, img: 35, tts: 80, models: ["nuvida", "tyra", "lexy", "vilda"], deep: true, data: false, dpCap: 10, win: 40 },
-  platinum: { name: "Platinum", msg: 140, file: 130, img: 45, tts: 100, models: ["nuvida", "tyra", "smart", "fenny", "vilda"], deep: true, data: true, dpCap: 14, win: 25 },
-  max: { name: "Max", msg: 200, file: 180, img: 60, tts: 150, models: ["neptune", "nova", "nuvida", "hiaru", "smart", "tyra", "manuva", "lexy", "fenny", "vilda"], deep: true, data: true, mvCap: 40, dpCap: 20, win: 15 },
+  gold: { name: "Gold", msg: 110, file: 100, img: 35, tts: 80, models: ["nuvida", "tyra", "smart", "vilda"], deep: true, data: false, dpCap: 10, win: 40 },
+  platinum: { name: "Platinum", msg: 140, file: 130, img: 45, tts: 100, models: ["nuvida", "hiaru", "tyra", "fenny", "vilda"], deep: true, data: true, dpCap: 14, win: 25 },
+  max: { name: "Max", msg: 200, file: 180, img: 60, tts: 150, models: ["neptune", "nova", "nuvida", "hiaru", "smart", "tyra", "manuva", "fenny", "vilda"], deep: true, data: true, mvCap: 40, dpCap: 20, win: 15 },
 };
 function winOf(lim) { return ((lim && lim.win) || 60) * 60 * 1000; }
 const TTS_LIMITS = {}; // natural voice clips per hour, taken from the plans above

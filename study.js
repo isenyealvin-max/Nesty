@@ -192,18 +192,46 @@
     f.onload = function () { try { f.contentWindow.focus(); f.contentWindow.print(); } catch (e) { toast("Could not open the print window."); } setTimeout(function () { if (f.parentNode) f.remove(); }, 120000); };
     f.srcdoc = paperHtml(title, body);
   }
+  function examTime(ex) {
+    var m = 0; ex.items.forEach(function (q) { m += q.type === "mcq" ? 1.2 : (q.marks || 1) * 2.5; });
+    m = Math.max(30, Math.round(m / 5) * 5); var h = Math.floor(m / 60), mm = m % 60;
+    return (h ? h + " hour" + (h > 1 ? "s" : "") : "") + (h && mm ? " " : "") + (mm ? mm + " minutes" : "");
+  }
   function examPaper(ex, withKey) {
-    var h = "<h1>" + E(ex.title) + "</h1><p><b>Name:</b> ____________________ &nbsp; <b>Date:</b> ____________ &nbsp; <b>Level:</b> " + E(ex.grade) + " &nbsp; <b>Marks:</b> ____ / " + totalMarks(ex) + "</p><hr>";
-    ex.items.forEach(function (q, i) {
-      h += "<p><b>" + (i + 1) + ". " + E(q.q) + "</b> (" + q.marks + " mark" + (q.marks > 1 ? "s" : "") + ")</p>";
-      if (q.type === "mcq") (q.options || []).forEach(function (o, j) { h += "<p style='margin:0 0 3px 22px'>" + "ABCD".charAt(j) + ". " + E(o) + "</p>"; });
-      else h += "<div class='l'></div><div class='l'></div><div class='l'></div>";
-    });
-    if (withKey) {
-      h += "<br><h2>Answer key</h2>";
-      ex.items.forEach(function (q, i) { h += "<p>" + (i + 1) + ". " + E(q.type === "mcq" ? "ABCD".charAt("ABCD".indexOf(q.answer)) + " - " + ((q.options || [])["ABCD".indexOf(q.answer)] || "") : q.answer) + (q.explain ? " <i>(" + E(q.explain) + ")</i>" : "") + "</p>"; });
+    var st = ex.style || "", n = ex.items.length, tm = totalMarks(ex), nm = ex.items.filter(function (q) { return q.type === "mcq"; }).length, nw = n - nm;
+    var tag = { KCPE: "KCPE STYLE PRACTICE PAPER", KPSEA: "KPSEA STYLE PRACTICE PAPER", KJSEA: "KJSEA STYLE PRACTICE PAPER", KCSE: "KCSE STYLE PRACTICE PAPER" }[st] || "";
+    var h = "<div style=\"font-family:'Times New Roman',serif\"><p style='text-align:center;margin:0'><b>SCHOOL: ______________________________</b></p>" + (tag ? "<p style='text-align:center;margin:2px 0;font-size:10pt'>" + tag + "</p>" : "") +
+      "<h1 style='margin:6px 0 2px'>" + E(ex.title).toUpperCase() + "</h1><p style='text-align:center;margin:0'><b>" + E(ex.grade).toUpperCase() + "</b> &nbsp;|&nbsp; TIME: " + examTime(ex).toUpperCase() + " &nbsp;|&nbsp; " + tm + " MARKS</p><hr>" +
+      "<table style='border:0'><tr><td style='border:0'>NAME: ______________________________</td><td style='border:0'>ADM NO: ____________</td></tr><tr><td style='border:0'>CLASS: ________ &nbsp; DATE: ______________</td><td style='border:0'>SIGNATURE: ____________</td></tr></table>" +
+      "<p><b><u>INSTRUCTIONS TO CANDIDATES</u></b></p><ol type='a' style='margin-top:0'>";
+    var ins = ["Write your name, admission number and class in the spaces provided above.", "This paper consists of " + n + " question" + (n > 1 ? "s" : "") + ". Answer ALL the questions."];
+    if (nm) ins.push("In the multiple choice questions each question has four options A, B, C and D. Choose the ONE correct answer and " + (st === "KCPE" || st === "KPSEA" ? "shade the letter in the answer grid at the end of the paper using a pencil." : "circle its letter."));
+    if (nw) ins.push("Write your answers in the spaces provided. The marks for each question are shown in brackets. Show all your working where necessary.");
+    ins.push("Do not use a calculator or any other aid unless your teacher allows it.");
+    h += ins.map(function (x) { return "<li>" + E(x) + "</li>"; }).join("") + "</ol>";
+    if (nw) {
+      var wi = [], q2 = 0; ex.items.forEach(function (q, i) { if (q.type !== "mcq") wi.push([i + 1, q.marks || 1]); });
+      h += "<p style='margin-bottom:2px'><b>FOR EXAMINER'S USE ONLY</b></p><table style='font-size:10pt'><tr><th>Question</th>" + wi.map(function (a) { return "<th>" + a[0] + "</th>"; }).join("") + "<th>Total</th></tr><tr><td>Maximum score</td>" + wi.map(function (a) { return "<td>" + a[1] + "</td>"; }).join("") + "<td>" + wi.reduce(function (s, a) { return s + a[1]; }, 0) + "</td></tr><tr><td>Candidate's score</td>" + wi.map(function () { return "<td>&nbsp;</td>"; }).join("") + "<td>&nbsp;</td></tr></table>";
     }
-    return h;
+    var lastType = "";
+    ex.items.forEach(function (q, i) {
+      if (nm && nw && q.type !== lastType) { h += "<h2 style='margin:14px 0 2px'>SECTION " + (q.type === "mcq" ? "A" : "B") + "</h2><p style='margin:0'><i>" + (q.type === "mcq" ? "Multiple choice. Answer ALL the questions in this section." : "Answer ALL the questions in this section.") + "</i></p>"; }
+      lastType = q.type;
+      h += "<p style='margin:11px 0 2px'><b>" + (i + 1) + ".</b> " + E(q.q) + (q.type !== "mcq" ? " <span style='float:right'><b>(" + q.marks + " mark" + (q.marks > 1 ? "s" : "") + ")</b></span>" : "") + "</p>";
+      if (q.type === "mcq") (q.options || []).forEach(function (o, j) { h += "<p style='margin:0 0 2px 26px'>" + "ABCD".charAt(j) + ". &nbsp;" + E(o) + "</p>"; });
+      else { var ln = Math.min(6, Math.max(2, (q.marks || 1) * 2)); for (var z = 0; z < ln; z++) h += "<div class='l'></div>"; }
+    });
+    if (nm && !nw) {
+      h += "<p style='margin-top:18px'><b>ANSWER GRID</b></p><table style='font-size:10pt;text-align:center'>";
+      for (var r = 0; r < n; r += 10) { h += "<tr>"; for (var c = r; c < Math.min(n, r + 10); c++) h += "<th>" + (c + 1) + "</th>"; h += "</tr><tr>"; for (var c2 = r; c2 < Math.min(n, r + 10); c2++) h += "<td style='height:26px'>&nbsp;</td>"; h += "</tr>"; }
+      h += "</table>";
+    }
+    h += "<p style='text-align:center;margin-top:18px'><b>*** END ***</b></p><p style='text-align:center;font-size:9pt;margin:0'>Practice paper made by Nesty AI</p>";
+    if (withKey) {
+      h += "<div style='page-break-before:always'></div><h2>MARKING SCHEME</h2>";
+      ex.items.forEach(function (q, i) { h += "<p style='margin:3px 0'><b>" + (i + 1) + ".</b> " + E(q.type === "mcq" ? "ABCD".charAt("ABCD".indexOf(q.answer)) + " - " + ((q.options || [])["ABCD".indexOf(q.answer)] || "") + " (1 mark)" : q.answer + " (" + q.marks + " mark" + (q.marks > 1 ? "s" : "") + ")") + (q.explain ? " <i>(" + E(q.explain) + ")</i>" : "") + "</p>"; });
+    }
+    return h + "</div>";
   }
   function totalMarks(ex) { return ex.items.reduce(function (a, q) { return a + (q.marks || 1); }, 0); }
 
@@ -266,11 +294,11 @@
     var s = load();
     var h = '<h2>📝 Exams</h2><div class="scm">Make a practice exam on any topic. Nesty marks it and updates your progress.</div><div class="card">' +
       '<label>Topic</label><input id="exTopic" placeholder="e.g. Fractions, Photosynthesis, The French Revolution" maxlength="80">' +
-      '<div class="g2"><div><label>Grade / level</label>' + gradeSel("exGrade") + '</div><div><label>Questions (max 20)</label><input id="exN" type="number" min="1" max="20" value="10"></div></div>' +
+      '<div class="g2"><div><label>Grade / level</label>' + gradeSel("exGrade") + '</div><div><label>Questions (up to 30)</label><input id="exN" type="number" min="1" max="30" value="10"></div></div>' +
       '<div class="g2"><div><label>Answer style</label><select id="exType"><option value="mcq">Choose A, B, C or D</option><option value="written">Write the answers</option><option value="mixed">Mixed</option></select></div><div><label>Difficulty</label><select id="exDiff"><option>Easy</option><option selected>Medium</option><option>Hard</option></select></div></div>' +
       '<label>Exam style</label><select id="exStyle"><option value="">Normal</option><option value="KCPE">Past-paper style: KCPE</option><option value="KPSEA">Past-paper style: KPSEA</option><option value="KJSEA">Past-paper style: KJSEA</option><option value="KCSE">Past-paper style: KCSE</option></select>' +
       '<label>Pictures in the exam (each picture uses 1 picture from your limit)</label><select id="exPics"><option value="0">No pictures</option><option value="1">1 picture</option><option value="2">2 pictures</option><option value="3">3 pictures</option></select>' +
-      '<div class="scm" style="margin-top:8px">Making an exam uses 1 message. If you write answers, marking them uses 1 more. Written exams can have up to 10 questions.</div>' +
+      '<div class="scm" style="margin-top:8px">Making an exam uses 1 message. If you write answers, marking them uses 1 more. Written exams can have up to 15 questions.</div>' +
       '<button class="scb" data-a="makeExam">Create my exam</button></div>';
     if (s.exams.length) {
       h += '<h3>Past exams</h3><div class="card">';
@@ -283,7 +311,7 @@
   };
   V.take = function () {
     var ex = cur.exam;
-    var h = '<div class="row"><h2 style="flex:1">' + E(ex.title) + '</h2><button class="scb sm ghost" data-a="tab" data-v="exams">Leave</button></div><div class="scm">' + E(ex.grade) + ' · ' + ex.items.length + ' questions · ' + totalMarks(ex) + ' marks</div>' +
+    var h = '<div class="row"><h2 style="flex:1">' + E(ex.title) + '</h2><button class="scb sm ghost" data-a="tab" data-v="exams">Leave</button></div><div class="scm">' + E(ex.grade) + ' · ' + ex.items.length + ' questions · ' + totalMarks(ex) + ' marks · ' + examTime(ex) + '</div>' +
       '<button class="scb sm ghost" data-a="dlPaper" data-v="0">Download paper</button><button class="scb sm ghost" data-a="dlPaper" data-v="1">Paper + answers</button>';
     ex.items.forEach(function (q, i) {
       h += '<div class="card"><b>' + (i + 1) + '. ' + E(q.q) + '</b> <span class="pill">' + q.marks + ' mark' + (q.marks > 1 ? 's' : '') + '</span>' + (q.imgData ? '<img class="qi" src="' + q.imgData + '" alt="Exam picture">' : '');
@@ -529,7 +557,7 @@
   window.openSharedQuiz = function (code) {
     try {
       var q = unb64(code);
-      if (!q || !Array.isArray(q.q) || q.q.length < 1 || q.q.length > 20) return;
+      if (!q || !Array.isArray(q.q) || q.q.length < 1 || q.q.length > 30) return;
       q.q = q.q.map(function (x) { return [String(x[0] || "").slice(0, 400), (x[1] || []).slice(0, 4).map(function (o) { return String(o).slice(0, 200); }), String(x[2] || "A").charAt(0).toUpperCase()]; });
       q.t = String(q.t || "Quiz").slice(0, 80); q.g = String(q.g || "").slice(0, 40);
       S = null; load(); build(); cur.sq = q; cur.sa = {}; TAB = "shared"; root.style.display = "flex"; document.body.style.overflow = "hidden"; render();
@@ -545,11 +573,11 @@
 
   A.makeExam = async function () {
     var topic = val("exTopic"); if (!topic) { toast("Type a topic first."); return; }
-    var type = val("exType"), n = clamp(val("exN"), 1, type === "mcq" ? 20 : 10), grade = val("exGrade"), diff = val("exDiff"), pics = clamp(val("exPics"), 0, 3);
+    var type = val("exType"), n = clamp(val("exN"), 1, type === "written" ? 15 : 30), grade = val("exGrade"), diff = val("exDiff"), pics = clamp(val("exPics"), 0, 3);
     if (pics > n) pics = n;
     busy("Nesty is writing your exam...");
     try {
-      var style = type === "mcq" ? "ALL multiple choice with 4 options" : type === "written" ? "ALL written answers (short answers or short problems)" : "about 60% multiple choice and 40% written";
+      var style = type === "mcq" ? "ALL multiple choice: every question has \"type\":\"mcq\" with exactly 4 options" : type === "written" ? "ALL written answers: every question has \"type\":\"written\" and NO options at all, no A, B, C or D anywhere (short answers or short problems). This rule is stronger than any past paper style" : "about 60% multiple choice and 40% written";
       var pst = val("exStyle"); if (pst) U("sc_past"); U("sc_exam"); if (S.lang === "sw") U("sc_swa");
       var p = "Make an exam as JSON only (no extra words, no code fence).\n" + (pst ? "Write it like a Kenyan " + pst + " past paper: the same tone, layout, wording and mark style as real " + pst + " papers, with Kenyan names, places, shillings and examples. Do not copy real papers; write new questions in that style.\n" : "") + "Topic: " + topic + ". Level: " + grade + ". Questions: exactly " + n + ". Style: " + style + ". Difficulty: " + diff + ".\n" +
         "Rules: accurate, clear questions that suit the level. Every question has \"sub\" (a 1 to 3 word sub-topic). Multiple choice: exactly 4 options WITHOUT letters, \"answer\" is one letter A, B, C or D, spread the right answers across A to D. Written: \"answer\" is a short model answer and \"marks\" is 1 to 5. \"explain\" is one friendly sentence. " +
@@ -558,9 +586,10 @@
       var j = parseJson(await ask(p));
       if (!j || !Array.isArray(j.questions) || !j.questions.length) throw { msg: "Nesty could not make that exam. Please try again." };
       var items = j.questions.slice(0, n).map(function (q) {
-        var mcq = q.type === "mcq" && Array.isArray(q.options) && q.options.length >= 2;
-        return { type: mcq ? "mcq" : "written", q: String(q.q || ""), options: mcq ? q.options.slice(0, 4).map(String) : [], answer: mcq ? String(q.answer || "A").trim().toUpperCase().charAt(0) : String(q.answer || ""), marks: clamp(q.marks, 1, 5), sub: String(q.sub || topic).slice(0, 40), explain: String(q.explain || ""), img: String(q.img || "").slice(0, 300) };
-      }).filter(function (q) { return q.q; });
+        var hasOpt = Array.isArray(q.options) && q.options.length >= 2, mcq = type === "written" ? false : (type === "mcq" ? hasOpt : (q.type === "mcq" && hasOpt)), ltr = "ABCD".indexOf(String(q.answer || "").trim().toUpperCase());
+        return { type: mcq ? "mcq" : "written", q: String(q.q || ""), options: mcq ? q.options.slice(0, 4).map(String) : [], answer: mcq ? String(q.answer || "A").trim().toUpperCase().charAt(0) : ((hasOpt && ltr > -1 && String(q.answer).trim().length === 1) ? String(q.options[ltr]) : String(q.answer || "")), marks: clamp(q.marks, 1, 5), sub: String(q.sub || topic).slice(0, 40), explain: String(q.explain || ""), img: String(q.img || "").slice(0, 300) };
+      }).filter(function (q) { return q.q && (type !== "mcq" || q.type === "mcq"); });
+      items = items.filter(function (q) { return q.type === "mcq"; }).concat(items.filter(function (q) { return q.type !== "mcq"; }));
       if (!items.length) throw { msg: "Nesty could not make that exam. Please try again." };
       var want = items.filter(function (q) { return q.img; }).slice(0, pics);
       for (var k = 0; k < want.length; k++) {
@@ -573,7 +602,7 @@
           if (d.image) { want[k].imgData = d.image; try { markUsed("img"); } catch (e) {} }
         } catch (e2) {}
       }
-      cur.exam = { id: nid(), topic: topic, grade: grade, title: String(j.title || topic + " exam"), items: items, at: Date.now() };
+      cur.exam = { id: nid(), topic: topic, grade: grade, title: String(j.title || topic + " exam"), items: items, style: pst, kind: type, at: Date.now() };
       cur.ans = {}; cur.t0 = Date.now(); busy(""); TAB = "take"; render(); touch();
     } catch (e) { fail(e); }
   };

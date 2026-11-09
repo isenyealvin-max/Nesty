@@ -70,6 +70,7 @@
     var p = load().profile;
     return '<div class="m">Make professional papers for your business. Nothing here uses your Nesty messages.</div>' +
       (!p.name ? '<div class="card gold"><b>Start here</b><div class="m">Add your business name, phone and logo once. They appear on every invoice.</div><button class="b green" data-o="profile">Set up my business</button></div>' : '') +
+      '<div class="card gold"><b>🎨 Brand Studio</b><div class="m">Design your logo, ads, shop banner, payment sign and cards, then print them or save them as pictures.</div><div class="tiles" style="margin-top:8px"><button class="tile" data-x="logo"><i>🎨</i>Logo maker</button><button class="tile" data-x="ad"><i>📣</i>Ad poster</button><button class="tile" data-x="banner"><i>🪧</i>Shop banner</button><button class="tile" data-x="pay"><i>💳</i>Payment sign</button><button class="tile" data-x="card"><i>📇</i>Business card</button><button class="tile" data-x="loyal"><i>🎟️</i>Loyalty card</button></div><button class="b green" data-x="brand">🏪 My brand details</button></div>' +
       '<div class="tiles" style="margin-top:10px"><button class="tile" data-o="invoice"><i>🧾</i>Invoice, receipt or quotation</button><button class="tile" data-o="cash"><i>📒</i>Cash book</button><button class="tile" data-o="budget"><i>🧮</i>Budget planner</button><button class="tile" data-o="prices"><i>🏷️</i>Price list</button><button class="tile" data-o="profile"><i>🏢</i>My business</button></div>' +
       '<div class="card"><b>Need words or a spreadsheet?</b><div class="m">Ask Hiaru in the chat: a business plan, an Excel table with borders, or a PowerPoint with charts.</div></div>';
   };
@@ -160,6 +161,7 @@
     if (!t) return;
     load();
     var g = function (k) { return t.getAttribute(k); };
+    if (g("data-x")) { if (window.goBrand) goBrand(g("data-x")); return; }
     if (g("data-o")) { open(g("data-o")); return; }
     if (g("data-rm") !== null) { inv.items.splice(parseInt(g("data-rm"), 10), 1); if (!inv.items.length) inv.items.push({ d: "", q: "1", p: "" }); B.draft = inv; save(); open("invoice"); return; }
     if (g("data-add")) { inv.items.push({ d: "", q: "1", p: "" }); B.draft = inv; save(); open("invoice"); return; }

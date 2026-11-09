@@ -81,6 +81,7 @@ td,th{padding:7px 6px;border-bottom:1px solid #ddd;text-align:left}
     <select id="oaMode"><option value="off">Off (never use OpenAI)</option><option value="backup">Backup only (when Groq, Gemini and OpenRouter fail)</option><option value="first">First (before the others, costs the most)</option></select>
     <button onclick="oaSave()">Save</button> <span id="oaNote" class="muted"></span>
     <div class="muted">Add the key in Cloudflare as OPENAI_API_KEY. Models are not fixed: set OPENAI_MODELS in Cloudflare (comma separated, tried in order, e.g. gpt-4.1-mini,gpt-4o-mini).</div></div>
+  <div id="provHead" style="margin-top:10px;font-weight:700"></div>
   <div id="provNow" style="margin-top:10px;overflow-x:auto"></div>
   <div id="provUse" class="muted" style="margin-top:8px"></div>
 </div>
@@ -102,6 +103,7 @@ td,th{padding:7px 6px;border-bottom:1px solid #ddd;text-align:left}
   <div class="muted">Shows as a banner to everyone who opens Nesty, until it expires.</div>
   <label for="annText">Message (200 letters)</label><input id="annText" maxlength="200" placeholder="e.g. New: Study Center stories now in Kiswahili!">
   <div class="row"><div><label for="annLink">Link (optional)</label><input id="annLink" placeholder="https://..."></div><div><label for="annDays">Days to show</label><input id="annDays" type="number" min="1" max="30" value="3"></div></div>
+  <label style="display:flex;gap:8px;align-items:center;margin:8px 0"><input type="checkbox" id="annPush" checked style="width:auto"> Also send it now as a push notification</label>
   <button onclick="sendAnn()">Publish</button> <button class="alt" onclick="clearAnn()">Remove current</button>
   <div id="annNow" class="muted" style="margin-top:6px"></div>
 </div>
@@ -257,7 +259,8 @@ function showNow(C, days){
     r.all += C[k]; if(m[1] === today) r.t += C[k];
   });
   var list = Object.keys(rows).sort(function(a, b){ return rows[b].t - rows[a].t || rows[b].all - rows[a].all; });
-  $("provNow").innerHTML = list.length ? '<b>Which AI is answering users</b><table><tr><th>Provider</th><th>Model</th><th>Today</th><th>14 days</th></tr>' + list.map(function(n, i){
+  $("provHead").innerHTML = list.length && rows[list[0]].t ? "Right now users are being answered by: <span class=\"ok\">" + esc(provOf(list[0])) + " (API) &middot; " + esc(list[0]) + " (real model)</span>" : "";
+  $("provNow").innerHTML = list.length ? '<b>Which AI is answering users</b><table><tr><th>API</th><th>Real model</th><th>Today</th><th>14 days</th></tr>' + list.map(function(n, i){
     return '<tr><td>' + esc(provOf(n)) + '</td><td>' + esc(n) + (i === 0 && rows[n].t ? ' <span class="ok">&#9679; main today</span>' : '') + '</td><td>' + rows[n].t + '</td><td>' + rows[n].all + '</td></tr>';
   }).join("") + '</table>' : '<div class="muted">No answers counted yet. Numbers appear after users chat.</div>';
 }
@@ -285,14 +288,15 @@ async function giveP(){
 }
 async function sendAnn(){
   var d = await call("/api/admin/announce", {text: $("annText").value, link: $("annLink").value, days: parseInt($("annDays").value, 10) || 3});
-  if(d){ $("annNow").textContent = "Showing now: " + d.announce.text; }
+  if(d){ $("annNow").textContent = "Showing now: " + d.announce.text;
+    if($("annPush").checked){ $("pnTitle").value = "Nesty AI \ud83d\udce3"; $("pnText").value = $("annText").value; $("pnLink").value = $("annLink").value; await sendPush(true); } }
 }
 async function pushCount(){
   var d = await call("/api/admin/pushall", {count: 1});
   if(d) $("pnOut").textContent = d.total + " people, " + d.devices + " phones can get notifications.";
 }
-async function sendPush(){
-  if(!confirm("Send this notification to everyone?")) return;
+async function sendPush(skip){
+  if(!skip && !confirm("Send this notification to everyone?")) return;
   var off = 0, sent = 0, dead = 0, total = 0;
   $("pnOut").textContent = "Sending...";
   while(off !== null){
