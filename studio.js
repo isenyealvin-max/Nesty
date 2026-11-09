@@ -212,8 +212,8 @@
     "#bs .b{display:inline-block;background:#ffc933;color:#12301f;border:0;border-radius:12px;padding:10px 15px;font-weight:800;font-size:14px;margin:8px 8px 0 0;font-family:inherit}#bs .b.green{background:#1f8a5b;color:#fff}#bs .b.ghost{background:#fff;border:1.5px solid #1f8a5b;color:#176b47}" +
     "#bs .tiles{display:grid;grid-template-columns:1fr 1fr;gap:10px}#bs .tile{background:#e3f5ea;border:1.5px solid #bfe3cf;border-radius:16px;padding:14px 8px;text-align:center;font-weight:700;color:#12301f;font-family:inherit;font-size:14px}#bs .tile i{display:block;font-style:normal;font-size:27px;margin-bottom:3px}" +
     "#bs .prev{background:#eef3ef;border:1.5px dashed #9fd1b6;border-radius:14px;padding:8px;margin:10px 0}#bs .prev svg{width:100%;height:auto;display:block;border-radius:8px;background:#fff}" +
-    "#bs .ic{display:flex;flex-wrap:wrap;gap:6px}#bs .ic button{width:42px;height:42px;font-size:22px;border:2px solid #cfe8da;background:#fff;border-radius:10px}#bs .ic button.on{border-color:#ffb800;background:#fff3c4}" +
-    "#bs .sw{display:flex;flex-wrap:wrap;gap:8px}#bs .sw button{width:46px;height:34px;border-radius:9px;border:3px solid #fff;box-shadow:0 0 0 2px #cfe8da;background-clip:padding-box}#bs .sw button.on{box-shadow:0 0 0 3px #ffb800}" +
+    "#bs .bic{display:flex;flex-wrap:wrap;gap:6px}#bs .bic button{width:42px;height:42px;font-size:22px;border:2px solid #cfe8da;background:#fff;border-radius:10px}#bs .bic button.on{border-color:#ffb800;background:#fff3c4}" +
+    "#bs .bsw{display:flex;flex-wrap:wrap;gap:8px}#bs .bsw button{width:46px;height:34px;border-radius:9px;border:3px solid #fff;box-shadow:0 0 0 2px #cfe8da;background-clip:padding-box}#bs .bsw button.on{box-shadow:0 0 0 3px #ffb800}" +
     "#bs .chips button{background:#fff3c4;border:1.5px solid #ffd566;border-radius:20px;padding:6px 11px;margin:5px 6px 0 0;font-family:inherit;font-size:13.5px}";
   var TITLES = { menu: "Brand Studio", brand: "My brand", logo: "Logo maker", ad: "Ad poster", banner: "Shop banner", pay: "Payment sign", card: "Business card", loyal: "Loyalty card" };
   function build() {
@@ -229,10 +229,10 @@
   function fld(k, label, ph, max, type) { return '<label>' + label + '</label><input data-k="' + k + '" value="' + X(D[k] || "") + '" maxlength="' + (max || 60) + '" placeholder="' + X(ph || "") + '"' + (type ? ' inputmode="' + type + '"' : '') + '>'; }
   function sel(k, label, opts) { return '<label>' + label + '</label><select data-k="' + k + '" data-n="1">' + opts.map(function (o, i) { return '<option value="' + i + '"' + (String(D[k]) === String(i) ? " selected" : "") + '>' + X(o) + '</option>'; }).join("") + '</select>'; }
   function look() {
-    return '<label>Colours</label><div class="sw">' + PAL.map(function (c, i) { return '<button data-pal="' + i + '" class="' + (D.pal === i ? "on" : "") + '" style="background:linear-gradient(90deg,' + c[0] + ' 55%,' + c[1] + ' 55%)" title="' + PALN[i] + '"></button>'; }).join("") + '</div>' +
+    return '<label>Colours</label><div class="bsw">' + PAL.map(function (c, i) { return '<button data-pal="' + i + '" class="' + (D.pal === i ? "on" : "") + '" style="background:linear-gradient(90deg,' + c[0] + ' 55%,' + c[1] + ' 55%)" title="' + PALN[i] + '"></button>'; }).join("") + '</div>' +
       sel("font", "Letter style", FONTS.map(function (f) { return f[0]; }));
   }
-  function icons() { return '<label>Symbol (or the first letters of your name)</label><div class="ic">' + ICONS.map(function (c) { return '<button data-ic="' + c + '" class="' + (D.icon === c ? "on" : "") + '">' + (c === "ABC" ? "<b style='font-size:15px'>ABC</b>" : c) + '</button>'; }).join("") + '</div>'; }
+  function icons() { return '<label>Symbol (or the first letters of your name)</label><div class="bic">' + ICONS.map(function (c) { return '<button data-ic="' + c + '" class="' + (D.icon === c ? "on" : "") + '">' + (c === "ABC" ? "<b style='font-size:15px'>ABC</b>" : c) + '</button>'; }).join("") + '</div>'; }
   function basics() { return fld("name", "Business name", "e.g. Mama Njeri Fresh Foods", 40) + '<div class="g2"><div>' + fld("phone", "Phone", "07...", 20, "tel") + '</div><div>' + fld("loc", "Location", "Town, street", 50) + '</div></div>'; }
   function actions(name, d, extra) {
     return '<div><button class="b green" data-act="print">🖨️ Print</button><button class="b ghost" data-act="png">⬇️ Save picture</button>' + (extra || "") + '</div>';
