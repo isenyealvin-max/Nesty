@@ -12,8 +12,27 @@ function needsResearch(prompt) {
   );
 }
 
+const ART_STYLE = /\b(cartoon|anime|animated|drawing|drawn|sketch|painting|painted|illustration|3d|pixel|logo|icon|poster|flat|vector|watercolou?r|comic|manga|pencil|oil|digital art|artwork|caricature|clip ?art|sticker|emoji|cute|chibi|fantasy|abstract|stylised|stylized|neon|cyberpunk|pop art)\b/i;
+const REAL_HINT = "Make it a photorealistic, true-to-life photograph: natural daylight and shadows, real textures and materials, accurate proportions and colours, sharp focus, shot on a professional DSLR camera, 35mm lens, high detail. Not a cartoon, not an illustration, not a painting.";
+
+// Free backup research: the Wikipedia summary of the thing in the request (no key needed).
+async function wikiNotes(prompt) {
+  try {
+    const q = prompt.replace(/\b(please|create|make|generate|draw|show|give me|me|a|an|the|picture|image|photo|of|current|latest|new|real|realistic)\b/gi, " ").replace(/\s+/g, " ").trim().slice(0, 120);
+    if (q.length < 3) return "";
+    const ctrl = new AbortController();
+    const timer = setTimeout(function () { ctrl.abort(); }, 5000);
+    const r = await fetch("https://en.wikipedia.org/w/api.php?action=query&generator=search&gsrsearch=" + encodeURIComponent(q) + "&gsrlimit=1&prop=extracts&exintro=1&explaintext=1&exchars=700&format=json", { signal: ctrl.signal, headers: { "User-Agent": "NestyAI/1.0" } });
+    clearTimeout(timer);
+    if (!r.ok) return "";
+    const d = await r.json();
+    const pg = d && d.query && d.query.pages && Object.values(d.query.pages)[0];
+    return pg && pg.extract ? ("Facts about " + pg.title + ": " + pg.extract).slice(0, 700) : "";
+  } catch (e) { return ""; }
+}
+
 async function researchSubject(env, prompt) {
-  if (!env.GEMINI_API_KEY) return "";
+  if (!env.GEMINI_API_KEY) return wikiNotes(prompt);
   try {
     const ctrl = new AbortController();
     const timer = setTimeout(function () { ctrl.abort(); }, 9000);
@@ -37,12 +56,13 @@ async function researchSubject(env, prompt) {
       }
     );
     clearTimeout(timer);
-    if (!res.ok) return "";
+    if (!res.ok) return wikiNotes(prompt);
     const d = await res.json();
     const parts = d && d.candidates && d.candidates[0] && d.candidates[0].content && d.candidates[0].content.parts;
-    return parts ? parts.map(function (p) { return p.text || ""; }).join("").trim().slice(0, 500) : "";
+    const t = parts ? parts.map(function (p) { return p.text || ""; }).join("").trim().slice(0, 500) : "";
+    return t || wikiNotes(prompt);
   } catch (e) {
-    return "";
+    return wikiNotes(prompt);
   }
 }
 
@@ -60,7 +80,7 @@ async function improvePrompt(env, prompt, notes) {
           {
             role: "system",
             content:
-              "You write prompts for an AI image generator. Turn the user's request, in any language, into ONE vivid English image prompt of at most 70 words. Follow the user's instructions exactly. Describe the subject, style, lighting and mood, and describe logos or brands by their shapes and colours. If real people are named, ask for a stylised illustration instead of a photograph and do not use their names. Output only the prompt.",
+              "You write prompts for an AI image generator. Turn the user's request, in any language, into ONE vivid English image prompt of at most 70 words. Follow the user's instructions exactly. Unless the user clearly asks for another style (cartoon, anime, drawing, painting, logo, poster), ALWAYS ask for a photorealistic photograph, shot on a DSLR, natural light, real textures, accurate proportions. For real places and buildings use the reference notes to get the real shape, height, colours and surroundings right. Describe the subject, lighting and mood, and describe logos or brands by their shapes and colours. If real people are named, ask for a stylised illustration instead of a photograph and do not use their names. Output only the prompt.",
           },
           { role: "user", content: prompt + (notes ? "\n\nReference notes: " + notes : "") },
         ],
@@ -186,6 +206,7 @@ export async function handleImage(request, env, d) {
     ? "Edit the attached picture exactly as asked and keep everything else the same. Request: " + prompt
     : prompt +
       (notes ? "\n\nVisual reference notes from web research: " + notes : "") +
+      (ART_STYLE.test(prompt) ? "" : "\n\n" + REAL_HINT) +
       "\n\nFollow the request exactly. If real people are named, draw a stylised illustration, not a photorealistic likeness. Do not add watermarks or extra text unless asked.";
   const g = await geminiImage(env, gemText, b64In, mimeIn);
   if (g) {
@@ -212,8 +233,8 @@ export async function handleImage(request, env, d) {
       });
     } else {
       out = await env.AI.run("@cf/black-forest-labs/flux-1-schnell", {
-        prompt: english,
-        steps: 4,
+        prompt: ART_STYLE.test(prompt) ? english : (english + ". Photorealistic photograph, DSLR, natural light, real textures, high detail, not a cartoon or illustration.").slice(0, 2000),
+        steps: 8,
       });
     }
     const b64 = await toBase64(out);
