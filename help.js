@@ -136,7 +136,7 @@
       ["🔎 Deep search", "Shows with Tyra: searches many websites and writes one cited report.", "#deepBtn"],
       ["💼 Business tools", "Shows with Hiaru: Brand Studio (logo, ads, banner, payment sign, cards), invoices, cash book, budget, price list.", "#bzBtn"],
       ["🏢 Office Center", "Shows with Hiaru: letters, CV, minutes, reports, agreements and more.", "#ofBtn"],
-      ["🔬 Research Center", "Shows with Tyra: proposals, questionnaires, citations, notebook.", "#rsBtn"],
+      ["🔬 Research Center", "Shows with Tyra: proposals, questionnaires, citations, notebook.", "#rcBtn"],
       ["💬 Help", "This Help Center.", "#xHelp"],
       ["✨ More", "Templates, to-do and reminders, daily briefing, invite friends, backup, display options.", "#xMore"]]],
     ["5. The message box", [

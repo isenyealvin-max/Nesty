@@ -269,7 +269,19 @@ header .hbtn{margin:0;padding:7px 10px;font-size:13px;white-space:nowrap}
 #tip button{border:0;cursor:pointer;font-family:inherit}
 #tipGo{background:#3a2a00;color:#ffd84d;border-radius:12px;padding:8px 12px;font-weight:800;font-size:13px;white-space:nowrap}
 #tipX{background:none;color:#6b4a00;font-size:24px;line-height:1;padding:0 6px}
-#boot{padding:22vh 0 0}
+#boot{position:fixed;inset:0;z-index:99999;background:#fff;padding:20vh 0 0;transition:opacity .5s ease;color:#1a1a1a}
+#boot.bye{opacity:0;pointer-events:none}
+#bootTxt{font-size:34px;font-weight:900;letter-spacing:3px;display:flex;justify-content:center;gap:2px;min-height:44px;margin-top:6px}
+#bootTxt span{opacity:0;transform:translateY(18px) scale(.7);display:inline-block;background:linear-gradient(100deg,#8a5d0a 0%,#e9c24a 25%,#fff2a8 45%,#d4a62a 62%,#8a5d0a 100%);background-size:220% 100%;-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;color:transparent;animation:bTxtIn .55s cubic-bezier(.2,1.4,.4,1) forwards,bTxtShine 2.4s linear infinite}
+#bootTxt span.sp{width:12px}
+@keyframes bTxtIn{to{opacity:1;transform:none}}
+@keyframes bTxtShine{from{background-position:120% 0}to{background-position:-100% 0}}
+#bootRed{position:absolute;right:18px;bottom:calc(18px + env(safe-area-inset-bottom));display:flex;align-items:center;gap:8px;font-size:12px;font-weight:700;color:#8a8a8a;opacity:0;animation:bRedIn .8s ease 3.3s forwards}
+#bootRed small{display:block;font-size:10px;font-weight:600;color:#a0a0a0;letter-spacing:.3px}
+#bootRed b{color:#c8102e;font-size:14px;letter-spacing:.4px}
+@keyframes bRedIn{to{opacity:1}}
+.redlogo{display:inline-block;vertical-align:middle;flex:none}
+@media (prefers-color-scheme:dark){#boot{background:#111;color:#eee}}
 #bootLogo{width:132px;height:132px;margin:0 auto 14px}
 #authLogo{overflow:hidden;background:#fff;width:96px;height:96px;border-radius:24px}
 #welcome img{animation:nFloat 4.5s ease-in-out infinite}
@@ -294,7 +306,7 @@ header .hbtn{margin:0;padding:7px 10px;font-size:13px;white-space:nowrap}
 </head>
 <body>
 
-<div id="boot"><div id="bootLogo"></div><div id="bootTxt">Loading...</div></div>
+<div id="boot"><div id="bootLogo"></div><div id="bootTxt" aria-label="Nesty AI"></div><div id="bootRed"></div></div>
 <script>window.NESTY_LOGO = function(uid, animate, opts){
   var u = String(uid || "x"), A = animate !== false, o = opts || {}, c = "nl" + u;
   var N = "M58 60 L96 60 L96 65 L94.5 65 L124 124 L124 65 L116 65 L116 60 L138 60 L138 65 L130 65 L130 136 L108 136 L76 72 L76 131 L84 131 L84 136 L62 136 L62 131 L70 131 L70 65 L58 65 Z";
@@ -360,7 +372,26 @@ header .hbtn{margin:0;padding:7px 10px;font-size:13px;white-space:nowrap}
     '</svg>';
 };
 
-document.getElementById("bootLogo").innerHTML = window.NESTY_LOGO("b", true);</script>
+document.getElementById("bootLogo").innerHTML = window.NESTY_LOGO("b", true);
+window.RED_LOGO = function(px){
+  var u = "r" + Math.floor(Math.random()*1e6);
+  return '<svg class="redlogo" width="'+px+'" height="'+px+'" viewBox="0 0 48 48" role="img" aria-label="Red element"><defs><linearGradient id="'+u+'" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#ff5a5a"/><stop offset="1" stop-color="#a50d22"/></linearGradient></defs><path d="M24 2 L44 14 V34 L24 46 L4 34 V14 Z" fill="url(#'+u+')"/><path d="M24 2 L44 14 L24 24 L4 14 Z" fill="#fff" opacity=".18"/><circle cx="24" cy="25" r="8.5" fill="none" stroke="#fff" stroke-width="3"/><circle cx="24" cy="25" r="2.8" fill="#fff"/></svg>';
+};
+(function(){
+  var T0 = Date.now(), word = "Nesty AI", t = document.getElementById("bootTxt"), h = "";
+  for(var i = 0; i < word.length; i++){
+    h += word[i] === " " ? '<span class="sp"></span>' : '<span style="animation-delay:'+(2.6 + i*0.12).toFixed(2)+'s,'+(3.2+i*0.12).toFixed(2)+'s">'+word[i]+'</span>';
+  }
+  t.innerHTML = h;
+  document.getElementById("bootRed").innerHTML = window.RED_LOGO(30) + '<div><small>Made by</small><b>Red element</b></div>';
+  window.bootDone = function(){
+    var b = document.getElementById("boot"); if(!b || b.getAttribute("data-done")) return;
+    b.setAttribute("data-done", "1");
+    var wait = Math.max(0, 5200 - (Date.now() - T0));
+    setTimeout(function(){ b.classList.add("bye"); setTimeout(function(){ b.style.display = "none"; }, 520); }, wait);
+  };
+})();
+</script>
 
 <div id="modelSheet" onclick="if(event.target===this)closeModelMenu()"><div class="box"><h3>Choose a model</h3><div class="muted2" id="modelNote"></div><div id="modelList"></div></div></div>
 
@@ -649,8 +680,9 @@ document.getElementById("bootLogo").innerHTML = window.NESTY_LOGO("b", true);</s
 <div id="updateBar"></div>
 
 <script>
-var VERSION = "V29";
+var VERSION = "V30";
 var VERSIONS = [
+  ["V30", "New opening screen: the logo animates, then Nesty AI appears in animated gold, with the Red element logo near the bottom. Fixed the missing Research Center button. Invite days now only count for a fresh link."],
   ["V29", "Brand Studio (logo, ads, banner, payment sign, cards), Office Center, Research Center, 30 question exams that look like Kenyan school papers, Nesty now for ages 5 and up, version history."],
   ["V28", "New models Lexy (sports, free), Fenny (fitness and body care) and Vilda (career and family). New plans Gold, Platinum and Max with faster limits. Ultra now has 3 models."],
   ["V27", "Real push notifications even when Nesty is closed, birthday and plan messages, invite reward of 3 free days each, link previews on WhatsApp."],
@@ -1099,8 +1131,8 @@ function applyLang(){
   $("sideLinks").innerHTML = links + " &middot; " + pl;
   $("dataNote").innerHTML = L("s_data_note", {p: pl});
   var vtxt = "Nesty AI " + VERSION + " \u00b7 Red element";
-  $("verSide").textContent = vtxt;
-  $("verAuth").textContent = vtxt;
+  $("verSide").innerHTML = window.RED_LOGO(16) + ' ' + vtxt;
+  $("verAuth").innerHTML = window.RED_LOGO(18) + ' ' + vtxt;
   $("aboutTxt").textContent = "Nesty AI " + VERSION + " \u2014 " + L("s_made");
   if(!$("resendBtn").disabled) $("resendBtn").textContent = L("a_resend");
   $("updateBar").textContent = L("upd");
@@ -1234,7 +1266,7 @@ function backToForm(){
 
 function showAuth(){
   clearInterval(resendTimer);
-  $("boot").style.display = "none";
+  window.bootDone();
   $("landing").style.display = "none";
   setThemeColor(curBg);
   $("app").style.display = "none";
@@ -1288,7 +1320,7 @@ async function saveProfile(){
 function showApp(){
   if(user && needProfile()){ showProfile(); return; }
   try{ var pf0 = user.prefs || {}, a0 = calcAge(pf0.dob); if(a0 && pf0.age !== a0) savePrefs({age: a0}).catch(function(){}); }catch(e){}
-  $("boot").style.display = "none";
+  window.bootDone();
   $("landing").style.display = "none";
   setThemeColor(curBg);
   $("auth").style.display = "none";
@@ -1386,7 +1418,7 @@ async function forgotPassword(){
 }
 function showOnlyAuth(step){
   clearInterval(resendTimer);
-  $("boot").style.display = "none";
+  window.bootDone();
   $("landing").style.display = "none";
   setThemeColor(curBg);
   $("app").style.display = "none";
@@ -3170,8 +3202,8 @@ function syncModes(){
   if(!of){ of = document.createElement("button"); of.className = "cpbtn"; of.id = "ofBtn"; of.onclick = function(){ if(window.goOffice) goOffice(); }; row.appendChild(of); }
   of.textContent = "\ud83c\udfe2 Office Center";
   of.style.display = (m === "hiaru") ? "" : "none";
-  var rs = $("rsBtn");
-  if(!rs){ rs = document.createElement("button"); rs.className = "cpbtn"; rs.id = "rsBtn"; rs.onclick = function(){ if(window.goResearch) goResearch(); }; row.appendChild(rs); }
+  var rs = $("rcBtn");
+  if(!rs){ rs = document.createElement("button"); rs.className = "cpbtn"; rs.id = "rcBtn"; rs.onclick = function(){ if(window.goResearch) goResearch(); }; row.appendChild(rs); }
   rs.textContent = "\ud83d\udd2c Research Center";
   rs.style.display = (m === "tyra") ? "" : "none";
   row.style.display = "";
@@ -3457,7 +3489,7 @@ function lpGo(dir){
 }
 function showLanding(){
   clearInterval(resendTimer);
-  $("boot").style.display = "none";
+  window.bootDone();
   $("app").style.display = "none";
   $("auth").style.display = "none";
   $("landing").style.display = "flex";

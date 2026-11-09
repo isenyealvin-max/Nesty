@@ -38,7 +38,7 @@
     "#xFilt{display:flex;gap:6px;flex-wrap:wrap;margin:6px 0}#xFilt button{background:var(--soft);border:1px solid var(--border);border-radius:16px;padding:4px 10px;font-size:12.5px;color:var(--text);font-family:inherit}#xFilt button.on{background:#ffc933;color:#2a2200;border-color:#ffc933;font-weight:700}" +
     "#modeRow .xb{background:#fff3c4!important;color:#2a2200!important;border:1px solid #ffd566!important;font-weight:700}" +
     "#bzBtn{background:#ffc933!important;color:#2a2200!important;border:0!important;font-weight:800}" +
-    "#ofBtn{background:#0f4c81!important;color:#fff!important;border:0!important;font-weight:800}#rsBtn{background:#7a1f4d!important;color:#fff!important;border:0!important;font-weight:800}";
+    "#ofBtn{background:#0f4c81!important;color:#fff!important;border:0!important;font-weight:800}#rcBtn{background:#7a1f4d!important;color:#fff!important;border:0!important;font-weight:800}";
   var st = document.createElement("style"); st.textContent = CSS; document.head.appendChild(st);
   var tsStyle = document.createElement("style"); tsStyle.textContent = ".msg{font-size:calc(15.5px*var(--ts,1))!important}#box{font-size:calc(16px*var(--ts,1))}"; document.head.appendChild(tsStyle);
   function applyTs() { var v = parseFloat(localStorage.getItem("nestyTs") || "1") || 1; document.documentElement.style.setProperty("--ts", String(v)); }
@@ -453,15 +453,16 @@
   (function grab() {
     try {
       var u = new URL(location.href), ch = false;
-      if (u.searchParams.get("ref")) { localStorage.setItem("nestyRef", u.searchParams.get("ref")); u.searchParams.delete("ref"); ch = true; }
+      if (u.searchParams.get("ref")) { localStorage.setItem("nestyRef", u.searchParams.get("ref")); localStorage.setItem("nestyRefAt", String(Date.now())); u.searchParams.delete("ref"); ch = true; }
       if (u.searchParams.get("quiz")) { localStorage.setItem("nestyQuiz", u.searchParams.get("quiz")); u.searchParams.delete("quiz"); ch = true; }
       if (ch) history.replaceState(null, "", u.pathname + (u.searchParams.toString() ? "?" + u.searchParams.toString() : "") + u.hash);
     } catch (e) {}
   })();
   async function claimRef() {
-    var r = localStorage.getItem("nestyRef");
+    var r = localStorage.getItem("nestyRef"), at = +localStorage.getItem("nestyRefAt") || 0;
     if (!r) return;
-    try { localStorage.removeItem("nestyRef"); } catch (e) {}
+    try { localStorage.removeItem("nestyRef"); localStorage.removeItem("nestyRefAt"); } catch (e) {}
+    if (!at || Date.now() - at > 3 * 3600000) return;
     try {
       var d = await api("/api/referral", { action: "claim", code: r });
       if (d && d.ok) { toast("🎁 Welcome! You and your friend each got " + d.days + " days of Go."); loadMe(); }

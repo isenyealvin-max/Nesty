@@ -967,7 +967,7 @@ async function handleReferral(request, env) {
     const code = String(b.code || "").toUpperCase().replace(/[^A-Z0-9]/g, "").slice(0, 8);
     if (code.length !== 8) return json({ ok: false, error: "That invite link is not valid." });
     if (code === mine) return json({ ok: false, error: "You cannot use your own invite." });
-    if (!user.created || Date.now() - user.created > 7 * 86400000) return json({ ok: false, error: "Invites only work for new accounts, in their first 7 days." });
+    if (!user.created || Date.now() - user.created > 86400000) return json({ ok: false, error: "Invites only work for new accounts, in their first day." });
     if (await reg.kvGet("cl:" + user.$id)) return json({ ok: false, error: "You already used an invite." });
     const ref = await reg.kvGet("c:" + code);
     if (!ref) return json({ ok: false, error: "That invite link is not valid." });
