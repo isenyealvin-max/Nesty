@@ -15,20 +15,40 @@ function needsResearch(prompt) {
 const ART_STYLE = /\b(cartoon|anime|animated|drawing|drawn|sketch|painting|painted|illustration|3d|pixel|logo|icon|poster|flat|vector|watercolou?r|comic|manga|pencil|oil|digital art|artwork|caricature|clip ?art|sticker|emoji|cute|chibi|fantasy|abstract|stylised|stylized|neon|cyberpunk|pop art)\b/i;
 const REAL_HINT = "Make it a photorealistic, true-to-life photograph: natural daylight and shadows, real textures and materials, accurate proportions and colours, sharp focus, shot on a professional DSLR camera, 35mm lens, high detail. Not a cartoon, not an illustration, not a painting.";
 
-// Free backup research: the Wikipedia summary of the thing in the request (no key needed).
-async function wikiNotes(prompt) {
+// Free research on Wikipedia (no key): facts about the subject plus its main photo.
+async function wikiInfo(prompt, wantPhoto) {
   try {
     const q = prompt.replace(/\b(please|create|make|generate|draw|show|give me|me|a|an|the|picture|image|photo|of|current|latest|new|real|realistic)\b/gi, " ").replace(/\s+/g, " ").trim().slice(0, 120);
-    if (q.length < 3) return "";
+    if (q.length < 3) return null;
     const ctrl = new AbortController();
-    const timer = setTimeout(function () { ctrl.abort(); }, 5000);
-    const r = await fetch("https://en.wikipedia.org/w/api.php?action=query&generator=search&gsrsearch=" + encodeURIComponent(q) + "&gsrlimit=1&prop=extracts&exintro=1&explaintext=1&exchars=700&format=json", { signal: ctrl.signal, headers: { "User-Agent": "NestyAI/1.0" } });
+    const timer = setTimeout(function () { ctrl.abort(); }, 6000);
+    const r = await fetch("https://en.wikipedia.org/w/api.php?action=query&generator=search&gsrsearch=" + encodeURIComponent(q) + "&gsrlimit=1&prop=extracts%7Cpageimages&exintro=1&explaintext=1&exchars=700&piprop=thumbnail&pithumbsize=800&format=json", { signal: ctrl.signal, headers: { "User-Agent": "NestyAI/1.0 (https://nestyai.nestyapp.workers.dev)" } });
     clearTimeout(timer);
-    if (!r.ok) return "";
+    if (!r.ok) return null;
     const d = await r.json();
     const pg = d && d.query && d.query.pages && Object.values(d.query.pages)[0];
-    return pg && pg.extract ? ("Facts about " + pg.title + ": " + pg.extract).slice(0, 700) : "";
-  } catch (e) { return ""; }
+    if (!pg) return null;
+    const out = { text: pg.extract ? ("Facts about " + pg.title + ": " + pg.extract).slice(0, 700) : "", b64: "" };
+    if (wantPhoto && pg.thumbnail && pg.thumbnail.source && /^https:\/\/upload\.wikimedia\.org\//.test(pg.thumbnail.source)) {
+      const c2 = new AbortController();
+      const t2 = setTimeout(function () { c2.abort(); }, 8000);
+      const ir = await fetch(pg.thumbnail.source, { signal: c2.signal, headers: { "User-Agent": "NestyAI/1.0 (https://nestyai.nestyapp.workers.dev)" } });
+      clearTimeout(t2);
+      if (ir.ok) {
+        const buf = new Uint8Array(await ir.arrayBuffer());
+        if (buf.length < 1500000) {
+          let bin = "";
+          for (let k = 0; k < buf.length; k += 0x8000) bin += String.fromCharCode.apply(null, buf.subarray(k, k + 0x8000));
+          out.b64 = btoa(bin);
+        }
+      }
+    }
+    return out;
+  } catch (e) { return null; }
+}
+async function wikiNotes(prompt) {
+  const w = await wikiInfo(prompt, false);
+  return w ? w.text : "";
 }
 
 async function researchSubject(env, prompt) {
@@ -218,6 +238,11 @@ export async function handleImage(request, env, d) {
     if (stb) await stb.refund();
     return json({ reply: "The picture maker is busy right now. Please try again in a few minutes." });
   }
+  let refPhoto = "";
+  if (!inputImage && !ART_STYLE.test(prompt) && needsResearch(prompt)) {
+    const w = await wikiInfo(prompt, true);
+    if (w && w.b64) refPhoto = w.b64;
+  }
   const english = await improvePrompt(env, prompt, notes);
   if (BLOCK.test(english)) {
     if (stb) await stb.refund();
@@ -231,6 +256,16 @@ export async function handleImage(request, env, d) {
         input_image: b64In,
         steps: 20,
       });
+    } else if (refPhoto) {
+      try {
+        out = await env.AI.run("@cf/black-forest-labs/flux-2-dev", {
+          prompt: english + ". Use the attached reference photo of the real subject: copy its real shape, proportions, colours and details exactly. Photorealistic photograph, natural light, sharp focus, no text or logos added.",
+          input_image: refPhoto,
+          steps: 20,
+        });
+      } catch (e2) {
+        out = await env.AI.run("@cf/black-forest-labs/flux-1-schnell", { prompt: (english + ". Photorealistic photograph, DSLR, natural light, real textures, high detail.").slice(0, 2000), steps: 8 });
+      }
     } else {
       out = await env.AI.run("@cf/black-forest-labs/flux-1-schnell", {
         prompt: ART_STYLE.test(prompt) ? english : (english + ". Photorealistic photograph, DSLR, natural light, real textures, high detail, not a cartoon or illustration.").slice(0, 2000),
