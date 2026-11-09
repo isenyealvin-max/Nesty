@@ -175,7 +175,7 @@
       ["Office Center", "Formal letter, job application, CV, minutes, agenda, memo, report, email, agreement, job advert, LPO, speech, task planner, proofreading.", null],
       ["Research Center", "Topic overview with sources, proposal, research questions, literature review, questionnaire, methodology, summary, abstract, data analysis plan, source checker, citation maker and notebook.", null]]],
     ["12. Plans and limits", [
-      ["Free to Max", "Go, Premium, Pro, Smart, Ultra, Gold, Platinum, Max and the Diamond add-on. Gold, Platinum and Max give your limits back every 40, 25 and 15 minutes.", null],
+      ["Free to Max", "Go, Premium, Pro, Smart, Ultra, Gold, Creator, Platinum, Max and the Diamond add-on. Gold, Creator, Platinum and Max give your limits back every 40, 35, 25 and 15 minutes.", null],
       ["Paying", "Pay with M-Pesa on your phone when it is switched on, or send to the Nesty number and tap Send proof. You can also enter a code.", null],
       ["Plan ending", "In the last 3 days Nesty reminds you every time you open the app and sends a notification.", null]]],
     ["13. Notifications and help", [

@@ -38,7 +38,7 @@ button{font-family:inherit;cursor:pointer}
 .lbtn{width:100%;padding:12px;margin-top:10px;border:1px solid var(--border);border-radius:10px;background:var(--card);color:var(--text);font-size:15px}
 .lbtn:disabled{color:var(--muted)}
 #codeInfo{text-align:center;color:var(--muted);font-size:14px;margin:0 0 14px}
-.gbtn{width:100%;padding:12px;border:1px solid var(--border);border-radius:10px;background:var(--card);color:var(--text);font-size:15px;display:flex;align-items:center;justify-content:center;gap:10px}
+.gRow{display:flex;gap:10px;margin-top:10px}.gRow .gbtn{flex:1;width:auto;min-width:0}.gbtn{width:100%;padding:12px;border:1px solid var(--border);border-radius:10px;background:var(--card);color:var(--text);font-size:15px;display:flex;align-items:center;justify-content:center;gap:10px}
 .or{display:flex;align-items:center;gap:10px;color:var(--muted);font-size:13px;margin:14px 0}
 .or:before,.or:after{content:"";flex:1;height:1px;background:var(--border)}
 #bootMsg{padding:0 24px}
@@ -269,6 +269,7 @@ header .hbtn{margin:0;padding:7px 10px;font-size:13px;white-space:nowrap}
 #tip button{border:0;cursor:pointer;font-family:inherit}
 #tipGo{background:#3a2a00;color:#ffd84d;border-radius:12px;padding:8px 12px;font-weight:800;font-size:13px;white-space:nowrap}
 #tipX{background:none;color:#6b4a00;font-size:24px;line-height:1;padding:0 6px}
+#limitBar{position:relative}#limitX{position:absolute;top:2px;right:6px;border:0;background:none;font-size:24px;line-height:1;color:#6b4a00;padding:4px 8px;cursor:pointer}#limitTxt{padding-right:22px}
 #boot{position:fixed;inset:0;z-index:99999;background:#fff;padding:20vh 0 0;transition:opacity .5s ease;color:#1a1a1a}
 #boot.bye{opacity:0;pointer-events:none}
 #bootTxt{font-size:34px;font-weight:900;letter-spacing:3px;display:flex;justify-content:center;gap:2px;min-height:44px;margin-top:6px}
@@ -374,8 +375,23 @@ header .hbtn{margin:0;padding:7px 10px;font-size:13px;white-space:nowrap}
 
 document.getElementById("bootLogo").innerHTML = window.NESTY_LOGO("b", true);
 window.RED_LOGO = function(px){
-  var u = "r" + Math.floor(Math.random()*1e6);
-  return '<svg class="redlogo" width="'+px+'" height="'+px+'" viewBox="0 0 48 48" role="img" aria-label="Red element"><defs><linearGradient id="'+u+'" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#ff5a5a"/><stop offset="1" stop-color="#a50d22"/></linearGradient></defs><path d="M24 2 L44 14 V34 L24 46 L4 34 V14 Z" fill="url(#'+u+')"/><path d="M24 2 L44 14 L24 24 L4 14 Z" fill="#fff" opacity=".18"/><circle cx="24" cy="25" r="8.5" fill="none" stroke="#fff" stroke-width="3"/><circle cx="24" cy="25" r="2.8" fill="#fff"/></svg>';
+  var u = "re" + Math.floor(Math.random()*1e7), q = "." + u;
+  var R1 = "M23 50V15H35a10 10 0 0 1 0 20H23", R2 = "M35 35L45 50";
+  return '<svg class="redlogo" width="'+px+'" height="'+px+'" viewBox="0 0 64 64" role="img" aria-label="Red element"><style>'+
+    '@keyframes '+u+'d{from{stroke-dashoffset:1}to{stroke-dashoffset:0}}@keyframes '+u+'o{to{transform:rotate(360deg)}}@keyframes '+u+'s{0%{transform:translateX(-30px)}55%,100%{transform:translateX(90px)}}@keyframes '+u+'p{0%,100%{opacity:.55}50%{opacity:1}}'+
+    q+'a{stroke-dasharray:1;stroke-dashoffset:1;animation:'+u+'d 1.1s cubic-bezier(.6,0,.2,1) .15s forwards}'+q+'b{stroke-dasharray:1;stroke-dashoffset:1;animation:'+u+'d .5s ease-out 1s forwards}'+
+    q+'o{transform-origin:32px 32px;animation:'+u+'o 7s linear infinite}'+q+'h{animation:'+u+'s 4.5s ease-in-out 1.8s infinite}'+q+'g{animation:'+u+'p 2.4s ease-in-out infinite}'+
+    '@media (prefers-reduced-motion:reduce){'+q+'a,'+q+'b{animation:none;stroke-dashoffset:0}'+q+'o,'+q+'h,'+q+'g{animation:none}}</style>'+
+    '<defs><linearGradient id="'+u+'l" gradientUnits="userSpaceOnUse" x1="14" y1="12" x2="52" y2="54"><stop offset="0" stop-color="#e11d48"/><stop offset=".5" stop-color="#f97316"/><stop offset="1" stop-color="#6d28d9"/></linearGradient>'+
+    '<linearGradient id="'+u+'r" gradientUnits="userSpaceOnUse" x1="4" y1="4" x2="60" y2="60"><stop offset="0" stop-color="#f43f5e"/><stop offset=".5" stop-color="#fbbf24"/><stop offset="1" stop-color="#06b6d4"/></linearGradient>'+
+    '<linearGradient id="'+u+'w" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#fff" stop-opacity="0"/><stop offset=".5" stop-color="#fff" stop-opacity=".85"/><stop offset="1" stop-color="#fff" stop-opacity="0"/></linearGradient>'+
+    '<clipPath id="'+u+'c"><path d="'+R1+'" fill="none"/></clipPath><mask id="'+u+'m"><g fill="none" stroke="#fff" stroke-width="7.5" stroke-linecap="round" stroke-linejoin="round"><path d="'+R1+'"/><path d="'+R2+'"/></g></mask></defs>'+
+    '<rect x="1.5" y="1.5" width="61" height="61" rx="18" fill="#fff" stroke="#e7e5e4" stroke-width="1"/>'+
+    '<circle cx="32" cy="32" r="28.5" fill="none" stroke="url(#'+u+'r)" stroke-width="1.6" stroke-opacity=".9"/>'+
+    '<g class="'+u+'o"><circle cx="32" cy="3.5" r="3" fill="#06b6d4"/><circle cx="32" cy="3.5" r="5" fill="#06b6d4" fill-opacity=".22" class="'+u+'g"/></g>'+
+    '<g fill="none" stroke="url(#'+u+'l)" stroke-width="7.5" stroke-linecap="round" stroke-linejoin="round"><path d="'+R1+'" pathLength="1" class="'+u+'a"/><path d="'+R2+'" pathLength="1" class="'+u+'b"/></g>'+
+    '<g mask="url(#'+u+'m)"><rect class="'+u+'h" x="0" y="8" width="14" height="50" fill="url(#'+u+'w)" transform="skewX(-18)"/></g>'+
+    '</svg>';
 };
 (function(){
   var T0 = Date.now(), word = "Nesty AI", t = document.getElementById("bootTxt"), h = "";
@@ -383,7 +399,7 @@ window.RED_LOGO = function(px){
     h += word[i] === " " ? '<span class="sp"></span>' : '<span style="animation-delay:'+(2.6 + i*0.12).toFixed(2)+'s,'+(3.2+i*0.12).toFixed(2)+'s">'+word[i]+'</span>';
   }
   t.innerHTML = h;
-  document.getElementById("bootRed").innerHTML = window.RED_LOGO(30) + '<div><small>Made by</small><b>Red element</b></div>';
+  document.getElementById("bootRed").innerHTML = window.RED_LOGO(40) + '<div><small>Made by</small><b>Red element</b></div>';
   window.bootDone = function(){
     var b = document.getElementById("boot"); if(!b || b.getAttribute("data-done")) return;
     b.setAttribute("data-done", "1");
@@ -425,6 +441,10 @@ window.RED_LOGO = function(px){
       <div class="or" data-i="a_or"></div>
       <button class="gbtn" onclick="googleLogin()"><svg width="20" height="20" viewBox="0 0 48 48"><path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/><path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/><path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/><path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/></svg><span data-i="a_google"></span></button>
       <button class="gbtn" id="fbBtn" style="margin-top:10px;display:none" onclick="facebookLogin()"><svg width="20" height="20" viewBox="0 0 24 24"><path fill="#1877F2" d="M24 12.07C24 5.4 18.63 0 12 0S0 5.4 0 12.07C0 18.1 4.39 23.1 10.13 24v-8.44H7.08v-3.49h3.05V9.41c0-3.02 1.79-4.69 4.53-4.69 1.31 0 2.68.24 2.68.24v2.97h-1.51c-1.49 0-1.96.93-1.96 1.88v2.26h3.33l-.53 3.49h-2.8V24C19.61 23.1 24 18.1 24 12.07z"/></svg>Continue with Facebook</button>
+      <div class="gRow">
+        <button class="gbtn" onclick="yahooLogin()"><svg width="20" height="20" viewBox="0 0 24 24"><rect width="24" height="24" rx="5" fill="#6001d2"/><path fill="#fff" d="M5 7h3.3l2 4.6L12.4 7h3.2l-4 8.7V19H8.6v-3.3zM16.2 12.2h2.2l.3-5.2h-2.5z"/></svg><span>Yahoo</span></button>
+        <button class="gbtn" onclick="notionLogin()"><svg width="20" height="20" viewBox="0 0 24 24"><rect x="2" y="2" width="20" height="20" rx="4" fill="#fff" stroke="#111" stroke-width="1.6"/><path fill="#111" d="M8 7h2l5.4 7.4V7H17v10h-1.9L9.6 9.6V17H8z"/></svg><span>Notion</span></button>
+      </div>
       <div id="authSwitch"></div>
     </div>
 
@@ -489,7 +509,7 @@ window.RED_LOGO = function(px){
   <div id="chat"></div>
   <div id="inputWrap">
     <div id="promoBar"><button class="x" onclick="hidePromo()">&times;</button><div id="promoTxt"></div><div class="upRow"><button onclick="openPlans('go')">Go</button><button onclick="openPlans('learnover')">Smart</button><button onclick="openPlans('ultra')">Ultra</button></div></div>
-    <div id="limitBar"><div id="limitTxt"></div><div class="upRow"><button onclick="openPlans('go')">Go</button><button onclick="openPlans('learnover')">Smart</button><button onclick="openPlans('ultra')">Ultra</button></div></div>
+    <div id="limitBar"><button id="limitX" aria-label="Close" onclick="document.getElementById('limitBar').style.display='none'">&times;</button><div id="limitTxt"></div><div class="upRow"><button onclick="openPlans('go')">Go</button><button onclick="openPlans('learnover')">Smart</button><button onclick="openPlans('ultra')">Ultra</button></div></div>
     <div id="modeRow"><button class="cpbtn" id="studyBtn" onclick="toggleStudy()"></button><button class="cpbtn" id="deepBtn" onclick="toggleDeep()"></button></div>
     <div id="chip"><span id="chipName"></span><button onclick="removeFile()">&times;</button></div>
     <div id="bar">
@@ -680,8 +700,9 @@ window.RED_LOGO = function(px){
 <div id="updateBar"></div>
 
 <script>
-var VERSION = "V30";
+var VERSION = "V31";
 var VERSIONS = [
+  ["V31", "Sign in with Yahoo and Notion. New animated Red element logo. New model Muse 5.5 (creative studio) and the new Creator plan. Pictures are now realistic photos by default, and landmarks are looked up first so they look like the real place."],
   ["V30", "New opening screen: the logo animates, then Nesty AI appears in animated gold, with the Red element logo near the bottom. Fixed the missing Research Center button. Invite days now only count for a fresh link."],
   ["V29", "Brand Studio (logo, ads, banner, payment sign, cards), Office Center, Research Center, 30 question exams that look like Kenyan school papers, Nesty now for ages 5 and up, version history."],
   ["V28", "New models Lexy (sports, free), Fenny (fitness and body care) and Vilda (career and family). New plans Gold, Platinum and Max with faster limits. Ultra now has 3 models."],
@@ -1131,9 +1152,9 @@ function applyLang(){
   $("sideLinks").innerHTML = links + " &middot; " + pl;
   $("dataNote").innerHTML = L("s_data_note", {p: pl});
   var vtxt = "Nesty AI " + VERSION + " \u00b7 Red element";
-  $("verSide").innerHTML = window.RED_LOGO(16) + ' ' + vtxt;
-  $("verAuth").innerHTML = window.RED_LOGO(18) + ' ' + vtxt;
-  $("aboutTxt").textContent = "Nesty AI " + VERSION + " \u2014 " + L("s_made");
+  $("verSide").innerHTML = window.RED_LOGO(24) + '<span style="vertical-align:middle;margin-left:6px">' + vtxt + '</span>';
+  $("verAuth").innerHTML = window.RED_LOGO(26) + '<span style="vertical-align:middle;margin-left:6px">' + vtxt + '</span>';
+  $("aboutTxt").innerHTML = "Nesty AI " + VERSION + " \u2014 " + L("s_made") + '<div style="margin-top:8px">' + window.RED_LOGO(34) + '</div>';
   if(!$("resendBtn").disabled) $("resendBtn").textContent = L("a_resend");
   $("updateBar").textContent = L("upd");
   drawAuthText();
@@ -1606,6 +1627,8 @@ function oauthLogin(name, label){
 }
 function googleLogin(){ oauthLogin("google", "Google"); }
 function facebookLogin(){ oauthLogin("facebook", "Facebook"); }
+function yahooLogin(){ oauthLogin("yahoo", "Yahoo"); }
+function notionLogin(){ oauthLogin("notion", "Notion"); }
 
 async function init(){
   var qs = new URLSearchParams(location.search);
@@ -2337,7 +2360,7 @@ function showLimit(kind){
     hidePromo();
     $("limitTxt").textContent = L(kind === "img" ? "lim_img" : (kind === "file" ? "lim_file" : "lim_msg"), {t: whenText(until), r: leftText(until)});
     bar.style.display = "block";
-    limitTimer = setTimeout(function(){ bar.style.display = "none"; }, until - Date.now() + 500);
+    limitTimer = setTimeout(function(){ bar.style.display = "none"; }, Math.min(30000, until - Date.now() + 500));
   }else{
     bar.style.display = "none";
   }

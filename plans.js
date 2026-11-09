@@ -5,7 +5,7 @@
   window.nestyPlansLoaded = true;
 
   /* ---------- plan data (Learnover is now called Smart; Diamond is new; Ultra has smaller limits) ---------- */
-  PLAN_ORDER = ["free", "diamond", "go", "premium", "pro", "learnover", "ultra", "gold", "platinum", "max"];
+  PLAN_ORDER = ["free", "diamond", "go", "premium", "pro", "learnover", "ultra", "gold", "creator", "platinum", "max"];
   PLAN_DATA.learnover.n = "Smart";
   PLAN_DATA.free.extras = ["Try Manuva: 3 free messages a day"];
   PLAN_DATA.diamond = { n: "Diamond", msg: 30, file: 20, img: 4, tts: 10, m: 30, y: 360, models: ["manuva"], extras: ["Adds the Manuva model to whatever plan you have", "Up to 20 Manuva messages per hour", "Other limits stay as on your main plan"] };
@@ -14,11 +14,13 @@
   PLAN_DATA.ultra.extras = ["3 models: Hiaru 5.1, Omni smart and Tyra", "Deep search (8 per hour) and data analysis with charts", "Big limits for work and study"];
   PLAN_DATA.free.models = ["neptune", "nova", "lexy"];
   PLAN_DATA.gold = { n: "Gold", msg: 110, file: 100, img: 35, tts: 80, win: 40, m: 799, y: 9588, models: ["nuvida", "tyra", "smart", "vilda"], extras: ["Your limits come back every 40 minutes, not every hour", "Deep search: 10 per hour", "Four models: Nuvida, Tyra, Omni smart and Vilda"] };
+  PLAN_DATA.creator = { n: "Creator", msg: 125, file: 115, img: 55, tts: 90, win: 35, m: 899, y: 10788, models: ["muse", "nuvida", "hiaru", "vilda"], extras: ["Your limits come back every 35 minutes", "Deep search: 12 per hour", "Four models: Muse 5.5 (creative studio), Nuvida, Hiaru and Vilda", "Extra picture creations for posters, covers and ideas"] };
   PLAN_DATA.platinum = { n: "Platinum", msg: 140, file: 130, img: 45, tts: 100, win: 25, m: 999, y: 11988, models: ["nuvida", "hiaru", "tyra", "fenny", "vilda"], extras: ["Your limits come back every 25 minutes", "Deep search: 14 per hour and data analysis with charts", "Five models: Nuvida, Hiaru, Tyra, Fenny and Vilda"] };
-  PLAN_DATA.max = { n: "Max", msg: 200, file: 180, img: 60, tts: 150, win: 15, m: 1599, y: 19188, models: ["neptune", "nova", "nuvida", "hiaru", "smart", "tyra", "manuva", "fenny", "vilda"], extras: ["All paid models, you choose (Lexy is free-only)", "Your limits come back every 15 minutes", "Deep search: 20 per hour, Manuva: 40 per hour, data analysis", "The biggest limits of all"] };
+  PLAN_DATA.max = { n: "Max", msg: 200, file: 180, img: 60, tts: 150, win: 15, m: 1599, y: 19188, models: ["neptune", "nova", "nuvida", "hiaru", "smart", "tyra", "manuva", "fenny", "vilda", "muse"], extras: ["All paid models, you choose (Lexy is free-only)", "Your limits come back every 15 minutes", "Deep search: 20 per hour, Manuva: 40 per hour, data analysis", "The biggest limits of all"] };
   function winTxt(p) { var w = p.win || 60; return w === 60 ? "per hour" : "every " + w + " minutes"; }
   MODEL_INFO.lexy = { n: "Lexy", d: "For sports: football, athletics, rugby, basketball and more" };
   MODEL_INFO.fenny = { n: "Fenny", d: "For fitness, exercises, body parts, organs and body care" };
+  MODEL_INFO.muse = { n: "Muse 5.5", d: "Creative studio: stories, poems, songs, speeches, captions, slogans and learning languages like Swahili and Sheng" };
   MODEL_INFO.vilda = { n: "Vilda", d: "For career, business ideas and family life: budgets, shopping lists, plans, vacations and packing lists" };
   MODEL_INFO.hiaru = { n: "Hiaru 5.1", d: "For office work: documents, files, spreadsheets, PowerPoint, business papers and data analysis" };
   MODEL_INFO.manuva = { n: "Manuva", d: "For tough challenges: hard maths, logic, science, coding and multi-step problems" };
@@ -46,6 +48,7 @@
     learnover: { c: "#e07b00", bg: "#ffecd0", ic: "🎓", tag: "For students" },
     ultra: { c: "#7c3aed", bg: "#eee6ff", ic: "👑", tag: "Work and study" },
     gold: { c: "#c98a00", bg: "#fff1bf", ic: "🥇", tag: "More models, faster limits" },
+    creator: { c: "#c2410c", bg: "#ffe9dc", ic: "🎨", tag: "For writers and creators" },
     platinum: { c: "#4a6a85", bg: "#e6eef5", ic: "🏆", tag: "Five models, 25 minute limits" },
     max: { c: "#111827", bg: "#e9e9ee", ic: "🚀", tag: "Everything, 15 minute limits" }
   };

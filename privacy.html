@@ -183,5 +183,25 @@ document.getElementById("lg").innerHTML = window.NESTY_LOGO("p", true);</script>
 <li>Threads: <a href="https://www.threads.com/@redel.ment" target="_blank" rel="noopener">@redel.ment</a></li>
 </ul>
 </main>
+<footer style="text-align:center;margin:32px 0 24px;color:#777;font:600 13px system-ui,sans-serif"><span id="rl"></span><div style="margin-top:6px">Made by <b style="color:#c8102e">Red element</b></div></footer>
+<script>window.RED_LOGO = function(px){
+  var u = "re" + Math.floor(Math.random()*1e7), q = "." + u;
+  var R1 = "M23 50V15H35a10 10 0 0 1 0 20H23", R2 = "M35 35L45 50";
+  return '<svg class="redlogo" width="'+px+'" height="'+px+'" viewBox="0 0 64 64" role="img" aria-label="Red element"><style>'+
+    '@keyframes '+u+'d{from{stroke-dashoffset:1}to{stroke-dashoffset:0}}@keyframes '+u+'o{to{transform:rotate(360deg)}}@keyframes '+u+'s{0%{transform:translateX(-30px)}55%,100%{transform:translateX(90px)}}@keyframes '+u+'p{0%,100%{opacity:.55}50%{opacity:1}}'+
+    q+'a{stroke-dasharray:1;stroke-dashoffset:1;animation:'+u+'d 1.1s cubic-bezier(.6,0,.2,1) .15s forwards}'+q+'b{stroke-dasharray:1;stroke-dashoffset:1;animation:'+u+'d .5s ease-out 1s forwards}'+
+    q+'o{transform-origin:32px 32px;animation:'+u+'o 7s linear infinite}'+q+'h{animation:'+u+'s 4.5s ease-in-out 1.8s infinite}'+q+'g{animation:'+u+'p 2.4s ease-in-out infinite}'+
+    '@media (prefers-reduced-motion:reduce){'+q+'a,'+q+'b{animation:none;stroke-dashoffset:0}'+q+'o,'+q+'h,'+q+'g{animation:none}}</style>'+
+    '<defs><linearGradient id="'+u+'l" gradientUnits="userSpaceOnUse" x1="14" y1="12" x2="52" y2="54"><stop offset="0" stop-color="#e11d48"/><stop offset=".5" stop-color="#f97316"/><stop offset="1" stop-color="#6d28d9"/></linearGradient>'+
+    '<linearGradient id="'+u+'r" gradientUnits="userSpaceOnUse" x1="4" y1="4" x2="60" y2="60"><stop offset="0" stop-color="#f43f5e"/><stop offset=".5" stop-color="#fbbf24"/><stop offset="1" stop-color="#06b6d4"/></linearGradient>'+
+    '<linearGradient id="'+u+'w" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#fff" stop-opacity="0"/><stop offset=".5" stop-color="#fff" stop-opacity=".85"/><stop offset="1" stop-color="#fff" stop-opacity="0"/></linearGradient>'+
+    '<clipPath id="'+u+'c"><path d="'+R1+'" fill="none"/></clipPath><mask id="'+u+'m"><g fill="none" stroke="#fff" stroke-width="7.5" stroke-linecap="round" stroke-linejoin="round"><path d="'+R1+'"/><path d="'+R2+'"/></g></mask></defs>'+
+    '<rect x="1.5" y="1.5" width="61" height="61" rx="18" fill="#fff" stroke="#e7e5e4" stroke-width="1"/>'+
+    '<circle cx="32" cy="32" r="28.5" fill="none" stroke="url(#'+u+'r)" stroke-width="1.6" stroke-opacity=".9"/>'+
+    '<g class="'+u+'o"><circle cx="32" cy="3.5" r="3" fill="#06b6d4"/><circle cx="32" cy="3.5" r="5" fill="#06b6d4" fill-opacity=".22" class="'+u+'g"/></g>'+
+    '<g fill="none" stroke="url(#'+u+'l)" stroke-width="7.5" stroke-linecap="round" stroke-linejoin="round"><path d="'+R1+'" pathLength="1" class="'+u+'a"/><path d="'+R2+'" pathLength="1" class="'+u+'b"/></g>'+
+    '<g mask="url(#'+u+'m)"><rect class="'+u+'h" x="0" y="8" width="14" height="50" fill="url(#'+u+'w)" transform="skewX(-18)"/></g>'+
+    '</svg>';
+};document.getElementById("rl").innerHTML=window.RED_LOGO(44);</script>
 </body>
 </html>

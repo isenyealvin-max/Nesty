@@ -12,7 +12,7 @@ const ICONS = {
 
 /* ---------- Plans (the server is the only place these limits are enforced) ---------- */
 const WINDOW_MS = 1 * 60 * 60 * 1000; // every usage window is 1 hour
-const MODELS = { neptune: "NEPTUNE 5.5", nova: "Nova 5.5", nuvida: "Nuvida 5.5", hiaru: "Hiaru 5.1", smart: "Omni smart", tyra: "Tyra", manuva: "Manuva", lexy: "Lexy", fenny: "Fenny", vilda: "Vilda" };
+const MODELS = { neptune: "NEPTUNE 5.5", nova: "Nova 5.5", nuvida: "Nuvida 5.5", hiaru: "Hiaru 5.1", smart: "Omni smart", tyra: "Tyra", manuva: "Manuva", lexy: "Lexy", fenny: "Fenny", vilda: "Vilda", muse: "Muse 5.5" };
 const PLANS = {
   free: { name: "Free", msg: 40, file: 30, img: 6, tts: 12, models: ["neptune", "nova", "manuva", "lexy"], deep: false, data: false, mvCap: 3, mvDaily: true },
   diamond: { name: "Diamond", addon: true, msg: 30, file: 20, img: 4, tts: 10, models: ["manuva"], deep: false, data: false, mvCap: 20 },
@@ -23,13 +23,14 @@ const PLANS = {
   ultra: { name: "Ultra", msg: 90, file: 90, img: 30, tts: 70, models: ["hiaru", "smart", "tyra"], deep: true, data: true, dpCap: 8 },
   // win = minutes in one usage window (default 60). Shorter window = limits come back sooner.
   gold: { name: "Gold", msg: 110, file: 100, img: 35, tts: 80, models: ["nuvida", "tyra", "smart", "vilda"], deep: true, data: false, dpCap: 10, win: 40 },
+  creator: { name: "Creator", msg: 125, file: 115, img: 55, tts: 90, models: ["muse", "nuvida", "hiaru", "vilda"], deep: true, data: false, dpCap: 12, win: 35 },
   platinum: { name: "Platinum", msg: 140, file: 130, img: 45, tts: 100, models: ["nuvida", "hiaru", "tyra", "fenny", "vilda"], deep: true, data: true, dpCap: 14, win: 25 },
-  max: { name: "Max", msg: 200, file: 180, img: 60, tts: 150, models: ["neptune", "nova", "nuvida", "hiaru", "smart", "tyra", "manuva", "fenny", "vilda"], deep: true, data: true, mvCap: 40, dpCap: 20, win: 15 },
+  max: { name: "Max", msg: 200, file: 180, img: 60, tts: 150, models: ["neptune", "nova", "nuvida", "hiaru", "smart", "tyra", "manuva", "fenny", "vilda", "muse"], deep: true, data: true, mvCap: 40, dpCap: 20, win: 15 },
 };
 function winOf(lim) { return ((lim && lim.win) || 60) * 60 * 1000; }
 const TTS_LIMITS = {}; // natural voice clips per hour, taken from the plans above
 Object.keys(PLANS).forEach(function (k) { TTS_LIMITS[k] = PLANS[k].tts; });
-const RANK = { free: 0, diamond: 0.5, premium: 1, go: 2, pro: 3, learnover: 4, ultra: 5, gold: 6, platinum: 7, max: 8 }; // by price (only used to name the top plan)
+const RANK = { free: 0, diamond: 0.5, premium: 1, go: 2, pro: 3, learnover: 4, ultra: 5, gold: 6, creator: 6.5, platinum: 7, max: 8 }; // by price (only used to name the top plan)
 const PRICES = {
   diamond: { monthly: 30, yearly: 360 },
   premium: { monthly: 50, yearly: 600 },
@@ -38,6 +39,7 @@ const PRICES = {
   learnover: { monthly: 150, yearly: 1800 },
   ultra: { monthly: 599, yearly: 7188 },
   gold: { monthly: 799, yearly: 9588 },
+  creator: { monthly: 899, yearly: 10788 },
   platinum: { monthly: 999, yearly: 11988 },
   max: { monthly: 1599, yearly: 19188 },
 };
