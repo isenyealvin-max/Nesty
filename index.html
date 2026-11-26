@@ -700,8 +700,9 @@ window.RED_LOGO = function(px){
 <div id="updateBar"></div>
 
 <script>
-var VERSION = "V31";
+var VERSION = "V32";
 var VERSIONS = [
+  ["V32", "Pictures are now saved in your history for 30 days, so they are still there when you come back."],
   ["V31", "Sign in with Yahoo and Notion. New animated Red element logo. New model Muse 5.5 (creative studio) and the new Creator plan. Pictures are now realistic photos by default, and landmarks are looked up first so they look like the real place."],
   ["V30", "New opening screen: the logo animates, then Nesty AI appears in animated gold, with the Red element logo near the bottom. Fixed the missing Research Center button. Invite days now only count for a fresh link."],
   ["V29", "Brand Studio (logo, ads, banner, payment sign, cards), Office Center, Research Center, 30 question exams that look like Kenyan school papers, Nesty now for ages 5 and up, version history."],
@@ -1785,7 +1786,7 @@ async function removeChat(id){
   if(!confirm(L("conf_chat"))) return;
   try{
     await db.deleteDocument(DB, TABLE, id);
-    if(id === chatId){ messages = []; chatId = null; renderAll(); }
+    if(id === chatId){ dropPics(messages); messages = []; chatId = null; renderAll(); }
     loadList();
   }catch(e){
     toast("Could not delete: " + (e.message || "error"));
@@ -2017,10 +2018,11 @@ function buildBot(m, isLast){
       oa.appendChild(od); d.appendChild(oa);
       return d;
     }
-    if(m.genImage.data){
+    if(m.genImage.data || m.genImage.fid){
       var gi = document.createElement("img");
       gi.className = "gimg";
-      gi.src = m.genImage.data;
+      if(m.genImage.data){ gi.src = m.genImage.data; }
+      else{ gi.style.minHeight = "160px"; gi.style.background = "var(--soft)"; }
       gi.alt = "Picture made by Nesty";
       d.appendChild(gi);
       var ga = document.createElement("div");
@@ -2028,8 +2030,19 @@ function buildBot(m, isLast){
       var dl = document.createElement("a");
       dl.className = "cpbtn";
       dl.style.textDecoration = "none";
-      dl.href = m.genImage.data;
+      dl.href = m.genImage.data || "#";
       dl.download = "nesty-picture.jpg";
+      if(!m.genImage.data){
+        loadSavedPic(m.genImage.fid).then(function(u){ gi.src = u; gi.style.minHeight = ""; dl.href = u; }).catch(function(){
+          d.innerHTML = "";
+          var gone = document.createElement("div"); gone.className = "gnote";
+          gone.textContent = "Image not available. Pictures are kept for " + PIC_DAYS + " days.";
+          d.appendChild(gone);
+          var ag = document.createElement("button"); ag.className = "cpbtn"; ag.textContent = L("again");
+          ag.onclick = function(){ if(!loading) makeImageChecked(m.genImage.prompt); };
+          d.appendChild(ag);
+        });
+      }
       dl.textContent = L("download");
       ga.appendChild(dl);
       if(isLast){
@@ -2550,6 +2563,46 @@ async function addLogo(dataUrl){
   }
 }
 
+/* ---------- Pictures kept in an Appwrite storage bucket for 30 days ---------- */
+var PIC_BUCKET = "6b0824770033987cfc5e", PIC_DAYS = 30, picCache = {};
+var storage = new Appwrite.Storage(client);
+async function savePic(dataUrl){
+  try{
+    if(!user) return "";
+    var pic = await loadPic(dataUrl), k = Math.min(1, 1024 / Math.max(pic.width, pic.height));
+    var c = document.createElement("canvas");
+    c.width = Math.round(pic.width * k); c.height = Math.round(pic.height * k);
+    c.getContext("2d").drawImage(pic, 0, 0, c.width, c.height);
+    var blob = await new Promise(function(res){ c.toBlob(res, "image/jpeg", 0.82); });
+    if(!blob) return "";
+    var file = new File([blob], "nesty-" + Date.now() + ".jpg", {type: "image/jpeg"});
+    var f = await storage.createFile(PIC_BUCKET, ID.unique(), file, [Permission.read(Role.user(user.$id)), Permission.delete(Role.user(user.$id))]);
+    return f.$id;
+  }catch(e){ return ""; }
+}
+async function loadSavedPic(fid){
+  if(picCache[fid]) return picCache[fid];
+  var r = await fetch(ENDPOINT + "/storage/buckets/" + PIC_BUCKET + "/files/" + fid + "/view", {headers: {"X-Appwrite-Project": PROJECT, "X-Appwrite-JWT": await getJwt()}});
+  if(!r.ok) throw new Error("gone");
+  var u = URL.createObjectURL(await r.blob());
+  picCache[fid] = u;
+  return u;
+}
+function dropPics(msgs){
+  try{ (msgs || []).forEach(function(m){ if(m && m.genImage && m.genImage.fid) storage.deleteFile(PIC_BUCKET, m.genImage.fid).catch(function(){}); }); }catch(e){}
+}
+async function sweepPics(){
+  try{
+    var day = new Date().toISOString().slice(0, 10);
+    if(localStorage.getItem("nestyPicSweep") === day || !user) return;
+    localStorage.setItem("nestyPicSweep", day);
+    var old = new Date(Date.now() - PIC_DAYS * 86400000).toISOString();
+    var l = await storage.listFiles(PIC_BUCKET, [Query.lessThan("$createdAt", old), Query.limit(25)]);
+    for(var i = 0; i < l.files.length; i++){ try{ await storage.deleteFile(PIC_BUCKET, l.files[i].$id); }catch(e){} }
+  }catch(e){}
+}
+setTimeout(sweepPics, 15000);
+
 async function makeImage(prompt, inputImage){
   if(loading) return;
   loading = true;
@@ -2586,7 +2639,9 @@ async function makeImage(prompt, inputImage){
     }
     if(data.image){
       markUsed("img");
-      messages.push({role:"assistant", content:"[Nesty created a picture for: " + prompt + "]", genImage:{data:await addLogo(data.image), prompt:prompt}});
+      var gdata = await addLogo(data.image);
+      var gfid = await savePic(gdata);
+      messages.push({role:"assistant", content:"[Nesty created a picture for: " + prompt + "]", genImage:{data:gdata, fid:gfid, prompt:prompt, at:Date.now()}});
       if(typeof data.left === "number" && data.left <= 2){
         toast(L("left_i", {n: data.left}));
       }
