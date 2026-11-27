@@ -86,6 +86,33 @@ async function researchSubject(env, prompt) {
   }
 }
 
+async function captionFor(env, prompt) {
+  if (!env.GROQ_API_KEY) return "";
+  try {
+    const ctrl = new AbortController();
+    const timer = setTimeout(function () { ctrl.abort(); }, 9000);
+    const res = await fetch("https://api.groq.com/openai/v1/chat/completions", {
+      method: "POST",
+      headers: { "Content-Type": "application/json", Authorization: "Bearer " + env.GROQ_API_KEY },
+      body: JSON.stringify({
+        model: "openai/gpt-oss-20b",
+        messages: [
+          { role: "system", content: "You are Nesty, a warm and friendly assistant. The user asked for a picture and it has just been made. In the SAME language as the request, write 2 short friendly sentences: say what you made, then offer one quick idea to change it (colours, style, a different angle or another version). Plain text only, at most one emoji." },
+          { role: "user", content: prompt },
+        ],
+        reasoning_effort: "low",
+        max_completion_tokens: 160,
+      }),
+      signal: ctrl.signal,
+    });
+    clearTimeout(timer);
+    if (!res.ok) return "";
+    const d = await res.json();
+    const t = d && d.choices && d.choices[0] && d.choices[0].message && d.choices[0].message.content;
+    return t ? String(t).trim().slice(0, 400) : "";
+  } catch (e) { return ""; }
+}
+
 async function improvePrompt(env, prompt, notes) {
   if (!env.GROQ_API_KEY) return prompt;
   try {
@@ -190,6 +217,7 @@ export async function handleImage(request, env, d) {
   const inputImage = body.image || null;
 
   if (!prompt) return json({ reply: "Tell me what picture to make or how to edit it." }, 400);
+  const capP = captionFor(env, prompt);
   if (!env.AI && !env.GEMINI_API_KEY) return json({ reply: "The picture maker is not set up yet." });
   if (BLOCK.test(prompt)) {
     return json({ reply: "I can't make that kind of picture. Please try something else." });
@@ -230,7 +258,7 @@ export async function handleImage(request, env, d) {
       "\n\nFollow the request exactly. If real people are named, draw a stylised illustration, not a photorealistic likeness. Do not add watermarks or extra text unless asked.";
   const g = await geminiImage(env, gemText, b64In, mimeIn);
   if (g) {
-    return json({ image: "data:" + g.mime + ";base64," + g.b64, left: left });
+    return json({ image: "data:" + g.mime + ";base64," + g.b64, left: left, caption: await capP });
   }
 
   // 3) Backup: Cloudflare FLUX.
@@ -274,7 +302,7 @@ export async function handleImage(request, env, d) {
     }
     const b64 = await toBase64(out);
     if (!b64) throw new Error("empty");
-    return json({ image: "data:image/jpeg;base64," + b64, left: left });
+    return json({ image: "data:image/jpeg;base64," + b64, left: left, caption: await capP });
   } catch (e) {
     if (stb) await stb.refund();
     console.error("Image error:", e);
