@@ -1,6 +1,7 @@
 import { DurableObject } from "cloudflare:workers";
 import { onRequestPost } from "./functions/api/chat.js";
 import { handleImage } from "./functions/api/image.js";
+import { handlePics } from "./functions/api/pics.js";
 
 const APPWRITE = "https://sgp.cloud.appwrite.io/v1";
 const PROJECT = "6adc585d003ae0c1be08";
@@ -1416,6 +1417,7 @@ export default {
         if (res.ok) track(env, ctx, ["d:{d}:img"]);
         return res;
       },
+      "/api/pics": function () { return handlePics(request, env, { needUser: needUser, stub: stub, json: json }); },
       "/api/me": function () { return handleMe(request, env); },
       "/api/place": function () { return handlePlace(request, env); },
       "/api/help": function () { return handleHelp(request, env, ctx); },

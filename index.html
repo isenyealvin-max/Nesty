@@ -143,6 +143,12 @@ header{display:flex;justify-content:space-between;align-items:center;padding:10p
 .src a{display:inline-block;margin:0 6px 4px 0;padding:2px 9px;border:1px solid var(--border);border-radius:12px;color:var(--text);text-decoration:none;background:var(--card)}
 #imgBtn{background:var(--card);border:1px solid var(--border);color:var(--muted);border-radius:14px;padding:4px 11px;font-size:12.5px}
 #imgBtn.on{background:#7c3aed;border-color:#7c3aed;color:#fff}
+.gcap{font-size:15px;margin:2px 0 8px;line-height:1.45}
+.pgrid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:6px;max-width:460px}
+.pcell{position:relative;display:block;border-radius:12px;overflow:hidden;border:1px solid var(--border);background:var(--soft);aspect-ratio:4/3;text-decoration:none}
+.pcell img{width:100%;height:100%;object-fit:cover;display:block}
+.pcell span{position:absolute;left:6px;bottom:6px;max-width:90%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;background:rgba(0,0,0,.62);color:#fff;font-size:11px;padding:2px 8px;border-radius:999px}
+.msg a{text-decoration:underline dotted;text-underline-offset:3px}
 .gimg{display:block;max-width:100%;width:420px;border-radius:12px;border:1px solid var(--border);margin-bottom:6px}
 .gnote{color:var(--muted);font-size:14px}
 #updateBar{display:none;position:fixed;top:0;left:0;right:0;background:#1a56db;color:#fff;text-align:center;padding:12px;font-size:14px;z-index:90;cursor:pointer}
@@ -700,8 +706,9 @@ window.RED_LOGO = function(px){
 <div id="updateBar"></div>
 
 <script>
-var VERSION = "V32";
+var VERSION = "V33";
 var VERSIONS = [
+  ["V33", "Show me a logo or a place and Nesty now finds real pictures on the web. After making a picture Nesty talks about it. Answers can include official links. The Install button is always available."],
   ["V32", "Pictures are now saved in your history for 30 days, so they are still there when you come back."],
   ["V31", "Sign in with Yahoo and Notion. New animated Red element logo. New model Muse 5.5 (creative studio) and the new Creator plan. Pictures are now realistic photos by default, and landmarks are looked up first so they look like the real place."],
   ["V30", "New opening screen: the logo animates, then Nesty AI appears in animated gold, with the Red element logo near the bottom. Fixed the missing Research Center button. Invite days now only count for a fresh link."],
@@ -1191,8 +1198,12 @@ window.addEventListener("appinstalled", function(){
   installEvent = null;
   $("installBtn").style.display = "none";
 });
+if(!(window.matchMedia && matchMedia("(display-mode: standalone)").matches) && !window.navigator.standalone){ setTimeout(function(){ try{ $("installBtn").style.display = "block"; }catch(e){} }, 600); }
 async function installApp(){
-  if(!installEvent) return;
+  if(!installEvent){
+    alert("To install Nesty:\n\nAndroid (Chrome): tap the 3 dots \u22EE, then 'Install app' or 'Add to Home screen'.\n\niPhone (Safari): tap Share, then 'Add to Home Screen'.");
+    return;
+  }
   installEvent.prompt();
   try{ await installEvent.userChoice; }catch(e){}
   installEvent = null;
@@ -2001,6 +2012,20 @@ function buildBot(m, isLast){
   var d = document.createElement("div");
   d.className = "msg bot";
   d.dir = "auto";
+  if(m.pics){
+    var pt = document.createElement("div"); pt.className = "gnote"; pt.textContent = "Pictures from the web";
+    d.appendChild(pt);
+    var grid = document.createElement("div"); grid.className = "pgrid";
+    m.pics.forEach(function(p){
+      var a = document.createElement("a"); a.className = "pcell"; a.href = p.url; a.target = "_blank"; a.rel = "noopener";
+      var im = document.createElement("img"); im.src = p.url; im.loading = "lazy"; im.referrerPolicy = "no-referrer"; im.alt = p.title || "Picture";
+      im.onerror = function(){ a.style.display = "none"; };
+      var cap = document.createElement("span"); cap.textContent = p.host || "";
+      a.appendChild(im); a.appendChild(cap); grid.appendChild(a);
+    });
+    d.appendChild(grid);
+    return d;
+  }
   if(m.genImage){
     if(m.genImage.own){
       var oi = document.createElement("img");
@@ -2025,6 +2050,7 @@ function buildBot(m, isLast){
       else{ gi.style.minHeight = "160px"; gi.style.background = "var(--soft)"; }
       gi.alt = "Picture made by Nesty";
       d.appendChild(gi);
+      if(m.genImage.caption){ var cp = document.createElement("div"); cp.className = "gcap"; cp.dir = "auto"; cp.textContent = m.genImage.caption; d.appendChild(cp); }
       var ga = document.createElement("div");
       ga.className = "actions";
       var dl = document.createElement("a");
@@ -2517,10 +2543,36 @@ async function ask(){
 /* ---------- Picture maker ---------- */
 var imageNext = false;
 var creatingImg = false;
-var IMG_RE = /^\s*(\/image\s+|(please\s+|pls\s+|can you\s+|could you\s+|would you\s+|kindly\s+)?((draw|sketch|paint|illustrate|imagine|render|chora)\b(?!\s+(a\s+|an\s+|the\s+)?(conclusions?|tables?|charts?|graphs?|lines?|diagrams?|comparisons?|inferences?|attention))|(generate|create|make|design|produce|show|give|tengeneza)\s+(me\s+)?(an?\s+|the\s+|some\s+)?([\w'’-]+\s+){0,6}?(image|images|picture|pictures|pic|pics|photo|photos|illustration|drawing|painting|logo|poster|wallpaper|portrait|cartoon|artwork|picha|icon|banner|sticker|meme)\b))/i;
+var IMG_RE = /^\s*(\/image\s+|(please\s+|pls\s+|can you\s+|could you\s+|would you\s+|kindly\s+)?((draw|sketch|paint|illustrate|imagine|render|chora)\b(?!\s+(a\s+|an\s+|the\s+)?(conclusions?|tables?|charts?|graphs?|lines?|diagrams?|comparisons?|inferences?|attention))|(generate|create|make|design|produce|give|tengeneza)\s+(me\s+)?(an?\s+|the\s+|some\s+)?([\w'’-]+\s+){0,6}?(image|images|picture|pictures|pic|pics|photo|photos|illustration|drawing|painting|logo|poster|wallpaper|portrait|cartoon|artwork|picha|icon|banner|sticker|meme)\b))/i;
 var EDIT_RE = /\b(make|turn|change|add|remove|edit|convert|replace|put|give|transform|erase|colou?r|recolou?r|apply|blur|brighten|darken|cartoon|anime|night|sunglasses|background|filter|style|restyle|enhance|fix|crop|cut|swap)\b/i;
 var ASK_RE = /^\s*(what|who|where|when|why|how|is|are|does|do|describe|explain|tell|read|translate|summari[sz]e|solve|extract|identify|count|list)\b/i;
-function wantsImage(s){ return IMG_RE.test(s || ""); }
+var PIC_RE = /^\s*(please\s+|pls\s+)?(can you\s+|could you\s+|would you\s+)?(show|find|search( for)?|get|display|bring|let me see|i want to see|see)\s+(me\s+)?(some\s+|a few\s+|the\s+|an?\s+)?([\w'’.-]+\s+){0,6}?(pictures?|images?|photos?|pics?|logos?|picha)\b|\bwhat (does|do|did) .{2,70} look like\b|\bpicha za\b/i;
+var REAL_RE = /\b(current|latest|real|actual|official|original)\b/i, MAKE_RE = /\b(draw|design|cartoon|anime|illustration|sketch|paint|generate|imagine|logo for|poster for|for my)\b/i;
+function wantsWebPics(s){
+  s = s || "";
+  if(PIC_RE.test(s) && !/\b(create|generate|draw|design|make)\b/i.test(s)) return true;
+  return IMG_RE.test(s) && REAL_RE.test(s) && !MAKE_RE.test(s) && /\b(pictures?|images?|photos?|pics?|logos?)\b/i.test(s);
+}
+async function fetchPics(text){
+  try{
+    var r = await fetch("/api/pics", {method:"POST", headers:{"Content-Type":"application/json", "X-Nesty-Token": await getJwt()}, body: JSON.stringify({q: text})});
+    var d = await r.json();
+    return (d && d.images) || [];
+  }catch(e){ return []; }
+}
+function showPicsAfterReply(job){
+  job.then(function(imgs){
+    if(!imgs.length) return;
+    var t = setInterval(function(){
+      if(loading) return;
+      clearInterval(t);
+      messages.push({role:"assistant", content:"[Nesty showed pictures found on the web]", pics: imgs});
+      renderAll(); saveChat();
+    }, 400);
+    setTimeout(function(){ clearInterval(t); }, 90000);
+  });
+}
+function wantsImage(s){ return IMG_RE.test(s || "") && !wantsWebPics(s); }
 function wantsEdit(s){ return EDIT_RE.test(s || "") && !ASK_RE.test(s || ""); }
 function drawImg(){
   var b = $("imgBtn");
@@ -2565,7 +2617,8 @@ async function addLogo(dataUrl){
 
 /* ---------- Pictures kept in an Appwrite storage bucket for 30 days ---------- */
 var PIC_BUCKET = "6b0824770033987cfc5e", PIC_DAYS = 30, picCache = {};
-var storage = new Appwrite.Storage(client);
+var storage = null;
+try{ storage = new Appwrite.Storage(client); }catch(e){ window.picErr = "storage not available"; }
 async function savePic(dataUrl){
   try{
     if(!user) return "";
@@ -2578,7 +2631,7 @@ async function savePic(dataUrl){
     var file = new File([blob], "nesty-" + Date.now() + ".jpg", {type: "image/jpeg"});
     var f = await storage.createFile(PIC_BUCKET, ID.unique(), file, [Permission.read(Role.user(user.$id)), Permission.delete(Role.user(user.$id))]);
     return f.$id;
-  }catch(e){ return ""; }
+  }catch(e){ window.picErr = (e && e.message) ? e.message : "upload failed"; return ""; }
 }
 async function loadSavedPic(fid){
   if(picCache[fid]) return picCache[fid];
@@ -2641,7 +2694,8 @@ async function makeImage(prompt, inputImage){
       markUsed("img");
       var gdata = await addLogo(data.image);
       var gfid = await savePic(gdata);
-      messages.push({role:"assistant", content:"[Nesty created a picture for: " + prompt + "]", genImage:{data:gdata, fid:gfid, prompt:prompt, at:Date.now()}});
+      messages.push({role:"assistant", content:"[Nesty created a picture for: " + prompt + "]", genImage:{data:gdata, fid:gfid, prompt:prompt, at:Date.now(), caption:data.caption || ""}});
+      if(!gfid && window.picErr){ toast("Picture not saved: " + window.picErr); }
       if(typeof data.left === "number" && data.left <= 2){
         toast(L("left_i", {n: data.left}));
       }
@@ -2704,6 +2758,7 @@ function send(){
   deepFlag = deepOn;
   deepOn = false;
   drawModes();
+  if(!pendingFile && !pendingImage && wantsWebPics(text)){ showPicsAfterReply(fetchPics(text)); }
   ask();
 }
 
